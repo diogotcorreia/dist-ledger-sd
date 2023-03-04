@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <profiles version="21">
-	<profile kind="CodeFormatterProfile" name="DistLedger" version="21">
+	<profile kind="CodeFormatterProfile" name="Project" version="21">
 		<setting id="org.eclipse.jdt.core.formatter.tabulation.char" value="space"/>
 		<setting id="org.eclipse.jdt.core.formatter.use_tabs_only_for_leading_indentations" value="false"/>
 		<setting id="org.eclipse.jdt.core.formatter.indentation.size" value="4"/>
@@ -41,7 +41,7 @@
 		<setting id="org.eclipse.jdt.core.formatter.parentheses_positions_in_method_invocation" value="separate_lines_if_wrapped"/>
 		<setting id="org.eclipse.jdt.core.formatter.parentheses_positions_in_enum_constant_declaration" value="separate_lines_if_wrapped"/>
 		<setting id="org.eclipse.jdt.core.formatter.parentheses_positions_in_record_declaration" value="separate_lines_if_wrapped"/>
-		<setting id="org.eclipse.jdt.core.formatter.parentheses_positions_in_annotation" value="separate_lines_if_not_empty"/>
+		<setting id="org.eclipse.jdt.core.formatter.parentheses_positions_in_annotation" value="preserve_positions"/>
 		<setting id="org.eclipse.jdt.core.formatter.parentheses_positions_in_lambda_declaration" value="separate_lines_if_wrapped"/>
 		<setting id="org.eclipse.jdt.core.formatter.parentheses_positions_in_if_while_statement" value="preserve_positions"/>
 		<setting id="org.eclipse.jdt.core.formatter.parentheses_positions_in_for_statment" value="separate_lines"/>

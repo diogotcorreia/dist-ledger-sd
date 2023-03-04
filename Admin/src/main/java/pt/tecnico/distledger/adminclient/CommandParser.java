@@ -21,7 +21,6 @@ public class CommandParser {
     }
 
     void parseInput() {
-
         Scanner scanner = new Scanner(System.in);
         boolean exit = false;
 
@@ -98,9 +97,7 @@ public class CommandParser {
         System.out.println("TODO: implement getLedgerState command");
     }
 
-    @SuppressWarnings(
-        "unused"
-    )
+    @SuppressWarnings("unused")
     private void gossip(String line) {
         /* TODO Phase-3 */
         System.out.println("TODO: implement gossip command (only for Phase-3)");

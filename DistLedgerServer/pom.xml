@@ -43,7 +43,7 @@
 
     <build>
         <plugins>
-            <!-- Plug-in used to compile the sources of your project. Java 9 requires 
+            <!-- Plug-in used to compile the sources of your project. Java 9 requires
                  at least version 3.7.0 to properly handle modules. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
