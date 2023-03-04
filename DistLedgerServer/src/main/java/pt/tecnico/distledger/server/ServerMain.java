@@ -3,13 +3,13 @@ package pt.tecnico.distledger.server;
 import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import pt.tecnico.distledger.server.service.AdminDistLedgerServiceImpl;
+import pt.tecnico.distledger.server.service.CrossServerDistLedgerServiceImpl;
+import pt.tecnico.distledger.server.service.UserDistLedgerServiceImpl;
 
 public class ServerMain {
 
-    // Server host port
-    private static int port;
-
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
         // Check arguments
         if (args.length != 2) {
@@ -27,9 +27,15 @@ public class ServerMain {
 
         // Ignore the second argument (for now)
 
-        final BindableService impl = new DistLedgerImpl();
+        final BindableService userImpl = new UserDistLedgerServiceImpl();
+        final BindableService adminImpl = new AdminDistLedgerServiceImpl();
+        final BindableService crossServerImpl = new CrossServerDistLedgerServiceImpl();
 
-        Server server = ServerBuilder().forPort(port).addService(impl).build();
+        Server server = ServerBuilder.forPort(port)
+                .addService(userImpl)
+                .addService(adminImpl)
+                .addService(crossServerImpl)
+                .build();
 
         server.start();
 
