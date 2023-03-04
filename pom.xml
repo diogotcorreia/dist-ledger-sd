@@ -1,25 +1,69 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<groupId>pt.tecnico.sdis.2023.A04</groupId>
-	<artifactId>DistLedger</artifactId>
-	<version>1.0.0-SNAPSHOT</version>
-	<packaging>pom</packaging>
+    <groupId>pt.tecnico.sdis.2023.A04</groupId>
+    <artifactId>DistLedger</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
 
-	<!-- Modules are subcomponents of the project. 
-		The reactor collects all the available modules to build;
-		sorts the projects into the correct build order;
-		builds the selected projects in order. -->
-	<modules>
-		<module>Contract</module>
-		<module>User</module>
-		<module>Admin</module>
-		<module>DistLedgerServer</module>
+    <!-- Modules are subcomponents of the project.
+        The reactor collects all the available modules to build;
+        sorts the projects into the correct build order;
+        builds the selected projects in order. -->
+    <modules>
+        <module>Contract</module>
+        <module>User</module>
+        <module>Admin</module>
+        <module>DistLedgerServer</module>
 
-		<!-- This one should only be used in phases 2 and 3
-		 <module>NamingServer</module>-->
-	</modules>
+        <!-- This one should only be used in phases 2 and 3 -->
+        <!-- <module>NamingServer</module> -->
+    </modules>
+
+    <!-- Properties are variables used to customize the behavior of Maven and its plug-ins. -->
+    <properties>
+        <version.spotless-maven-plugin>2.33.0</version.spotless-maven-plugin>
+
+        <spotless.java.eclipse.file>${project.basedir}${file.separator}formatter-config.xml</spotless.java.eclipse.file>
+    </properties>
+
+    <build>
+        <plugins>
+            <!-- Plug-in that formats the code to ensure consistent styling -->
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>${version.spotless-maven-plugin}</version>
+                <configuration>
+                    <java>
+                        <includes>
+                            <include>src/main/java/**/*.java</include>
+                            <include>src/test/java/**/*.java</include>
+                        </includes>
+                        <importOrder>
+                            <order>,javax,java,\#</order>
+                        </importOrder>
+                        <removeUnusedImports/>
+                        <toggleOffOn/>
+                        <trimTrailingWhitespace/>
+                        <endWithNewline/>
+                        <eclipse>
+                            <file>${spotless.java.eclipse.file}</file>
+                        </eclipse>
+                    </java>
+                    <pom>
+                        <sortPom>
+                            <lineSeparator>\n</lineSeparator>
+                            <expandEmptyElements>false</expandEmptyElements>
+                            <indentSchemaLocation>true</indentSchemaLocation>
+                            <nrOfIndentSpace>4</nrOfIndentSpace>
+                        </sortPom>
+                    </pom>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

@@ -15,11 +15,12 @@ public class CommandParser {
     private static final String EXIT = "exit";
 
     private final AdminService adminService;
+
     public CommandParser(AdminService adminService) {
         this.adminService = adminService;
     }
-    void parseInput() {
 
+    void parseInput() {
         Scanner scanner = new Scanner(System.in);
         boolean exit = false;
 
@@ -60,10 +61,10 @@ public class CommandParser {
         }
     }
 
-    private void activate(String line){
+    private void activate(String line) {
         String[] split = line.split(SPACE);
 
-        if (split.length != 2){
+        if (split.length != 2) {
             this.printUsage();
             return;
         }
@@ -72,10 +73,10 @@ public class CommandParser {
         System.out.println("TODO: implement activate command");
     }
 
-    private void deactivate(String line){
+    private void deactivate(String line) {
         String[] split = line.split(SPACE);
 
-        if (split.length != 2){
+        if (split.length != 2) {
             this.printUsage();
             return;
         }
@@ -84,10 +85,10 @@ public class CommandParser {
         System.out.println("TODO: implement deactivate command");
     }
 
-    private void dump(String line){
+    private void dump(String line) {
         String[] split = line.split(SPACE);
 
-        if (split.length != 2){
+        if (split.length != 2) {
             this.printUsage();
             return;
         }
@@ -97,17 +98,15 @@ public class CommandParser {
     }
 
     @SuppressWarnings("unused")
-    private void gossip(String line){
+    private void gossip(String line) {
         /* TODO Phase-3 */
         System.out.println("TODO: implement gossip command (only for Phase-3)");
     }
+
     private void printUsage() {
-        System.out.println("Usage:\n" +
-                "- activate <server>\n" +
-                "- deactivate <server>\n" +
-                "- getLedgerState <server>\n" +
-                "- gossip <server>\n" +
-                "- exit\n");
+        System.out.println(
+                "Usage:\n" + "- activate <server>\n" + "- deactivate <server>\n" + "- getLedgerState <server>\n" + "- gossip <server>\n" + "- exit\n"
+        );
     }
 
 }

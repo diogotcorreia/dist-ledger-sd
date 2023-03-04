@@ -30,7 +30,7 @@ public class CommandParser {
             String line = scanner.nextLine().trim();
             String cmd = line.split(SPACE)[0];
 
-            try{
+            try {
                 switch (cmd) {
                     case CREATE_ACCOUNT:
                         this.createAccount(line);
@@ -59,17 +59,16 @@ public class CommandParser {
                     default:
                         break;
                 }
-            }
-            catch (Exception e){
+            } catch (Exception e) {
                 System.err.println(e.getMessage());
             }
         }
     }
 
-    private void createAccount(String line){
+    private void createAccount(String line) {
         String[] split = line.split(SPACE);
 
-        if (split.length != 3){
+        if (split.length != 3) {
             this.printUsage();
             return;
         }
@@ -80,10 +79,10 @@ public class CommandParser {
         System.out.println("TODO: implement createAccount command");
     }
 
-    private void deleteAccount(String line){
+    private void deleteAccount(String line) {
         String[] split = line.split(SPACE);
 
-        if (split.length != 3){
+        if (split.length != 3) {
             this.printUsage();
             return;
         }
@@ -94,10 +93,10 @@ public class CommandParser {
     }
 
 
-    private void balance(String line){
+    private void balance(String line) {
         String[] split = line.split(SPACE);
 
-        if (split.length != 3){
+        if (split.length != 3) {
             this.printUsage();
             return;
         }
@@ -107,10 +106,10 @@ public class CommandParser {
         System.out.println("TODO: implement balance command");
     }
 
-    private void transferTo(String line){
+    private void transferTo(String line) {
         String[] split = line.split(SPACE);
 
-        if (split.length != 5){
+        if (split.length != 5) {
             this.printUsage();
             return;
         }
@@ -123,11 +122,8 @@ public class CommandParser {
     }
 
     private void printUsage() {
-        System.out.println("Usage:\n" +
-                        "- createAccount <server> <username>\n" +
-                        "- deleteAccount <server> <username>\n" +
-                        "- balance <server> <username>\n" +
-                        "- transferTo <server> <username_from> <username_to> <amount>\n" +
-                        "- exit\n");
+        System.out.println(
+                "Usage:\n" + "- createAccount <server> <username>\n" + "- deleteAccount <server> <username>\n" + "- balance <server> <username>\n" + "- transferTo <server> <username_from> <username_to> <amount>\n" + "- exit\n"
+        );
     }
 }
