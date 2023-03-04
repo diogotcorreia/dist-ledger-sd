@@ -27,6 +27,7 @@
         <version.spotless-maven-plugin>2.33.0</version.spotless-maven-plugin>
 
         <spotless.java.eclipse.file>${project.basedir}${file.separator}formatter-config.xml</spotless.java.eclipse.file>
+        <version.org.projectlombok.lombok>1.18.24</version.org.projectlombok.lombok>
     </properties>
 
     <build>
@@ -65,5 +66,14 @@
             </plugin>
         </plugins>
     </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${version.org.projectlombok.lombok}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 
 </project>
