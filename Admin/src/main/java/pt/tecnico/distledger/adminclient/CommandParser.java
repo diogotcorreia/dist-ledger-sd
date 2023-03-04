@@ -30,32 +30,14 @@ public class CommandParser {
             String cmd = line.split(SPACE)[0];
 
             switch (cmd) {
-                case ACTIVATE:
-                    this.activate(line);
-                    break;
-
-                case DEACTIVATE:
-                    this.deactivate(line);
-                    break;
-
-                case GET_LEDGER_STATE:
-                    this.dump(line);
-                    break;
-
-                case GOSSIP:
-                    this.gossip(line);
-                    break;
-
-                case HELP:
-                    this.printUsage();
-                    break;
-
-                case EXIT:
-                    exit = true;
-                    break;
-
-                default:
-                    break;
+                case ACTIVATE -> this.activate(line);
+                case DEACTIVATE -> this.deactivate(line);
+                case GET_LEDGER_STATE -> this.dump(line);
+                case GOSSIP -> this.gossip(line);
+                case HELP -> this.printUsage();
+                case EXIT -> exit = true;
+                default -> {
+                }
             }
 
         }
@@ -105,7 +87,14 @@ public class CommandParser {
 
     private void printUsage() {
         System.out.println(
-                "Usage:\n" + "- activate <server>\n" + "- deactivate <server>\n" + "- getLedgerState <server>\n" + "- gossip <server>\n" + "- exit\n"
+                """
+                        Usage:
+                        - activate <server>
+                        - deactivate <server>
+                        - getLedgerState <server>
+                        - gossip <server>
+                        - exit
+                        """
         );
     }
 
