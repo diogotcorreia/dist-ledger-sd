@@ -44,7 +44,7 @@
 		<setting id="org.eclipse.jdt.core.formatter.parentheses_positions_in_annotation" value="preserve_positions"/>
 		<setting id="org.eclipse.jdt.core.formatter.parentheses_positions_in_lambda_declaration" value="separate_lines_if_wrapped"/>
 		<setting id="org.eclipse.jdt.core.formatter.parentheses_positions_in_if_while_statement" value="preserve_positions"/>
-		<setting id="org.eclipse.jdt.core.formatter.parentheses_positions_in_for_statment" value="separate_lines"/>
+		<setting id="org.eclipse.jdt.core.formatter.parentheses_positions_in_for_statment" value="preserve_positions"/>
 		<setting id="org.eclipse.jdt.core.formatter.parentheses_positions_in_switch_statement" value="preserve_positions"/>
 		<setting id="org.eclipse.jdt.core.formatter.parentheses_positions_in_try_clause" value="separate_lines"/>
 		<setting id="org.eclipse.jdt.core.formatter.parentheses_positions_in_catch_clause" value="preserve_positions"/>
@@ -326,10 +326,10 @@
 		<setting id="org.eclipse.jdt.core.formatter.alignment_for_conditional_expression" value="48"/>
 		<setting id="org.eclipse.jdt.core.formatter.alignment_for_conditional_expression_chain" value="0"/>
 		<setting id="org.eclipse.jdt.core.formatter.wrap_before_conditional_operator" value="true"/>
-		<setting id="org.eclipse.jdt.core.formatter.alignment_for_assignment" value="0"/>
+		<setting id="org.eclipse.jdt.core.formatter.alignment_for_assignment" value="16"/>
 		<setting id="org.eclipse.jdt.core.formatter.wrap_before_assignment_operator" value="false"/>
 		<setting id="org.eclipse.jdt.core.formatter.alignment_for_expressions_in_array_initializer" value="0"/>
-		<setting id="org.eclipse.jdt.core.formatter.alignment_for_expressions_in_for_loop_header" value="0"/>
+		<setting id="org.eclipse.jdt.core.formatter.alignment_for_expressions_in_for_loop_header" value="16"/>
 		<setting id="org.eclipse.jdt.core.formatter.alignment_for_compact_if" value="16"/>
 		<setting id="org.eclipse.jdt.core.formatter.alignment_for_compact_loops" value="16"/>
 		<setting id="org.eclipse.jdt.core.formatter.alignment_for_resources_in_try" value="0"/>

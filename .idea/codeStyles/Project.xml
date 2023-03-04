@@ -25,8 +25,7 @@
       <option name="METHOD_CALL_CHAIN_WRAP" value="5" />
       <option name="TERNARY_OPERATION_WRAP" value="5" />
       <option name="TERNARY_OPERATION_SIGNS_ON_NEXT_LINE" value="true" />
-      <option name="FOR_STATEMENT_LPAREN_ON_NEXT_LINE" value="true" />
-      <option name="FOR_STATEMENT_RPAREN_ON_NEXT_LINE" value="true" />
+      <option name="FOR_STATEMENT_WRAP" value="1" />
       <option name="ASSIGNMENT_WRAP" value="1" />
       <option name="WRAP_COMMENTS" value="true" />
       <option name="ENUM_CONSTANTS_WRAP" value="5" />
