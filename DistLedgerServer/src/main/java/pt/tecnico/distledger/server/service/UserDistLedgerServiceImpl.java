@@ -3,7 +3,14 @@ package pt.tecnico.distledger.server.service;
 import io.grpc.stub.StreamObserver;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.exceptions.DistLedgerExceptions;
-import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger;
+import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.BalanceRequest;
+import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.BalanceResponse;
+import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.CreateAccountRequest;
+import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.CreateAccountResponse;
+import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.DeleteAccountRequest;
+import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.DeleteAccountResponse;
+import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.TransferToRequest;
+import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.TransferToResponse;
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc;
 
 import static io.grpc.Status.INVALID_ARGUMENT;
@@ -19,11 +26,11 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
 
     @Override
     public void balance(
-            UserDistLedger.BalanceRequest request,
-            StreamObserver<UserDistLedger.BalanceResponse> responseObserver
+            BalanceRequest request,
+            StreamObserver<BalanceResponse> responseObserver
     ) {
         try {
-            UserDistLedger.BalanceResponse response = UserDistLedger.BalanceResponse.newBuilder()
+            BalanceResponse response = BalanceResponse.newBuilder()
                     .setValue(serverState.getBalance(request.getUserId()))
                     .build();
             responseObserver.onNext(response);
@@ -36,8 +43,8 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
 
     @Override
     public void createAccount(
-            UserDistLedger.CreateAccountRequest request,
-            StreamObserver<UserDistLedger.CreateAccountResponse> responseObserver
+            CreateAccountRequest request,
+            StreamObserver<CreateAccountResponse> responseObserver
     ) {
         try {
             serverState.createAccount(request.getUserId());
@@ -50,8 +57,8 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
 
     @Override
     public void deleteAccount(
-            UserDistLedger.DeleteAccountRequest request,
-            StreamObserver<UserDistLedger.DeleteAccountResponse> responseObserver
+            DeleteAccountRequest request,
+            StreamObserver<DeleteAccountResponse> responseObserver
     ) {
         try {
             serverState.deleteAccount(request.getUserId());
@@ -63,8 +70,8 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
 
     @Override
     public void transferTo(
-            UserDistLedger.TransferToRequest request,
-            StreamObserver<UserDistLedger.TransferToResponse> responseObserver
+            TransferToRequest request,
+            StreamObserver<TransferToResponse> responseObserver
     ) {
         try {
             serverState.transferTo(request.getAccountFrom(), request.getAccountTo(), request.getAmount());
