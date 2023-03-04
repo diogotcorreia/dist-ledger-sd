@@ -30,6 +30,15 @@
         <version.org.projectlombok.lombok>1.18.24</version.org.projectlombok.lombok>
     </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${version.org.projectlombok.lombok}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
     <build>
         <plugins>
             <!-- Plug-in that formats the code to ensure consistent styling -->
@@ -66,14 +75,5 @@
             </plugin>
         </plugins>
     </build>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${version.org.projectlombok.lombok}</version>
-            <scope>provided</scope>
-        </dependency>
-    </dependencies>
 
 </project>
