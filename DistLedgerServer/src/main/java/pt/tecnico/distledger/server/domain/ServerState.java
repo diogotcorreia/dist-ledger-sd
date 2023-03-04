@@ -17,9 +17,12 @@ public class ServerState {
 
     private Map<String, Account> accounts;
 
+    private boolean active;
+
     public ServerState() {
         this.ledger = new CopyOnWriteArrayList<>();
         this.accounts = new ConcurrentHashMap<>();
+        this.active = true;
     }
 
     public int getBalance(String userId) {
@@ -59,6 +62,22 @@ public class ServerState {
         accounts.get(fromUserId).removeBalance(amount);
         accounts.get(toUserId).addBalance(amount);
         ledger.add(new TransferOp(fromUserId, toUserId, amount));
+    }
+
+    public void activate() {
+        this.active = true;
+    }
+
+    public void deactivate() {
+        this.active = false;
+    }
+
+    public List<Operation> getLedger() {
+        return ledger;
+    }
+
+    public void gossip() {
+        // TODO
     }
 
 
