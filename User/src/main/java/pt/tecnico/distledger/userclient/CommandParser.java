@@ -32,32 +32,14 @@ public class CommandParser {
 
             try {
                 switch (cmd) {
-                    case CREATE_ACCOUNT:
-                        this.createAccount(line);
-                        break;
-
-                    case DELETE_ACCOUNT:
-                        this.deleteAccount(line);
-                        break;
-
-                    case TRANSFER_TO:
-                        this.transferTo(line);
-                        break;
-
-                    case BALANCE:
-                        this.balance(line);
-                        break;
-
-                    case HELP:
-                        this.printUsage();
-                        break;
-
-                    case EXIT:
-                        exit = true;
-                        break;
-
-                    default:
-                        break;
+                    case CREATE_ACCOUNT -> this.createAccount(line);
+                    case DELETE_ACCOUNT -> this.deleteAccount(line);
+                    case TRANSFER_TO -> this.transferTo(line);
+                    case BALANCE -> this.balance(line);
+                    case HELP -> this.printUsage();
+                    case EXIT -> exit = true;
+                    default -> {
+                    }
                 }
             } catch (Exception e) {
                 System.err.println(e.getMessage());
@@ -123,7 +105,14 @@ public class CommandParser {
 
     private void printUsage() {
         System.out.println(
-                "Usage:\n" + "- createAccount <server> <username>\n" + "- deleteAccount <server> <username>\n" + "- balance <server> <username>\n" + "- transferTo <server> <username_from> <username_to> <amount>\n" + "- exit\n"
+                """
+                        Usage:
+                        - createAccount <server> <username>
+                        - deleteAccount <server> <username>
+                        - balance <server> <username>
+                        - transferTo <server> <username_from> <username_to> <amount>
+                        - exit
+                        """
         );
     }
 }
