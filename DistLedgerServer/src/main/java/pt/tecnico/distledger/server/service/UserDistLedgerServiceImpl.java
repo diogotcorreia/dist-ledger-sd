@@ -17,7 +17,10 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
     }
 
     @Override
-    public void balance(UserDistLedger.BalanceRequest request, StreamObserver<UserDistLedger.BalanceResponse> responseObserver) {
+    public void balance(
+            UserDistLedger.BalanceRequest request,
+            StreamObserver<UserDistLedger.BalanceResponse> responseObserver
+    ) {
         try {
             UserDistLedger.BalanceResponse response = UserDistLedger.BalanceResponse.newBuilder()
                     .setValue(serverState.getBalance(request.getUserId()))
@@ -30,7 +33,10 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
     }
 
     @Override
-    public void createAccount(UserDistLedger.CreateAccountRequest request, StreamObserver<UserDistLedger.CreateAccountResponse> responseObserver) {
+    public void createAccount(
+            UserDistLedger.CreateAccountRequest request,
+            StreamObserver<UserDistLedger.CreateAccountResponse> responseObserver
+    ) {
         try {
             serverState.createAccount(request.getUserId());
             responseObserver.onCompleted();
@@ -40,7 +46,10 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
     }
 
     @Override
-    public void deleteAccount(UserDistLedger.DeleteAccountRequest request, StreamObserver<UserDistLedger.DeleteAccountResponse> responseObserver) {
+    public void deleteAccount(
+            UserDistLedger.DeleteAccountRequest request,
+            StreamObserver<UserDistLedger.DeleteAccountResponse> responseObserver
+    ) {
         try {
             serverState.deleteAccount(request.getUserId());
             responseObserver.onCompleted();
@@ -50,7 +59,10 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
     }
 
     @Override
-    public void transferTo(UserDistLedger.TransferToRequest request, StreamObserver<UserDistLedger.TransferToResponse> responseObserver) {
+    public void transferTo(
+            UserDistLedger.TransferToRequest request,
+            StreamObserver<UserDistLedger.TransferToResponse> responseObserver
+    ) {
         try {
             serverState.transferTo(request.getAccountFrom(), request.getAccountTo(), request.getAmount());
             responseObserver.onCompleted();

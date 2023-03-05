@@ -24,10 +24,7 @@ public class Account {
 
     @Override
     public String toString() {
-        return "Account{" +
-                "userId='" + userId + '\'' +
-                ", balance=" + balance +
-                '}';
+        return "Account{" + "userId='" + userId + '\'' + ", balance=" + balance + '}';
     }
 
 }
