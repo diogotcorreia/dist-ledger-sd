@@ -5,8 +5,9 @@ import pt.tecnico.distledger.server.domain.operation.CreateOp;
 import pt.tecnico.distledger.server.domain.operation.DeleteOp;
 import pt.tecnico.distledger.server.domain.operation.Operation;
 import pt.tecnico.distledger.server.domain.operation.TransferOp;
-import pt.tecnico.distledger.server.exceptions.DistLedgerExceptions;
-import pt.tecnico.distledger.server.exceptions.ErrorMessage;
+import pt.tecnico.distledger.server.exceptions.AccountAlreadyExistsException;
+import pt.tecnico.distledger.server.exceptions.AccountNotFoundException;
+import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
 
 import java.util.List;
 import java.util.Map;
@@ -15,8 +16,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 @Getter
 public class ServerState {
-    private List<Operation> ledger;
-    private Map<String, Account> accounts;
+    private final List<Operation> ledger;
+    private final Map<String, Account> accounts;
     private boolean active;
 
     public ServerState() {
@@ -25,38 +26,42 @@ public class ServerState {
         this.active = true;
     }
 
-    public int getBalance(String userId) {
+    public int getBalance(String userId) throws AccountNotFoundException {
         if (!accounts.containsKey(userId)) {
-            throw new DistLedgerExceptions(ErrorMessage.ACCOUNT_NOT_FOUND);
+            throw new AccountNotFoundException(userId);
         }
         return accounts.get(userId).getBalance();
     }
 
-    public void createAccount(String userId) {
+    public void createAccount(String userId) throws AccountAlreadyExistsException {
         if (accounts.containsKey(userId)) {
-            throw new DistLedgerExceptions(ErrorMessage.ACCOUNT_ALREADY_EXISTS);
+            throw new AccountAlreadyExistsException(userId);
         }
         accounts.put(userId, new Account(userId));
         ledger.add(new CreateOp(userId));
     }
 
-    public void deleteAccount(String userId) {
+    public void deleteAccount(String userId) throws AccountNotFoundException {
         if (!accounts.containsKey(userId)) {
-            throw new DistLedgerExceptions(ErrorMessage.ACCOUNT_NOT_FOUND);
+            throw new AccountNotFoundException(userId);
         }
         accounts.remove(userId);
         ledger.add(new DeleteOp(userId));
     }
 
-    public void transferTo(String fromUserId, String toUserId, int amount) {
+    public void transferTo(
+            String fromUserId,
+            String toUserId,
+            int amount
+    ) throws AccountNotFoundException, InsufficientFundsException {
         if (!accounts.containsKey(fromUserId)) {
-            throw new DistLedgerExceptions(ErrorMessage.ACCOUNT_NOT_FOUND);
+            throw new AccountNotFoundException(fromUserId);
         }
         if (!accounts.containsKey(toUserId)) {
-            throw new DistLedgerExceptions(ErrorMessage.ACCOUNT_NOT_FOUND);
+            throw new AccountNotFoundException(toUserId);
         }
         if (accounts.get(fromUserId).getBalance() < amount) {
-            throw new DistLedgerExceptions(ErrorMessage.INSUFFICIENT_AMOUNT);
+            throw new InsufficientFundsException(fromUserId, amount, accounts.get(fromUserId).getBalance());
         }
         accounts.get(fromUserId).decreaseBalance(amount);
         accounts.get(toUserId).increaseBalance(amount);

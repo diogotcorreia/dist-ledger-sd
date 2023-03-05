@@ -2,11 +2,12 @@ package pt.tecnico.distledger.server.service;
 
 import io.grpc.stub.StreamObserver;
 import pt.tecnico.distledger.server.domain.ServerState;
-import pt.tecnico.distledger.server.exceptions.DistLedgerExceptions;
+import pt.tecnico.distledger.server.exceptions.AccountAlreadyExistsException;
+import pt.tecnico.distledger.server.exceptions.AccountNotFoundException;
+import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc;
 
-import static io.grpc.Status.INVALID_ARGUMENT;
 
 public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 
@@ -22,15 +23,14 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
             StreamObserver<BalanceResponse> responseObserver
     ) {
         try {
-            BalanceResponse response = BalanceResponse.newBuilder()
-                    .setValue(serverState.getBalance(request.getUserId()))
+            final int balance = serverState.getBalance(request.getUserId());
+            final BalanceResponse response = BalanceResponse.newBuilder()
+                    .setValue(balance)
                     .build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
-        } catch (DistLedgerExceptions e) {
-            responseObserver.onError(
-                    INVALID_ARGUMENT.withDescription(e.getErrorMessage().message).asRuntimeException()
-            );
+        } catch (AccountNotFoundException e) {
+            responseObserver.onError(e.toGrpcRuntimeException());
         }
     }
 
@@ -42,10 +42,8 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
         try {
             serverState.createAccount(request.getUserId());
             responseObserver.onCompleted();
-        } catch (DistLedgerExceptions e) {
-            responseObserver.onError(
-                    INVALID_ARGUMENT.withDescription(e.getErrorMessage().message).asRuntimeException()
-            );
+        } catch (AccountAlreadyExistsException e) {
+            responseObserver.onError(e.toGrpcRuntimeException());
         }
     }
 
@@ -57,10 +55,8 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
         try {
             serverState.deleteAccount(request.getUserId());
             responseObserver.onCompleted();
-        } catch (DistLedgerExceptions e) {
-            responseObserver.onError(
-                    INVALID_ARGUMENT.withDescription(e.getErrorMessage().message).asRuntimeException()
-            );
+        } catch (AccountNotFoundException e) {
+            responseObserver.onError(e.toGrpcRuntimeException());
         }
     }
 
@@ -72,10 +68,8 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
         try {
             serverState.transferTo(request.getAccountFrom(), request.getAccountTo(), request.getAmount());
             responseObserver.onCompleted();
-        } catch (DistLedgerExceptions e) {
-            responseObserver.onError(
-                    INVALID_ARGUMENT.withDescription(e.getErrorMessage().message).asRuntimeException()
-            );
+        } catch (AccountNotFoundException | InsufficientFundsException e) {
+            responseObserver.onError(e.toGrpcRuntimeException());
         }
     }
 
