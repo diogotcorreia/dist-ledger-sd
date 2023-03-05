@@ -28,7 +28,9 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
             responseObserver.onNext(response);
             responseObserver.onCompleted();
         } catch (DistLedgerExceptions e) {
-            responseObserver.onError(INVALID_ARGUMENT.withDescription(e.getMessage()).asRuntimeException());
+            responseObserver.onError(
+                    INVALID_ARGUMENT.withDescription(e.getErrorMessage().message).asRuntimeException()
+            );
         }
     }
 
@@ -41,7 +43,9 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
             serverState.createAccount(request.getUserId());
             responseObserver.onCompleted();
         } catch (DistLedgerExceptions e) {
-            responseObserver.onError(INVALID_ARGUMENT.withDescription(e.getMessage()).asRuntimeException());
+            responseObserver.onError(
+                    INVALID_ARGUMENT.withDescription(e.getErrorMessage().message).asRuntimeException()
+            );
         }
     }
 
@@ -54,7 +58,9 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
             serverState.deleteAccount(request.getUserId());
             responseObserver.onCompleted();
         } catch (DistLedgerExceptions e) {
-            responseObserver.onError(INVALID_ARGUMENT.withDescription(e.getMessage()).asRuntimeException());
+            responseObserver.onError(
+                    INVALID_ARGUMENT.withDescription(e.getErrorMessage().message).asRuntimeException()
+            );
         }
     }
 
@@ -67,7 +73,9 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
             serverState.transferTo(request.getAccountFrom(), request.getAccountTo(), request.getAmount());
             responseObserver.onCompleted();
         } catch (DistLedgerExceptions e) {
-            responseObserver.onError(INVALID_ARGUMENT.withDescription(e.getMessage()).asRuntimeException());
+            responseObserver.onError(
+                    INVALID_ARGUMENT.withDescription(e.getErrorMessage().message).asRuntimeException()
+            );
         }
     }
 

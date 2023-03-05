@@ -25,7 +25,9 @@ public class AdminDistLedgerServiceImpl extends AdminServiceGrpc.AdminServiceImp
             serverState.activate();
             responseObserver.onCompleted();
         } catch (DistLedgerExceptions e) {
-            responseObserver.onError(INVALID_ARGUMENT.withDescription(e.getMessage()).asRuntimeException());
+            responseObserver.onError(
+                    INVALID_ARGUMENT.withDescription(e.getErrorMessage().message).asRuntimeException()
+            );
         }
     }
 
@@ -38,7 +40,9 @@ public class AdminDistLedgerServiceImpl extends AdminServiceGrpc.AdminServiceImp
             serverState.deactivate();
             responseObserver.onCompleted();
         } catch (DistLedgerExceptions e) {
-            responseObserver.onError(INVALID_ARGUMENT.withDescription(e.getMessage()).asRuntimeException());
+            responseObserver.onError(
+                    INVALID_ARGUMENT.withDescription(e.getErrorMessage().message).asRuntimeException()
+            );
         }
     }
 
@@ -51,7 +55,9 @@ public class AdminDistLedgerServiceImpl extends AdminServiceGrpc.AdminServiceImp
             serverState.gossip();
             responseObserver.onCompleted();
         } catch (DistLedgerExceptions e) {
-            responseObserver.onError(INVALID_ARGUMENT.withDescription(e.getMessage()).asRuntimeException());
+            responseObserver.onError(
+                    INVALID_ARGUMENT.withDescription(e.getErrorMessage().message).asRuntimeException()
+            );
         }
     }
 
