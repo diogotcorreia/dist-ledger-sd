@@ -5,7 +5,6 @@ import lombok.Getter;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.OperationType;
 
 @Getter
-@EqualsAndHashCode(callSuper = false)
 public class TransferOp extends Operation {
     private final String destAccount;
     private final int amount;
