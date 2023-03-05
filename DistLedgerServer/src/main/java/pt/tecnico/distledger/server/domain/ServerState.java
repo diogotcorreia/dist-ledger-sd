@@ -1,5 +1,6 @@
 package pt.tecnico.distledger.server.domain;
 
+import lombok.Getter;
 import pt.tecnico.distledger.server.domain.operation.CreateOp;
 import pt.tecnico.distledger.server.domain.operation.DeleteOp;
 import pt.tecnico.distledger.server.domain.operation.Operation;
@@ -12,13 +13,16 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+@Getter
 public class ServerState {
     private List<Operation> ledger;
     private Map<String, Account> accounts;
+    private boolean active;
 
     public ServerState() {
         this.ledger = new CopyOnWriteArrayList<>();
         this.accounts = new ConcurrentHashMap<>();
+        this.active = true;
     }
 
     public int getBalance(String userId) {
@@ -57,6 +61,18 @@ public class ServerState {
         accounts.get(fromUserId).decreaseBalance(amount);
         accounts.get(toUserId).increaseBalance(amount);
         ledger.add(new TransferOp(fromUserId, toUserId, amount));
+    }
+
+    public void activate() {
+        this.active = true;
+    }
+
+    public void deactivate() {
+        this.active = false;
+    }
+
+    public void gossip() {
+        // TODO
     }
 
 }

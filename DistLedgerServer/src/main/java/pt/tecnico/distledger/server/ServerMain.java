@@ -35,12 +35,12 @@ public class ServerMain {
 
         final BindableService userImpl = new UserDistLedgerServiceImpl(serverState);
         final BindableService adminImpl = new AdminDistLedgerServiceImpl(serverState);
-        // final BindableService crossServerImpl = new CrossServerDistLedgerServiceImpl(serverState);
+        final BindableService crossServerImpl = new CrossServerDistLedgerServiceImpl(serverState);
 
         Server server = ServerBuilder.forPort(port)
                 .addService(userImpl)
                 .addService(adminImpl)
-                // .addService(crossServerImpl)
+                .addService(crossServerImpl)
                 .build();
 
         server.start();
