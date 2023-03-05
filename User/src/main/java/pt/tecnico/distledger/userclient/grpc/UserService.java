@@ -25,23 +25,27 @@ public class UserService extends UserServiceGrpc.UserServiceImplBase implements 
 
     public void createAccount(String username) throws StatusRuntimeException {
         //noinspection ResultOfMethodCallIgnored
-        stub.createAccount(CreateAccountRequest.newBuilder()
-                .setUserId(username)
-                .build());
+        stub.createAccount(
+                CreateAccountRequest.newBuilder()
+                        .setUserId(username)
+                        .build()
+        );
     }
 
     public void deleteAccount(String username) throws StatusRuntimeException {
         //noinspection ResultOfMethodCallIgnored
-        stub.deleteAccount(DeleteAccountRequest.newBuilder()
-                .setUserId(username)
-                .build()
+        stub.deleteAccount(
+                DeleteAccountRequest.newBuilder()
+                        .setUserId(username)
+                        .build()
         );
     }
 
     public int balance(String username) throws StatusRuntimeException {
-        final BalanceResponse response = stub.balance(BalanceRequest.newBuilder()
-                .setUserId(username)
-                .build()
+        final BalanceResponse response = stub.balance(
+                BalanceRequest.newBuilder()
+                        .setUserId(username)
+                        .build()
         );
         return response.getValue();
     }
@@ -49,11 +53,12 @@ public class UserService extends UserServiceGrpc.UserServiceImplBase implements 
 
     public void transferTo(String username, String to, Integer amount) throws StatusRuntimeException {
         //noinspection ResultOfMethodCallIgnored
-        stub.transferTo(TransferToRequest.newBuilder()
-                .setAccountFrom(username)
-                .setAccountTo(to)
-                .setAmount(amount)
-                .build()
+        stub.transferTo(
+                TransferToRequest.newBuilder()
+                        .setAccountFrom(username)
+                        .setAccountTo(to)
+                        .setAmount(amount)
+                        .build()
         );
     }
 
