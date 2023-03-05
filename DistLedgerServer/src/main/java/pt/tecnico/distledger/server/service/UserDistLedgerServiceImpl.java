@@ -41,6 +41,7 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
     ) {
         try {
             serverState.createAccount(request.getUserId());
+            responseObserver.onNext(CreateAccountResponse.getDefaultInstance());
             responseObserver.onCompleted();
         } catch (AccountAlreadyExistsException e) {
             responseObserver.onError(e.toGrpcRuntimeException());
@@ -54,6 +55,7 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
     ) {
         try {
             serverState.deleteAccount(request.getUserId());
+            responseObserver.onNext(DeleteAccountResponse.getDefaultInstance());
             responseObserver.onCompleted();
         } catch (AccountNotFoundException e) {
             responseObserver.onError(e.toGrpcRuntimeException());
@@ -67,6 +69,7 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
     ) {
         try {
             serverState.transferTo(request.getAccountFrom(), request.getAccountTo(), request.getAmount());
+            responseObserver.onNext(TransferToResponse.getDefaultInstance());
             responseObserver.onCompleted();
         } catch (AccountNotFoundException | InsufficientFundsException e) {
             responseObserver.onError(e.toGrpcRuntimeException());
