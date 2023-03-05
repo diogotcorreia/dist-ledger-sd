@@ -3,7 +3,7 @@ package pt.tecnico.distledger.server.service;
 import io.grpc.stub.StreamObserver;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.exceptions.DistLedgerExceptions;
-import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger;
+import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminServiceGrpc;
 
 import static io.grpc.Status.INVALID_ARGUMENT;
@@ -18,8 +18,8 @@ public class AdminDistLedgerServiceImpl extends AdminServiceGrpc.AdminServiceImp
 
     @Override
     public void activate(
-            AdminDistLedger.ActivateRequest request,
-            StreamObserver<AdminDistLedger.ActivateResponse> responseObserver
+            ActivateRequest request,
+            StreamObserver<ActivateResponse> responseObserver
     ) {
         try {
             serverState.activate();
@@ -31,8 +31,8 @@ public class AdminDistLedgerServiceImpl extends AdminServiceGrpc.AdminServiceImp
 
     @Override
     public void deactivate(
-            AdminDistLedger.DeactivateRequest request,
-            StreamObserver<AdminDistLedger.DeactivateResponse> responseObserver
+            DeactivateRequest request,
+            StreamObserver<DeactivateResponse> responseObserver
     ) {
         try {
             serverState.deactivate();
@@ -44,8 +44,8 @@ public class AdminDistLedgerServiceImpl extends AdminServiceGrpc.AdminServiceImp
 
     @Override
     public void gossip(
-            AdminDistLedger.GossipRequest request,
-            StreamObserver<AdminDistLedger.GossipResponse> responseObserver
+            GossipRequest request,
+            StreamObserver<GossipResponse> responseObserver
     ) {
         try {
             serverState.gossip();
