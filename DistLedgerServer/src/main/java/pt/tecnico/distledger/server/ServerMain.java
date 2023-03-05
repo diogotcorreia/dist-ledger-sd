@@ -7,6 +7,8 @@ import pt.tecnico.distledger.server.service.AdminDistLedgerServiceImpl;
 import pt.tecnico.distledger.server.service.CrossServerDistLedgerServiceImpl;
 import pt.tecnico.distledger.server.service.UserDistLedgerServiceImpl;
 
+import java.util.OptionalInt;
+
 public class ServerMain {
 
     public static void main(String[] args) throws Exception {
@@ -18,13 +20,15 @@ public class ServerMain {
             return;
         }
 
-        final int port = Integer.parseInt(args[0]);
-        if (port < 1024 || port > 65535) {
-            System.err.println("Port must be between 1024 and 65535");
-            return;
+        final OptionalInt portOpt = parsePort(args[0]);
+        if (portOpt.isEmpty()) {
+            System.err.println("Port must be a number between 1024 and 65535");
+            System.exit(1);
         }
+        final int port = portOpt.getAsInt();
 
         // Ignore the second argument (for now)
+        // final String serverQualifier = args[1];
 
         final BindableService userImpl = new UserDistLedgerServiceImpl();
         final BindableService adminImpl = new AdminDistLedgerServiceImpl();
@@ -38,8 +42,27 @@ public class ServerMain {
 
         server.start();
 
-        System.out.println("Server started, listening on " + port);
+        System.out.println("Server started, listening on port " + port);
 
         server.awaitTermination();
+    }
+
+    /**
+     * Parses a string as a valid non-priviledged port number (1024-65535).
+     *
+     * @param portStr A string containing the port number.
+     * @return An empty optional if the port is invalid, or an optional wrapping the parsed port number.
+     */
+    private static OptionalInt parsePort(String portStr) {
+        try {
+            final int port = Integer.parseInt(portStr);
+
+            if (port < 1024 || port > 65535) {
+                return OptionalInt.empty();
+            }
+            return OptionalInt.of(port);
+        } catch (NumberFormatException e) {
+            return OptionalInt.empty();
+        }
     }
 }
