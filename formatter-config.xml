@@ -46,7 +46,7 @@
 		<setting id="org.eclipse.jdt.core.formatter.parentheses_positions_in_if_while_statement" value="preserve_positions"/>
 		<setting id="org.eclipse.jdt.core.formatter.parentheses_positions_in_for_statment" value="preserve_positions"/>
 		<setting id="org.eclipse.jdt.core.formatter.parentheses_positions_in_switch_statement" value="preserve_positions"/>
-		<setting id="org.eclipse.jdt.core.formatter.parentheses_positions_in_try_clause" value="separate_lines"/>
+		<setting id="org.eclipse.jdt.core.formatter.parentheses_positions_in_try_clause" value="preserve_positions"/>
 		<setting id="org.eclipse.jdt.core.formatter.parentheses_positions_in_catch_clause" value="preserve_positions"/>
 		<setting id="org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_type_declaration" value="insert"/>
 		<setting id="org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_anonymous_type_declaration" value="insert"/>
