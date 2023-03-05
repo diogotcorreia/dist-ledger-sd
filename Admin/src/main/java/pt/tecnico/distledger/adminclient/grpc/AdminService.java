@@ -6,7 +6,7 @@ import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminServiceGrpc;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminServiceGrpc.*;
 
-public class AdminService {
+public class AdminService extends AdminServiceGrpc.AdminServiceImplBase implements AutoCloseable {
 
     private final ManagedChannel channel;
 
@@ -21,15 +21,18 @@ public class AdminService {
 
     public void activate(String server) {
         // TODO: server is useful from phase 2 onwards
+        // noInspection ResultOfMethodCallIgnored
         stub.activate(ActivateRequest.newBuilder().build());
     }
 
     public void deactivate(String server) {
         // TODO: server is useful from phase 2 onwards
+        // noinspection ResultOfMethodCallIgnored
         stub.deactivate(DeactivateRequest.newBuilder().build());
     }
 
     public void gossip() {
+        // noinspection ResultOfMethodCallIgnored
         stub.gossip(GossipRequest.newBuilder().build());
     }
 
@@ -38,5 +41,10 @@ public class AdminService {
         final GetLedgerStateResponse response = stub.getLedgerState(GetLedgerStateRequest.newBuilder().build());
 
         System.out.println(response);
+    }
+
+    @Override
+    public void close() {
+        channel.shutdown();
     }
 }

@@ -37,6 +37,8 @@ public class CommandParser {
                 case HELP -> this.printUsage();
                 case EXIT -> exit = true;
                 default -> {
+                    System.err.printf("Command '%s' does not exist%n%n", cmd);
+                    this.printUsage();
                 }
             }
 
@@ -53,6 +55,7 @@ public class CommandParser {
         String server = split[1];
 
         adminService.activate(server);
+        System.out.printf("Server '%s' has been activated%n", server);
     }
 
     private void deactivate(String line) {
@@ -65,6 +68,7 @@ public class CommandParser {
         String server = split[1];
 
         adminService.deactivate(server);
+        System.out.printf("Server '%s' has been deactivated%n", server);
     }
 
     private void dump(String line) {
@@ -77,6 +81,7 @@ public class CommandParser {
         String server = split[1];
 
         adminService.getLedgerState(server);
+        // TODO: print ledger state
     }
 
     @SuppressWarnings("unused")
