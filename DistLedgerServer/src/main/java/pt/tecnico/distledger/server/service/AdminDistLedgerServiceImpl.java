@@ -24,6 +24,7 @@ public class AdminDistLedgerServiceImpl extends AdminServiceGrpc.AdminServiceImp
             StreamObserver<ActivateResponse> responseObserver
     ) {
         serverState.activate();
+        responseObserver.onNext(ActivateResponse.getDefaultInstance());
         responseObserver.onCompleted();
     }
 
@@ -33,6 +34,7 @@ public class AdminDistLedgerServiceImpl extends AdminServiceGrpc.AdminServiceImp
             StreamObserver<DeactivateResponse> responseObserver
     ) {
         serverState.deactivate();
+        responseObserver.onNext(DeactivateResponse.getDefaultInstance());
         responseObserver.onCompleted();
     }
 
@@ -42,6 +44,7 @@ public class AdminDistLedgerServiceImpl extends AdminServiceGrpc.AdminServiceImp
             StreamObserver<GossipResponse> responseObserver
     ) {
         serverState.gossip();
+        responseObserver.onNext(GossipResponse.getDefaultInstance());
         responseObserver.onCompleted();
     }
 
