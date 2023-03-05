@@ -1,5 +1,6 @@
 package pt.tecnico.distledger.userclient;
 
+import io.grpc.StatusRuntimeException;
 import pt.tecnico.distledger.userclient.grpc.UserService;
 
 import java.util.Scanner;
@@ -39,7 +40,15 @@ public class CommandParser {
                     case HELP -> this.printUsage();
                     case EXIT -> exit = true;
                     default -> {
+                        System.err.printf("Command '%s' does not exist%n%n", cmd);
+                        this.printUsage();
                     }
+                }
+            } catch (StatusRuntimeException e) {
+                if (e.getStatus().getDescription() != null) {
+                    System.err.println("Error: " + e.getStatus().getDescription());
+                } else {
+                    System.err.println("Error: " + e.getMessage());
                 }
             } catch (Exception e) {
                 System.err.println(e.getMessage());
@@ -58,7 +67,8 @@ public class CommandParser {
         String server = split[1];
         String username = split[2];
 
-        System.out.println("TODO: implement createAccount command");
+        userService.createAccount(username);
+        System.out.printf("Account '%s' has been created%n", username);
     }
 
     private void deleteAccount(String line) {
@@ -71,7 +81,8 @@ public class CommandParser {
         String server = split[1];
         String username = split[2];
 
-        System.out.println("TODO: implement deleteAccount command");
+        userService.deleteAccount(username);
+        System.out.printf("Account '%s' has been deleted%n", username);
     }
 
 
@@ -85,7 +96,8 @@ public class CommandParser {
         String server = split[1];
         String username = split[2];
 
-        System.out.println("TODO: implement balance command");
+        final int balance = userService.balance(username);
+        System.out.printf("Balance of user '%s' is %d%n", username, balance);
     }
 
     private void transferTo(String line) {
@@ -100,7 +112,12 @@ public class CommandParser {
         String dest = split[3];
         Integer amount = Integer.valueOf(split[4]);
 
-        System.out.println("TODO: implement transferTo command");
+        userService.transferTo(from, dest, amount);
+        if (amount == 1) {
+            System.out.printf("1 coin has been transfered from account '%s' account '%s'%n", from, dest);
+        } else {
+            System.out.printf("%d coins have been transfered from account '%s' account '%s'%n", amount, from, dest);
+        }
     }
 
     private void printUsage() {
