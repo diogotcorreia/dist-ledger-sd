@@ -13,9 +13,8 @@ public class ServerMain {
 
         // Check arguments
         if (args.length != 2) {
-            // TODO: change to constant
-            System.err.println("Number of arguments must be 2");
-            System.err.printf("Usage: java %s port%n", ServerMain.class.getName());
+            System.err.println("Argument(s) missing!");
+            System.err.println("Usage: mvn exec:java -Dexec.args=\"<port> <server qualifier>\"");
             return;
         }
 
