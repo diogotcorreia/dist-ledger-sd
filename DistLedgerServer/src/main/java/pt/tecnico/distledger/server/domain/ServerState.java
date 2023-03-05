@@ -11,6 +11,7 @@ import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -27,10 +28,9 @@ public class ServerState {
     }
 
     public int getBalance(String userId) throws AccountNotFoundException {
-        if (!accounts.containsKey(userId)) {
-            throw new AccountNotFoundException(userId);
-        }
-        return accounts.get(userId).getBalance();
+        return getAccount(userId)
+                .orElseThrow(() -> new AccountNotFoundException(userId))
+                .getBalance();
     }
 
     public void createAccount(String userId) throws AccountAlreadyExistsException {
@@ -42,10 +42,9 @@ public class ServerState {
     }
 
     public void deleteAccount(String userId) throws AccountNotFoundException {
-        if (!accounts.containsKey(userId)) {
+        if (accounts.remove(userId) == null) {
             throw new AccountNotFoundException(userId);
         }
-        accounts.remove(userId);
         ledger.add(new DeleteOp(userId));
     }
 
@@ -54,17 +53,14 @@ public class ServerState {
             String toUserId,
             int amount
     ) throws AccountNotFoundException, InsufficientFundsException {
-        if (!accounts.containsKey(fromUserId)) {
-            throw new AccountNotFoundException(fromUserId);
+        final Account fromAccount = getAccount(fromUserId).orElseThrow(() -> new AccountNotFoundException(fromUserId));
+        final Account toAccount = getAccount(toUserId).orElseThrow(() -> new AccountNotFoundException(toUserId));
+
+        if (fromAccount.getBalance() < amount) {
+            throw new InsufficientFundsException(fromUserId, amount, fromAccount.getBalance());
         }
-        if (!accounts.containsKey(toUserId)) {
-            throw new AccountNotFoundException(toUserId);
-        }
-        if (accounts.get(fromUserId).getBalance() < amount) {
-            throw new InsufficientFundsException(fromUserId, amount, accounts.get(fromUserId).getBalance());
-        }
-        accounts.get(fromUserId).decreaseBalance(amount);
-        accounts.get(toUserId).increaseBalance(amount);
+        fromAccount.decreaseBalance(amount);
+        toAccount.increaseBalance(amount);
         ledger.add(new TransferOp(fromUserId, toUserId, amount));
     }
 
@@ -78,6 +74,16 @@ public class ServerState {
 
     public void gossip() {
         // TODO
+    }
+
+    /**
+     * Get an account by its ID.
+     *
+     * @param userId The ID of the account to get.
+     * @return An optional with the Account, or an empty optional if the account cannot be found.
+     */
+    private Optional<Account> getAccount(String userId) {
+        return Optional.ofNullable(accounts.get(userId));
     }
 
 }
