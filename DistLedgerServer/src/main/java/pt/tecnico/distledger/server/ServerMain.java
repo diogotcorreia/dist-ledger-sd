@@ -3,6 +3,7 @@ package pt.tecnico.distledger.server;
 import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.service.AdminDistLedgerServiceImpl;
 import pt.tecnico.distledger.server.service.CrossServerDistLedgerServiceImpl;
 import pt.tecnico.distledger.server.service.UserDistLedgerServiceImpl;
@@ -30,14 +31,16 @@ public class ServerMain {
         // Ignore the second argument (for now)
         // final String serverQualifier = args[1];
 
-        final BindableService userImpl = new UserDistLedgerServiceImpl();
-        final BindableService adminImpl = new AdminDistLedgerServiceImpl();
-        final BindableService crossServerImpl = new CrossServerDistLedgerServiceImpl();
+        ServerState serverState = new ServerState();
+
+        final BindableService userImpl = new UserDistLedgerServiceImpl(serverState);
+        final BindableService adminImpl = new AdminDistLedgerServiceImpl(serverState);
+        // final BindableService crossServerImpl = new CrossServerDistLedgerServiceImpl(serverState);
 
         Server server = ServerBuilder.forPort(port)
                 .addService(userImpl)
                 .addService(adminImpl)
-                .addService(crossServerImpl)
+                // .addService(crossServerImpl)
                 .build();
 
         server.start();
