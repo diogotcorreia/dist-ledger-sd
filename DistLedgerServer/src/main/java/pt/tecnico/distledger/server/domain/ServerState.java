@@ -57,11 +57,11 @@ public class ServerState {
         final int balance = getAccount(userId)
                 .orElseThrow(() -> new AccountNotFoundException(userId))
                 .getBalance();
-        if (balance != 0) {
-            throw new CannotRemoveNotEmptyAccountException(userId, balance);
-        }
         if (userId.equals(BROKER_ID)) {
             throw new CannotRemoveProtectedAccountException(userId);
+        }
+        if (balance != 0) {
+            throw new CannotRemoveNotEmptyAccountException(userId, balance);
         }
 
         accounts.remove(userId);
