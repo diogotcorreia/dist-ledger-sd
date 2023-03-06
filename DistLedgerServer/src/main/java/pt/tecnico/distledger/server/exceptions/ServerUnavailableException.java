@@ -17,6 +17,6 @@ public class ServerUnavailableException extends Exception implements GrpcSeriali
 
     @Override
     public Status.Code getStatusCode() {
-        return Status.Code.FAILED_PRECONDITION;
+        return Status.Code.UNAVAILABLE;
     }
 }
