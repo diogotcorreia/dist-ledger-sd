@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Stream;
 
 @Getter
 public class ServerState {
@@ -82,6 +83,10 @@ public class ServerState {
 
     public void gossip() {
         // TODO
+    }
+
+    public Stream<Operation> getLedgerStream() {
+        return ledger.stream();
     }
 
     /**
