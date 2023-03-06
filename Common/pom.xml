@@ -24,8 +24,7 @@
 
         <version.maven-compiler-plugin>3.8.1</version.maven-compiler-plugin>
 
-        <spotless.java.eclipse.file>${project.basedir}${file.separator}..${file.separator}formatter-config.xml
-        </spotless.java.eclipse.file>
+        <spotless.java.eclipse.file>${project.basedir}${file.separator}..${file.separator}formatter-config.xml</spotless.java.eclipse.file>
     </properties>
 
     <build>
