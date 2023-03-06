@@ -61,7 +61,7 @@ public class ServerState {
             throw new AccountProtectedException(userId);
         }
         if (balance != 0) {
-            throw new CannotRemoveNotEmptyAccountException(userId, balance);
+            throw new AccountNotEmptyException(userId, balance);
         }
 
         accounts.remove(userId);
