@@ -3,6 +3,8 @@ package pt.tecnico.distledger.server;
 import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import lombok.CustomLog;
+import pt.tecnico.distledger.common.Logger;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.service.AdminDistLedgerServiceImpl;
 import pt.tecnico.distledger.server.service.CrossServerDistLedgerServiceImpl;
@@ -10,20 +12,22 @@ import pt.tecnico.distledger.server.service.UserDistLedgerServiceImpl;
 
 import java.util.OptionalInt;
 
+@CustomLog
 public class ServerMain {
 
     public static void main(String[] args) throws Exception {
+        Logger.setDebug(System.getProperty("debug") != null);
 
         // Check arguments
         if (args.length != 2) {
-            System.err.println("Argument(s) missing!");
-            System.err.println("Usage: mvn exec:java -Dexec.args=\"<port> <server qualifier>\"");
-            return;
+            log.error("Argument(s) missing!");
+            log.error("Usage: mvn exec:java -Dexec.args=\"<port> <server qualifier>\"");
+            System.exit(1);
         }
 
         final OptionalInt portOpt = parsePort(args[0]);
         if (portOpt.isEmpty()) {
-            System.err.println("Port must be a number between 1024 and 65535");
+            log.error("Port must be a number between 1024 and 65535 ('%s' was given)", args[0]);
             System.exit(1);
         }
         final int port = portOpt.getAsInt();
@@ -45,7 +49,8 @@ public class ServerMain {
 
         server.start();
 
-        System.out.println("Server started, listening on port " + port);
+        log.info("Server started, listening on port " + port);
+        log.debug("Debug mode is active");
 
         server.awaitTermination();
     }
