@@ -50,17 +50,17 @@ public class ServerState {
     public void deleteAccount(
             String userId
     ) throws CannotRemoveNotEmptyAccountException, AccountNotFoundException, CannotRemoveProtectedAccountException {
-        final int balance = accounts.get(userId).getBalance();
+        final int balance = getAccount(userId)
+                .orElseThrow(() -> new AccountNotFoundException(userId))
+                .getBalance();
         if (balance != 0) {
             throw new CannotRemoveNotEmptyAccountException(userId, balance);
-        }
-        if (accounts.remove(userId) == null) {
-            throw new AccountNotFoundException(userId);
         }
         if (userId.equals(BROKER_ID)) {
             throw new CannotRemoveProtectedAccountException(userId);
         }
 
+        accounts.remove(userId);
         ledger.add(new DeleteOp(userId));
     }
 
