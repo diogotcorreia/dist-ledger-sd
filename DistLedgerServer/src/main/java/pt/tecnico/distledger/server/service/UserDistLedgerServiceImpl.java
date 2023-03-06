@@ -4,9 +4,9 @@ import io.grpc.stub.StreamObserver;
 import lombok.CustomLog;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.exceptions.AccountAlreadyExistsException;
+import pt.tecnico.distledger.server.exceptions.AccountNotEmptyException;
 import pt.tecnico.distledger.server.exceptions.AccountNotFoundException;
-import pt.tecnico.distledger.server.exceptions.CannotRemoveNotEmptyAccountException;
-import pt.tecnico.distledger.server.exceptions.CannotRemoveProtectedAccountException;
+import pt.tecnico.distledger.server.exceptions.AccountProtectedException;
 import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.*;
@@ -69,8 +69,8 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
             log.debug("Account '%s' has been deleted", request.getUserId());
             responseObserver.onNext(DeleteAccountResponse.getDefaultInstance());
             responseObserver.onCompleted();
-        } catch (CannotRemoveNotEmptyAccountException | AccountNotFoundException |
-                 CannotRemoveProtectedAccountException | ServerUnavailableException e) {
+        } catch (AccountNotEmptyException | AccountNotFoundException | AccountProtectedException |
+                 ServerUnavailableException e) {
             log.debug("Error deleting account: %s", e.getMessage());
             responseObserver.onError(e.toGrpcRuntimeException());
         }
