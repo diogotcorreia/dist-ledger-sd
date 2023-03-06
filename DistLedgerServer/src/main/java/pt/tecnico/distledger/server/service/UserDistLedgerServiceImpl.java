@@ -7,6 +7,7 @@ import pt.tecnico.distledger.server.exceptions.AccountNotFoundException;
 import pt.tecnico.distledger.server.exceptions.CannotRemoveNotEmptyAccountException;
 import pt.tecnico.distledger.server.exceptions.CannotRemoveProtectedAccountException;
 import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
+import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc;
 
@@ -31,7 +32,7 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
                     .build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
-        } catch (AccountNotFoundException e) {
+        } catch (AccountNotFoundException | ServerUnavailableException e) {
             responseObserver.onError(e.toGrpcRuntimeException());
         }
     }
@@ -45,7 +46,7 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
             serverState.createAccount(request.getUserId());
             responseObserver.onNext(CreateAccountResponse.getDefaultInstance());
             responseObserver.onCompleted();
-        } catch (AccountAlreadyExistsException e) {
+        } catch (AccountAlreadyExistsException | ServerUnavailableException e) {
             responseObserver.onError(e.toGrpcRuntimeException());
         }
     }
@@ -60,7 +61,7 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
             responseObserver.onNext(DeleteAccountResponse.getDefaultInstance());
             responseObserver.onCompleted();
         } catch (CannotRemoveNotEmptyAccountException | AccountNotFoundException |
-                 CannotRemoveProtectedAccountException e) {
+                 CannotRemoveProtectedAccountException | ServerUnavailableException e) {
             responseObserver.onError(e.toGrpcRuntimeException());
         }
     }
@@ -74,7 +75,7 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
             serverState.transferTo(request.getAccountFrom(), request.getAccountTo(), request.getAmount());
             responseObserver.onNext(TransferToResponse.getDefaultInstance());
             responseObserver.onCompleted();
-        } catch (AccountNotFoundException | InsufficientFundsException e) {
+        } catch (AccountNotFoundException | InsufficientFundsException | ServerUnavailableException e) {
             responseObserver.onError(e.toGrpcRuntimeException());
         }
     }
