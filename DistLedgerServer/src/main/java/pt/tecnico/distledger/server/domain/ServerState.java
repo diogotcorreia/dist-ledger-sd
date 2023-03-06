@@ -7,6 +7,7 @@ import pt.tecnico.distledger.server.domain.operation.Operation;
 import pt.tecnico.distledger.server.domain.operation.TransferOp;
 import pt.tecnico.distledger.server.exceptions.AccountAlreadyExistsException;
 import pt.tecnico.distledger.server.exceptions.AccountNotFoundException;
+import pt.tecnico.distledger.server.exceptions.CannotRemoveNotEmptyAccountException;
 import pt.tecnico.distledger.server.exceptions.CannotRemoveProtectedAccountException;
 import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
@@ -51,15 +52,19 @@ public class ServerState {
 
     public void deleteAccount(
             String userId
-    ) throws AccountNotFoundException, CannotRemoveProtectedAccountException, ServerUnavailableException {
+    ) throws CannotRemoveNotEmptyAccountException, AccountNotFoundException, CannotRemoveProtectedAccountException, ServerUnavailableException {
         ensureServerIsActive();
-        if (accounts.remove(userId) == null) {
-            throw new AccountNotFoundException(userId);
+        final int balance = getAccount(userId)
+                .orElseThrow(() -> new AccountNotFoundException(userId))
+                .getBalance();
+        if (balance != 0) {
+            throw new CannotRemoveNotEmptyAccountException(userId, balance);
         }
         if (userId.equals(BROKER_ID)) {
             throw new CannotRemoveProtectedAccountException(userId);
         }
 
+        accounts.remove(userId);
         ledger.add(new DeleteOp(userId));
     }
 
