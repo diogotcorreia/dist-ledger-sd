@@ -6,9 +6,9 @@ import pt.tecnico.distledger.server.domain.operation.DeleteOp;
 import pt.tecnico.distledger.server.domain.operation.Operation;
 import pt.tecnico.distledger.server.domain.operation.TransferOp;
 import pt.tecnico.distledger.server.exceptions.AccountAlreadyExistsException;
+import pt.tecnico.distledger.server.exceptions.AccountNotEmptyException;
 import pt.tecnico.distledger.server.exceptions.AccountNotFoundException;
-import pt.tecnico.distledger.server.exceptions.CannotRemoveNotEmptyAccountException;
-import pt.tecnico.distledger.server.exceptions.CannotRemoveProtectedAccountException;
+import pt.tecnico.distledger.server.exceptions.AccountProtectedException;
 import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 
@@ -52,16 +52,16 @@ public class ServerState {
 
     public void deleteAccount(
             String userId
-    ) throws CannotRemoveNotEmptyAccountException, AccountNotFoundException, CannotRemoveProtectedAccountException, ServerUnavailableException {
+    ) throws AccountNotEmptyException, AccountNotFoundException, AccountProtectedException, ServerUnavailableException {
         ensureServerIsActive();
         final int balance = getAccount(userId)
                 .orElseThrow(() -> new AccountNotFoundException(userId))
                 .getBalance();
-        if (balance != 0) {
-            throw new CannotRemoveNotEmptyAccountException(userId, balance);
-        }
         if (userId.equals(BROKER_ID)) {
-            throw new CannotRemoveProtectedAccountException(userId);
+            throw new AccountProtectedException(userId);
+        }
+        if (balance != 0) {
+            throw new AccountNotEmptyException(userId, balance);
         }
 
         accounts.remove(userId);
@@ -105,7 +105,8 @@ public class ServerState {
      * Get an account by its ID.
      *
      * @param userId The ID of the account to get.
-     * @return An optional with the Account, or an empty optional if the account cannot be found.
+     * @return An optional with the Account, or an empty optional if the account
+     *         cannot be found.
      */
     private Optional<Account> getAccount(String userId) {
         return Optional.ofNullable(accounts.get(userId));

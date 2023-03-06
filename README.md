@@ -48,6 +48,20 @@ To compile and install all modules:
 mvn clean install
 ```
 
+### Running
+
+Run each module with:
+
+```s
+mvn exec:java
+```
+
+Optionally, you can customize the given argument and turn on debug messages:
+
+```s
+mvn exec:java -Dexec.args="<args here>" -Ddebug
+```
+
 ## Built With
 
 * [Maven](https://maven.apache.org/) - Build and dependency management tool;

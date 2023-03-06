@@ -1,6 +1,7 @@
 package pt.tecnico.distledger.server.service;
 
 import io.grpc.stub.StreamObserver;
+import lombok.CustomLog;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.domain.operation.Operation;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.LedgerState;
@@ -14,7 +15,7 @@ import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger.GossipReques
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger.GossipResponse;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminServiceGrpc;
 
-
+@CustomLog(topic = "Admin Service")
 public class AdminDistLedgerServiceImpl extends AdminServiceGrpc.AdminServiceImplBase {
 
     private final ServerState serverState;
@@ -29,6 +30,7 @@ public class AdminDistLedgerServiceImpl extends AdminServiceGrpc.AdminServiceImp
             StreamObserver<ActivateResponse> responseObserver
     ) {
         serverState.activate();
+        log.debug("Server has been activated");
         responseObserver.onNext(ActivateResponse.getDefaultInstance());
         responseObserver.onCompleted();
     }
@@ -39,6 +41,7 @@ public class AdminDistLedgerServiceImpl extends AdminServiceGrpc.AdminServiceImp
             StreamObserver<DeactivateResponse> responseObserver
     ) {
         serverState.deactivate();
+        log.debug("Server has been deactivated");
         responseObserver.onNext(DeactivateResponse.getDefaultInstance());
         responseObserver.onCompleted();
     }
@@ -58,6 +61,7 @@ public class AdminDistLedgerServiceImpl extends AdminServiceGrpc.AdminServiceImp
             GetLedgerStateRequest request,
             StreamObserver<GetLedgerStateResponse> responseObserver
     ) {
+        log.debug("Ledger state has been requested");
         final LedgerState ledgerState = LedgerState.newBuilder()
                 .addAllLedger(serverState.getLedgerStream().map(Operation::toProto).toList())
                 .build();
