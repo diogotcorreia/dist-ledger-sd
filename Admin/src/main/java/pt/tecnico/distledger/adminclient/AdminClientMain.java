@@ -23,8 +23,10 @@ public class AdminClientMain {
         final String host = args[0];
         final int port = Integer.parseInt(args[1]);
 
-        CommandParser parser = new CommandParser(new AdminService());
-        parser.parseInput();
+        try (var adminService = new AdminService(host, port)) {
+            CommandParser parser = new CommandParser(adminService);
+            parser.parseInput();
+        }
 
     }
 }

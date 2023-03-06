@@ -37,6 +37,8 @@ public class CommandParser {
                 case HELP -> this.printUsage();
                 case EXIT -> exit = true;
                 default -> {
+                    System.err.printf("Command '%s' does not exist%n%n", cmd);
+                    this.printUsage();
                 }
             }
 
@@ -52,7 +54,8 @@ public class CommandParser {
         }
         String server = split[1];
 
-        System.out.println("TODO: implement activate command");
+        adminService.activate(server);
+        System.out.printf("Server '%s' has been activated%n", server);
     }
 
     private void deactivate(String line) {
@@ -64,7 +67,8 @@ public class CommandParser {
         }
         String server = split[1];
 
-        System.out.println("TODO: implement deactivate command");
+        adminService.deactivate(server);
+        System.out.printf("Server '%s' has been deactivated%n", server);
     }
 
     private void dump(String line) {
@@ -76,13 +80,14 @@ public class CommandParser {
         }
         String server = split[1];
 
-        System.out.println("TODO: implement getLedgerState command");
+        adminService.getLedgerState(server);
+        // TODO: print ledger state
     }
 
     @SuppressWarnings("unused")
     private void gossip(String line) {
         /* TODO Phase-3 */
-        System.out.println("TODO: implement gossip command (only for Phase-3)");
+        adminService.gossip();
     }
 
     private void printUsage() {
