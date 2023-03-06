@@ -5,8 +5,10 @@ import lombok.CustomLog;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.exceptions.AccountAlreadyExistsException;
 import pt.tecnico.distledger.server.exceptions.AccountNotFoundException;
+import pt.tecnico.distledger.server.exceptions.CannotRemoveNotEmptyAccountException;
 import pt.tecnico.distledger.server.exceptions.CannotRemoveProtectedAccountException;
 import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
+import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc;
 
@@ -33,7 +35,7 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
                     .build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
-        } catch (AccountNotFoundException e) {
+        } catch (AccountNotFoundException | ServerUnavailableException e) {
             log.debug("Error getting balance: %s", e.getMessage());
             responseObserver.onError(e.toGrpcRuntimeException());
         }
@@ -50,7 +52,7 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
             log.debug("Account '%s' has been created", request.getUserId());
             responseObserver.onNext(CreateAccountResponse.getDefaultInstance());
             responseObserver.onCompleted();
-        } catch (AccountAlreadyExistsException e) {
+        } catch (AccountAlreadyExistsException | ServerUnavailableException e) {
             log.debug("Error creating account: %s", e.getMessage());
             responseObserver.onError(e.toGrpcRuntimeException());
         }
@@ -67,7 +69,8 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
             log.debug("Account '%s' has been deleted", request.getUserId());
             responseObserver.onNext(DeleteAccountResponse.getDefaultInstance());
             responseObserver.onCompleted();
-        } catch (AccountNotFoundException | CannotRemoveProtectedAccountException e) {
+        } catch (CannotRemoveNotEmptyAccountException | AccountNotFoundException |
+                 CannotRemoveProtectedAccountException | ServerUnavailableException e) {
             log.debug("Error deleting account: %s", e.getMessage());
             responseObserver.onError(e.toGrpcRuntimeException());
         }
@@ -94,7 +97,7 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
             );
             responseObserver.onNext(TransferToResponse.getDefaultInstance());
             responseObserver.onCompleted();
-        } catch (AccountNotFoundException | InsufficientFundsException e) {
+        } catch (AccountNotFoundException | InsufficientFundsException | ServerUnavailableException e) {
             log.debug("Error creating transfer: %s", e.getMessage());
             responseObserver.onError(e.toGrpcRuntimeException());
         }
