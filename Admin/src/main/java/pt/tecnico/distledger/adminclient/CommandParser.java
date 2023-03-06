@@ -1,6 +1,7 @@
 package pt.tecnico.distledger.adminclient;
 
 import pt.tecnico.distledger.adminclient.grpc.AdminService;
+import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.LedgerState;
 
 import java.util.Scanner;
 
@@ -80,8 +81,8 @@ public class CommandParser {
         }
         String server = split[1];
 
-        adminService.getLedgerState(server);
-        // TODO: print ledger state
+        final LedgerState ledgerState = adminService.getLedgerState(server);
+        System.out.println(ledgerState);
     }
 
     @SuppressWarnings("unused")

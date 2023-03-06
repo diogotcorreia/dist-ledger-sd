@@ -2,6 +2,7 @@ package pt.tecnico.distledger.adminclient.grpc;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.LedgerState;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminServiceGrpc;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminServiceGrpc.*;
@@ -36,11 +37,8 @@ public class AdminService extends AdminServiceGrpc.AdminServiceImplBase implemen
         stub.gossip(GossipRequest.newBuilder().build());
     }
 
-    public void getLedgerState(String server) {
-        // TODO: server is useful from phase 2 onwards
-        final GetLedgerStateResponse response = stub.getLedgerState(GetLedgerStateRequest.newBuilder().build());
-
-        System.out.println(response);
+    public LedgerState getLedgerState(String server) {
+        return stub.getLedgerState(GetLedgerStateRequest.newBuilder().build()).getLedgerState();
     }
 
     @Override
