@@ -43,7 +43,6 @@ public class TransferToTest {
         assertEquals(5, state.getAccounts().get(userId).getBalance());
         assertEquals(995, state.getAccounts().get(brokerId).getBalance());
         assertEquals(3, state.getLedger().size());
-
     }
 
     @Test

@@ -33,6 +33,7 @@ public class CreateAccountTest {
 
         assertEquals(2, state.getAccounts().size());
         assertEquals(0, state.getBalance(userId));
+        assertEquals(1, state.getLedger().size());
     }
 
     @Test
@@ -46,6 +47,8 @@ public class CreateAccountTest {
         assertEquals(3, state.getAccounts().size());
         assertEquals(0, state.getBalance(userId1));
         assertEquals(0, state.getBalance(userId2));
+        assertEquals(2, state.getLedger().size());
+
     }
 
     @Test
@@ -55,6 +58,8 @@ public class CreateAccountTest {
         state.createAccount(userId);
         assertThrows(AccountAlreadyExistsException.class, () -> state.createAccount(userId));
         assertEquals(2, state.getAccounts().size());
+        assertEquals(1, state.getLedger().size());
+
     }
 
     @Test
@@ -64,6 +69,7 @@ public class CreateAccountTest {
         final String userId = "user1";
         assertThrows(ServerUnavailableException.class, () -> state.createAccount(userId));
         assertEquals(1, state.getAccounts().size());
+        assertEquals(0, state.getLedger().size());
     }
 
 }

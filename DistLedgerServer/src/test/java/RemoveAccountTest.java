@@ -29,6 +29,7 @@ public class RemoveAccountTest {
         state.deleteAccount(userId);
 
         assertEquals(1, state.getAccounts().size());
+        assertEquals(2, state.getLedger().size());
     }
 
     @Test
@@ -45,6 +46,7 @@ public class RemoveAccountTest {
 
         state.deleteAccount(userId1);
         assertEquals(1, state.getAccounts().size());
+        assertEquals(4, state.getLedger().size());
     }
 
     @Test
@@ -55,6 +57,7 @@ public class RemoveAccountTest {
         state.deleteAccount(userId);
         assertThrows(AccountNotFoundException.class, () -> state.deleteAccount(userId));
         assertEquals(1, state.getAccounts().size());
+        assertEquals(2, state.getLedger().size());
     }
 
     @Test
@@ -65,6 +68,7 @@ public class RemoveAccountTest {
         state.transferTo(brokerId, userId, 50);
         assertThrows(CannotRemoveNotEmptyAccountException.class, () -> state.deleteAccount(userId));
         assertEquals(2, state.getAccounts().size());
+        assertEquals(2, state.getLedger().size());
     }
 
     @Test
@@ -76,6 +80,7 @@ public class RemoveAccountTest {
         assertEquals(0, state.getAccounts().get(brokerId).getBalance());
         assertThrows(CannotRemoveProtectedAccountException.class, () -> state.deleteAccount(brokerId));
         assertEquals(2, state.getAccounts().size());
+        assertEquals(2, state.getLedger().size());
     }
 
     @Test
@@ -86,8 +91,10 @@ public class RemoveAccountTest {
         state.deactivate();
         assertThrows(ServerUnavailableException.class, () -> state.deleteAccount(userId));
         assertEquals(2, state.getAccounts().size());
+        assertEquals(1, state.getLedger().size());
         state.activate();
         state.deleteAccount(userId);
         assertEquals(1, state.getAccounts().size());
+        assertEquals(2, state.getLedger().size());
     }
 }
