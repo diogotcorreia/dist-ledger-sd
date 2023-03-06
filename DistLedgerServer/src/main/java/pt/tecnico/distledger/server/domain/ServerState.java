@@ -9,6 +9,7 @@ import pt.tecnico.distledger.server.exceptions.AccountAlreadyExistsException;
 import pt.tecnico.distledger.server.exceptions.AccountNotFoundException;
 import pt.tecnico.distledger.server.exceptions.CannotRemoveProtectedAccountException;
 import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
+import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 
 import java.util.List;
 import java.util.Map;
@@ -32,13 +33,15 @@ public class ServerState {
         createBroker();
     }
 
-    public int getBalance(String userId) throws AccountNotFoundException {
+    public int getBalance(String userId) throws AccountNotFoundException, ServerUnavailableException {
+        ensureServerIsActive();
         return getAccount(userId)
                 .orElseThrow(() -> new AccountNotFoundException(userId))
                 .getBalance();
     }
 
-    public void createAccount(String userId) throws AccountAlreadyExistsException {
+    public void createAccount(String userId) throws AccountAlreadyExistsException, ServerUnavailableException {
+        ensureServerIsActive();
         if (accounts.containsKey(userId)) {
             throw new AccountAlreadyExistsException(userId);
         }
@@ -46,7 +49,8 @@ public class ServerState {
         ledger.add(new CreateOp(userId));
     }
 
-    public void deleteAccount(String userId) throws AccountNotFoundException, CannotRemoveProtectedAccountException {
+    public void deleteAccount(String userId) throws AccountNotFoundException, CannotRemoveProtectedAccountException, ServerUnavailableException {
+        ensureServerIsActive();
         if (accounts.remove(userId) == null) {
             throw new AccountNotFoundException(userId);
         }
@@ -61,7 +65,8 @@ public class ServerState {
             String fromUserId,
             String toUserId,
             int amount
-    ) throws AccountNotFoundException, InsufficientFundsException {
+    ) throws AccountNotFoundException, InsufficientFundsException, ServerUnavailableException {
+        ensureServerIsActive();
         final Account fromAccount = getAccount(fromUserId).orElseThrow(() -> new AccountNotFoundException(fromUserId));
         final Account toAccount = getAccount(toUserId).orElseThrow(() -> new AccountNotFoundException(toUserId));
 
@@ -103,5 +108,11 @@ public class ServerState {
         Account broker = new Account(BROKER_ID);
         broker.increaseBalance(1000);
         accounts.put(BROKER_ID, broker);
+    }
+
+    private void ensureServerIsActive() throws ServerUnavailableException {
+        if (!active) {
+            throw new ServerUnavailableException("Server is not active");
+        }
     }
 }
