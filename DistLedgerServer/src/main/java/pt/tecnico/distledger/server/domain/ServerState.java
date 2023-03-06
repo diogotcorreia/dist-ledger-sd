@@ -7,6 +7,7 @@ import pt.tecnico.distledger.server.domain.operation.Operation;
 import pt.tecnico.distledger.server.domain.operation.TransferOp;
 import pt.tecnico.distledger.server.exceptions.AccountAlreadyExistsException;
 import pt.tecnico.distledger.server.exceptions.AccountNotFoundException;
+import pt.tecnico.distledger.server.exceptions.CannotRemoveProtectedAccountException;
 import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
 
 import java.util.List;
@@ -17,6 +18,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 @Getter
 public class ServerState {
+
+    private static final String BROKER_ID = "broker";
     private final List<Operation> ledger;
     private final Map<String, Account> accounts;
     private boolean active;
@@ -25,6 +28,7 @@ public class ServerState {
         this.ledger = new CopyOnWriteArrayList<>();
         this.accounts = new ConcurrentHashMap<>();
         this.active = true;
+        createBroker();
     }
 
     public int getBalance(String userId) throws AccountNotFoundException {
@@ -41,10 +45,14 @@ public class ServerState {
         ledger.add(new CreateOp(userId));
     }
 
-    public void deleteAccount(String userId) throws AccountNotFoundException {
+    public void deleteAccount(String userId) throws AccountNotFoundException, CannotRemoveProtectedAccountException {
         if (accounts.remove(userId) == null) {
             throw new AccountNotFoundException(userId);
         }
+        if (userId.equals(BROKER_ID)) {
+            throw new CannotRemoveProtectedAccountException(userId);
+        }
+
         ledger.add(new DeleteOp(userId));
     }
 
@@ -86,4 +94,9 @@ public class ServerState {
         return Optional.ofNullable(accounts.get(userId));
     }
 
+    private void createBroker() {
+        Account broker = new Account(BROKER_ID);
+        broker.increaseBalance(1000);
+        accounts.put(BROKER_ID, broker);
+    }
 }
