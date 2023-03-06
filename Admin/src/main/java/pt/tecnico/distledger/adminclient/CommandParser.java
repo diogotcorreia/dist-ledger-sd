@@ -1,10 +1,12 @@
 package pt.tecnico.distledger.adminclient;
 
+import lombok.CustomLog;
 import pt.tecnico.distledger.adminclient.grpc.AdminService;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.LedgerState;
 
 import java.util.Scanner;
 
+@CustomLog
 public class CommandParser {
 
     private static final String SPACE = " ";
@@ -38,7 +40,7 @@ public class CommandParser {
                 case HELP -> this.printUsage();
                 case EXIT -> exit = true;
                 default -> {
-                    System.err.printf("Command '%s' does not exist%n%n", cmd);
+                    log.error("Command '%s' does not exist%n%n", cmd);
                     this.printUsage();
                 }
             }
@@ -56,7 +58,8 @@ public class CommandParser {
         String server = split[1];
 
         adminService.activate(server);
-        System.out.printf("Server '%s' has been activated%n", server);
+        log.debug("Server '%s' has been activated%n", server);
+        log.info("OK%n");
     }
 
     private void deactivate(String line) {
@@ -69,7 +72,8 @@ public class CommandParser {
         String server = split[1];
 
         adminService.deactivate(server);
-        System.out.printf("Server '%s' has been deactivated%n", server);
+        log.debug("Server '%s' has been deactivated%n", server);
+        log.info("OK%n");
     }
 
     private void dump(String line) {
@@ -82,7 +86,7 @@ public class CommandParser {
         String server = split[1];
 
         final LedgerState ledgerState = adminService.getLedgerState(server);
-        System.out.println(ledgerState);
+        log.info("OK%n'%s'", ledgerState);
     }
 
     @SuppressWarnings("unused")
