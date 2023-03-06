@@ -1,5 +1,6 @@
 package pt.tecnico.distledger.server.domain;
 
+import lombok.CustomLog;
 import lombok.Getter;
 import pt.tecnico.distledger.server.domain.operation.CreateOp;
 import pt.tecnico.distledger.server.domain.operation.DeleteOp;

@@ -13,6 +13,7 @@
         sorts the projects into the correct build order;
         builds the selected projects in order. -->
     <modules>
+        <module>Common</module>
         <module>Contract</module>
         <module>User</module>
         <module>Admin</module>
