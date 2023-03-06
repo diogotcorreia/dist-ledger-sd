@@ -7,6 +7,7 @@ import pt.tecnico.distledger.server.domain.operation.Operation;
 import pt.tecnico.distledger.server.domain.operation.TransferOp;
 import pt.tecnico.distledger.server.exceptions.AccountAlreadyExistsException;
 import pt.tecnico.distledger.server.exceptions.AccountNotFoundException;
+import pt.tecnico.distledger.server.exceptions.CannotRemoveNotEmptyAccountException;
 import pt.tecnico.distledger.server.exceptions.CannotRemoveProtectedAccountException;
 import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
 
@@ -46,7 +47,13 @@ public class ServerState {
         ledger.add(new CreateOp(userId));
     }
 
-    public void deleteAccount(String userId) throws AccountNotFoundException, CannotRemoveProtectedAccountException {
+    public void deleteAccount(
+            String userId
+    ) throws CannotRemoveNotEmptyAccountException, AccountNotFoundException, CannotRemoveProtectedAccountException {
+        final int balance = accounts.get(userId).getBalance();
+        if (balance != 0) {
+            throw new CannotRemoveNotEmptyAccountException(userId, balance);
+        }
         if (accounts.remove(userId) == null) {
             throw new AccountNotFoundException(userId);
         }
