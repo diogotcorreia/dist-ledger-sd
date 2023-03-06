@@ -49,7 +49,9 @@ public class ServerState {
         ledger.add(new CreateOp(userId));
     }
 
-    public void deleteAccount(String userId) throws AccountNotFoundException, CannotRemoveProtectedAccountException, ServerUnavailableException {
+    public void deleteAccount(
+            String userId
+    ) throws AccountNotFoundException, CannotRemoveProtectedAccountException, ServerUnavailableException {
         ensureServerIsActive();
         if (accounts.remove(userId) == null) {
             throw new AccountNotFoundException(userId);
