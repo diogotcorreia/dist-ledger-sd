@@ -2,13 +2,12 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import pt.tecnico.distledger.server.domain.ServerState;
-import pt.tecnico.distledger.server.exceptions.AccountAlreadyExistsException;
-import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class AdminTest {
+class AdminTest {
 
     private final String brokerId = "broker";
     private static ServerState state;
@@ -20,21 +19,21 @@ public class AdminTest {
 
     @Test
     void changeServerAvailability() {
-        assertEquals(true, state.isActive());
+        assertTrue(state.isActive());
         state.deactivate();
-        assertEquals(false, state.isActive());
+        assertFalse(state.isActive());
         state.activate();
-        assertEquals(true, state.isActive());
+        assertTrue(state.isActive());
     }
 
     @Test
     void changeServerToCurrentAvailability() {
         state.activate();
-        assertEquals(true, state.isActive());
+        assertTrue(state.isActive());
         state.deactivate();
-        assertEquals(false, state.isActive());
+        assertFalse(state.isActive());
         state.deactivate();
-        assertEquals(false, state.isActive());
+        assertFalse(state.isActive());
     }
 
     @Test

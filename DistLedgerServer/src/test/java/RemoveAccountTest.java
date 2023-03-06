@@ -2,30 +2,32 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import pt.tecnico.distledger.server.domain.ServerState;
+import pt.tecnico.distledger.server.exceptions.AccountNotEmptyException;
 import pt.tecnico.distledger.server.exceptions.AccountNotFoundException;
-import pt.tecnico.distledger.server.exceptions.CannotRemoveNotEmptyAccountException;
-import pt.tecnico.distledger.server.exceptions.CannotRemoveProtectedAccountException;
+import pt.tecnico.distledger.server.exceptions.AccountProtectedException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class RemoveAccountTest {
+class RemoveAccountTest {
 
     private static ServerState state;
 
     private static final String brokerId = "broker";
 
+    private final String userId = "user1";
+
     @BeforeEach
-    public void setUp() {
+    @SneakyThrows
+    void setUp() {
         state = new ServerState();
+        state.createAccount(userId);
     }
 
     @Test
     @SneakyThrows
-    public void RemoveAccount() {
-        final String userId = "user1";
-        state.createAccount(userId);
+    void RemoveAccount() {
         state.deleteAccount(userId);
 
         assertEquals(1, state.getAccounts().size());
@@ -34,27 +36,24 @@ public class RemoveAccountTest {
 
     @Test
     @SneakyThrows
-    public void deleteAccounts() {
-        final String userId1 = "user1";
+    void deleteAccounts() {
         final String userId2 = "user2";
-        state.createAccount(userId1);
         state.createAccount(userId2);
 
         state.deleteAccount(userId2);
         assertEquals(2, state.getAccounts().size());
-        assertEquals(0, state.getBalance(userId1));
+        assertEquals(0, state.getBalance(userId));
 
-        state.deleteAccount(userId1);
+        state.deleteAccount(userId);
         assertEquals(1, state.getAccounts().size());
         assertEquals(4, state.getLedger().size());
     }
 
     @Test
     @SneakyThrows
-    public void deleteAccountTwice() {
-        final String userId = "user1";
-        state.createAccount(userId);
+    void deleteAccountTwice() {
         state.deleteAccount(userId);
+
         assertThrows(AccountNotFoundException.class, () -> state.deleteAccount(userId));
         assertEquals(1, state.getAccounts().size());
         assertEquals(2, state.getLedger().size());
@@ -62,36 +61,34 @@ public class RemoveAccountTest {
 
     @Test
     @SneakyThrows
-    public void deleteAccountWithMoney() {
-        final String userId = "user1";
-        state.createAccount(userId);
+    void deleteAccountWithMoney() {
         state.transferTo(brokerId, userId, 50);
-        assertThrows(CannotRemoveNotEmptyAccountException.class, () -> state.deleteAccount(userId));
+
+        assertThrows(AccountNotEmptyException.class, () -> state.deleteAccount(userId));
         assertEquals(2, state.getAccounts().size());
         assertEquals(2, state.getLedger().size());
     }
 
     @Test
     @SneakyThrows
-    public void cannotDeleteBroker() {
-        final String userId = "user1";
-        state.createAccount(userId);
+    void cannotDeleteBroker() {
         state.transferTo(brokerId, userId, 1000);
+
         assertEquals(0, state.getAccounts().get(brokerId).getBalance());
-        assertThrows(CannotRemoveProtectedAccountException.class, () -> state.deleteAccount(brokerId));
+        assertThrows(AccountProtectedException.class, () -> state.deleteAccount(brokerId));
         assertEquals(2, state.getAccounts().size());
         assertEquals(2, state.getLedger().size());
     }
 
     @Test
     @SneakyThrows
-    public void UnavailableServer() {
-        final String userId = "user2";
-        state.createAccount(userId);
+    void UnavailableServer() {
         state.deactivate();
+
         assertThrows(ServerUnavailableException.class, () -> state.deleteAccount(userId));
         assertEquals(2, state.getAccounts().size());
         assertEquals(1, state.getLedger().size());
+
         state.activate();
         state.deleteAccount(userId);
         assertEquals(1, state.getAccounts().size());

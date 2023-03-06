@@ -9,24 +9,26 @@ import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class TransferToTest {
+class TransferToTest {
 
     private static ServerState state;
 
     private static final String brokerId = "broker";
 
+    private static final String userId = "user1";
 
     @BeforeEach
-    public void setUp() {
+    @SneakyThrows
+    void setUp() {
         state = new ServerState();
+        state.createAccount(userId);
     }
 
     @Test
     @SneakyThrows
-    public void TransferToUser() {
-        final String userId = "user1";
-        state.createAccount(userId);
+    void TransferToUser() {
         state.transferTo(brokerId, userId, 10);
+
         assertEquals(10, state.getAccounts().get(userId).getBalance());
         assertEquals(990, state.getAccounts().get(brokerId).getBalance());
         assertEquals(2, state.getLedger().size());
@@ -34,12 +36,10 @@ public class TransferToTest {
 
     @Test
     @SneakyThrows
-    public void transferFromUser() {
-        final String userId = "user1";
-        state.createAccount(userId);
+    void transferFromUser() {
         state.transferTo(brokerId, userId, 10);
-
         state.transferTo(userId, brokerId, 5);
+
         assertEquals(5, state.getAccounts().get(userId).getBalance());
         assertEquals(995, state.getAccounts().get(brokerId).getBalance());
         assertEquals(3, state.getLedger().size());
@@ -47,26 +47,26 @@ public class TransferToTest {
 
     @Test
     @SneakyThrows
-    public void fromUserDoesNotExist() {
-        final String userId = "user1";
-        assertThrows(AccountNotFoundException.class, () -> state.transferTo(brokerId, userId, 10));
-        assertEquals(0, state.getLedger().size());
+    void fromUserDoesNotExist() {
+        final String userNotRegistered = "user37";
+
+        assertThrows(AccountNotFoundException.class, () -> state.transferTo(userNotRegistered, brokerId, 10));
+        assertEquals(1, state.getLedger().size());
     }
 
     @Test
     @SneakyThrows
-    public void toUserDoesNotExist() {
-        final String userId = "user1";
-        assertThrows(AccountNotFoundException.class, () -> state.transferTo(userId, brokerId, 10));
-        assertEquals(0, state.getLedger().size());
+    void toUserDoesNotExist() {
+        final String userNotRegistered = "user37";
+
+        assertThrows(AccountNotFoundException.class, () -> state.transferTo(brokerId, userNotRegistered, 10));
+        assertEquals(1, state.getLedger().size());
 
     }
 
     @Test
     @SneakyThrows
-    public void invalidAmount() {
-        final String userId = "user1";
-        state.createAccount(userId);
+    void invalidAmount() {
         // TODO
         // assertThrows(InvalidAmountException.class, () -> state.transferTo(brokerId, userId, -69));
         assertEquals(1, state.getLedger().size());
@@ -74,19 +74,16 @@ public class TransferToTest {
 
     @Test
     @SneakyThrows
-    public void insufficientAmount() {
-        final String userId = "user1";
-        state.createAccount(userId);
+    void insufficientAmount() {
         assertThrows(InsufficientFundsException.class, () -> state.transferTo(brokerId, userId, 10000));
         assertEquals(1, state.getLedger().size());
     }
 
     @Test
     @SneakyThrows
-    public void deactivateServer() {
-        final String userId = "user1";
-        state.createAccount(userId);
+    void deactivateServer() {
         state.deactivate();
+
         assertThrows(ServerUnavailableException.class, () -> state.transferTo(brokerId, userId, 10));
         assertEquals(0, state.getAccounts().get(userId).getBalance());
         assertEquals(1000, state.getAccounts().get(brokerId).getBalance());
