@@ -13,6 +13,7 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: 'maven'
       - name: Check formatting
         run: mvn spotless:check
       - name: Compile code
