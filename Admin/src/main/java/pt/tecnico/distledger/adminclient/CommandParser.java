@@ -40,7 +40,7 @@ public class CommandParser {
                 case HELP -> this.printUsage();
                 case EXIT -> exit = true;
                 default -> {
-                    log.error("Command '%s' does not exist%n%n", cmd);
+                    log.error("Command '%s' does not exist%n", cmd);
                     this.printUsage();
                 }
             }
@@ -86,7 +86,7 @@ public class CommandParser {
         String server = split[1];
 
         final LedgerState ledgerState = adminService.getLedgerState(server);
-        log.info("OK%n'%s'", ledgerState);
+        log.info("OK%n%s%n", ledgerState);
     }
 
     @SuppressWarnings("unused")

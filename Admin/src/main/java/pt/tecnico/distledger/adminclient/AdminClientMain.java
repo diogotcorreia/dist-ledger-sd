@@ -4,17 +4,15 @@ import lombok.CustomLog;
 import pt.tecnico.distledger.adminclient.grpc.AdminService;
 import pt.tecnico.distledger.common.Logger;
 
-@CustomLog
+@CustomLog(topic = "AdminClientMain")
 public class AdminClientMain {
     public static void main(String[] args) {
         Logger.setDebug(System.getProperty("debug") != null);
 
-        log.info(AdminClientMain.class.getSimpleName());
-
         // receive and print arguments
-        log.info("Received %d arguments%nOK", args.length);
+        log.debug("Received %d arguments", args.length);
         for (int i = 0; i < args.length; i++) {
-            log.info("arg[%d] = %s", i, args[i]);
+            log.debug("arg[%d] = %s", i, args[i]);
         }
 
         // check arguments
