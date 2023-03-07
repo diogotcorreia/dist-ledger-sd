@@ -10,6 +10,7 @@ import pt.tecnico.distledger.server.exceptions.AccountNotEmptyException;
 import pt.tecnico.distledger.server.exceptions.AccountNotFoundException;
 import pt.tecnico.distledger.server.exceptions.AccountProtectedException;
 import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
+import pt.tecnico.distledger.server.exceptions.InvalidAmountException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 
 import java.util.List;
@@ -72,10 +73,14 @@ public class ServerState {
             String fromUserId,
             String toUserId,
             int amount
-    ) throws AccountNotFoundException, InsufficientFundsException, ServerUnavailableException {
+    ) throws AccountNotFoundException, InsufficientFundsException, ServerUnavailableException, InvalidAmountException {
         ensureServerIsActive();
         final Account fromAccount = getAccount(fromUserId).orElseThrow(() -> new AccountNotFoundException(fromUserId));
         final Account toAccount = getAccount(toUserId).orElseThrow(() -> new AccountNotFoundException(toUserId));
+
+        if (amount <= 0) {
+            throw new InvalidAmountException(amount);
+        }
 
         if (fromAccount.getBalance() < amount) {
             throw new InsufficientFundsException(fromUserId, amount, fromAccount.getBalance());
@@ -105,8 +110,7 @@ public class ServerState {
      * Get an account by its ID.
      *
      * @param userId The ID of the account to get.
-     * @return An optional with the Account, or an empty optional if the account
-     *         cannot be found.
+     * @return An optional with the Account, or an empty optional if the account cannot be found.
      */
     private Optional<Account> getAccount(String userId) {
         return Optional.ofNullable(accounts.get(userId));
