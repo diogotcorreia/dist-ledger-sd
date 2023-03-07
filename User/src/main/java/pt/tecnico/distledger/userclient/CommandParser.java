@@ -1,10 +1,12 @@
 package pt.tecnico.distledger.userclient;
 
 import io.grpc.StatusRuntimeException;
+import lombok.CustomLog;
 import pt.tecnico.distledger.userclient.grpc.UserService;
 
 import java.util.Scanner;
 
+@CustomLog
 public class CommandParser {
 
     private static final String SPACE = " ";
@@ -40,18 +42,18 @@ public class CommandParser {
                     case HELP -> this.printUsage();
                     case EXIT -> exit = true;
                     default -> {
-                        System.err.printf("Command '%s' does not exist%n%n", cmd);
+                        log.error("Command '%s' does not exist%n%n", cmd);
                         this.printUsage();
                     }
                 }
             } catch (StatusRuntimeException e) {
                 if (e.getStatus().getDescription() != null) {
-                    System.err.println("Error: " + e.getStatus().getDescription());
+                    log.error(e.getStatus().getDescription());
                 } else {
-                    System.err.println("Error: " + e.getMessage());
+                    log.error(e.getMessage());
                 }
             } catch (Exception e) {
-                System.err.println(e.getMessage());
+                log.error(e.getMessage());
             }
         }
     }
@@ -68,7 +70,8 @@ public class CommandParser {
         String username = split[2];
 
         userService.createAccount(username);
-        System.out.printf("Account '%s' has been created%n", username);
+        log.debug("Account '%s' has been created%n", username);
+        log.info("OK%n");
     }
 
     private void deleteAccount(String line) {
@@ -82,9 +85,9 @@ public class CommandParser {
         String username = split[2];
 
         userService.deleteAccount(username);
-        System.out.printf("Account '%s' has been deleted%n", username);
+        log.debug("Account '%s' has been deleted%n", username);
+        log.info("OK%n");
     }
-
 
     private void balance(String line) {
         String[] split = line.split(SPACE);
@@ -97,7 +100,8 @@ public class CommandParser {
         String username = split[2];
 
         final int balance = userService.balance(username);
-        System.out.printf("Balance of user '%s' is %d%n", username, balance);
+        log.debug("Balance of user '%s' is %d%n", username, balance);
+        log.info("OK%n%d%n", balance);
     }
 
     private void transferTo(String line) {
@@ -114,10 +118,11 @@ public class CommandParser {
 
         userService.transferTo(from, dest, amount);
         if (amount == 1) {
-            System.out.printf("1 coin has been transfered from account '%s' account '%s'%n", from, dest);
+            log.debug("1 coin has been transfered from account '%s' account '%s'%n", from, dest);
         } else {
-            System.out.printf("%d coins have been transfered from account '%s' account '%s'%n", amount, from, dest);
+            log.debug("%d coins have been transfered from account '%s' account '%s'%n", amount, from, dest);
         }
+        log.info("OK%n");
     }
 
     private void printUsage() {
