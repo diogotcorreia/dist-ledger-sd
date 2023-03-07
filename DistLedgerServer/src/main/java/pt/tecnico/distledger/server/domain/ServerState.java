@@ -6,10 +6,11 @@ import pt.tecnico.distledger.server.domain.operation.DeleteOp;
 import pt.tecnico.distledger.server.domain.operation.Operation;
 import pt.tecnico.distledger.server.domain.operation.TransferOp;
 import pt.tecnico.distledger.server.exceptions.AccountAlreadyExistsException;
+import pt.tecnico.distledger.server.exceptions.AccountNotEmptyException;
 import pt.tecnico.distledger.server.exceptions.AccountNotFoundException;
-import pt.tecnico.distledger.server.exceptions.CannotRemoveNotEmptyAccountException;
-import pt.tecnico.distledger.server.exceptions.CannotRemoveProtectedAccountException;
+import pt.tecnico.distledger.server.exceptions.AccountProtectedException;
 import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
+import pt.tecnico.distledger.server.exceptions.InvalidAmountException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 
 import java.util.List;
@@ -52,16 +53,16 @@ public class ServerState {
 
     public void deleteAccount(
             String userId
-    ) throws CannotRemoveNotEmptyAccountException, AccountNotFoundException, CannotRemoveProtectedAccountException, ServerUnavailableException {
+    ) throws AccountNotEmptyException, AccountNotFoundException, AccountProtectedException, ServerUnavailableException {
         ensureServerIsActive();
         final int balance = getAccount(userId)
                 .orElseThrow(() -> new AccountNotFoundException(userId))
                 .getBalance();
-        if (balance != 0) {
-            throw new CannotRemoveNotEmptyAccountException(userId, balance);
-        }
         if (userId.equals(BROKER_ID)) {
-            throw new CannotRemoveProtectedAccountException(userId);
+            throw new AccountProtectedException(userId);
+        }
+        if (balance != 0) {
+            throw new AccountNotEmptyException(userId, balance);
         }
 
         accounts.remove(userId);
@@ -72,10 +73,14 @@ public class ServerState {
             String fromUserId,
             String toUserId,
             int amount
-    ) throws AccountNotFoundException, InsufficientFundsException, ServerUnavailableException {
+    ) throws AccountNotFoundException, InsufficientFundsException, ServerUnavailableException, InvalidAmountException {
         ensureServerIsActive();
         final Account fromAccount = getAccount(fromUserId).orElseThrow(() -> new AccountNotFoundException(fromUserId));
         final Account toAccount = getAccount(toUserId).orElseThrow(() -> new AccountNotFoundException(toUserId));
+
+        if (amount <= 0) {
+            throw new InvalidAmountException(amount);
+        }
 
         if (fromAccount.getBalance() < amount) {
             throw new InsufficientFundsException(fromUserId, amount, fromAccount.getBalance());
