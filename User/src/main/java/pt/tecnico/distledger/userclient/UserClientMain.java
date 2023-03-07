@@ -1,23 +1,25 @@
 package pt.tecnico.distledger.userclient;
 
 
+import lombok.CustomLog;
+import pt.tecnico.distledger.common.Logger;
 import pt.tecnico.distledger.userclient.grpc.UserService;
 
+@CustomLog(topic = "UserClientMain")
 public class UserClientMain {
     public static void main(String[] args) {
-
-        System.out.println(UserClientMain.class.getSimpleName());
+        Logger.setDebug(System.getProperty("debug") != null);
 
         // receive and print arguments
-        System.out.printf("Received %d arguments%n", args.length);
+        log.debug("Received %d arguments", args.length);
         for (int i = 0; i < args.length; i++) {
-            System.out.printf("arg[%d] = %s%n", i, args[i]);
+            log.debug("arg[%d] = %s", i, args[i]);
         }
 
         // check arguments
         if (args.length != 2) {
-            System.err.println("Argument(s) missing!");
-            System.err.println("Usage: mvn exec:java -Dexec.args=<host> <port>");
+            log.error("Argument(s) missing!");
+            log.error("Usage: mvn exec:java -Dexec.args=<host> <port>");
             return;
         }
 
