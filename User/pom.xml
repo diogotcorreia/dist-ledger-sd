@@ -29,8 +29,7 @@
         <server.host>localhost</server.host>
         <server.port>2001</server.port>
 
-        <spotless.java.eclipse.file>${project.basedir}${file.separator}..${file.separator}formatter-config.xml
-        </spotless.java.eclipse.file>
+        <spotless.java.eclipse.file>${project.basedir}${file.separator}..${file.separator}formatter-config.xml</spotless.java.eclipse.file>
     </properties>
 
     <!-- Dependencies are code archives - JARs -
