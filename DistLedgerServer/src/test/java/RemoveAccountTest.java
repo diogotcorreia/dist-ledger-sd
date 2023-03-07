@@ -20,14 +20,14 @@ class RemoveAccountTest {
 
     @BeforeEach
     @SneakyThrows
-    void setUp() {
+    void setup() {
         state = new ServerState();
         state.createAccount(userId);
     }
 
     @Test
     @SneakyThrows
-    void RemoveAccount() {
+    void deleteAccount() {
         state.deleteAccount(userId);
 
         assertEquals(1, state.getAccounts().size());
@@ -82,7 +82,7 @@ class RemoveAccountTest {
 
     @Test
     @SneakyThrows
-    void UnavailableServer() {
+    void unavailableServer() {
         state.deactivate();
 
         assertThrows(ServerUnavailableException.class, () -> state.deleteAccount(userId));

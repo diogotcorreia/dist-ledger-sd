@@ -14,7 +14,7 @@ class CreateAccountTest {
     private static final String userId = "user1";
 
     @BeforeEach
-    void setUp() {
+    void setup() {
         state = new ServerState();
     }
 

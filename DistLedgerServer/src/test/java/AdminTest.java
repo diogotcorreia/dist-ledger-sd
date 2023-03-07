@@ -13,7 +13,7 @@ class AdminTest {
     private static ServerState state;
 
     @BeforeEach
-    public void setUp() {
+    public void setup() {
         state = new ServerState();
     }
 

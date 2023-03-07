@@ -20,14 +20,14 @@ class TransferToTest {
 
     @BeforeEach
     @SneakyThrows
-    void setUp() {
+    void setup() {
         state = new ServerState();
         state.createAccount(userId);
     }
 
     @Test
     @SneakyThrows
-    void TransferToUser() {
+    void transferToUser() {
         state.transferTo(brokerId, userId, 10);
 
         assertEquals(10, state.getAccounts().get(userId).getBalance());
