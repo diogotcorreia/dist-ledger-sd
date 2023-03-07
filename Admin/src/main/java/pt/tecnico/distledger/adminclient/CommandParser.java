@@ -23,7 +23,7 @@ public class CommandParser {
         this.adminService = adminService;
     }
 
-    void parseInput() {
+    public void parseInput() {
         Scanner scanner = new Scanner(System.in);
         boolean exit = false;
 
