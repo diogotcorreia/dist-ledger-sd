@@ -8,6 +8,7 @@ import pt.tecnico.distledger.server.exceptions.AccountNotEmptyException;
 import pt.tecnico.distledger.server.exceptions.AccountNotFoundException;
 import pt.tecnico.distledger.server.exceptions.AccountProtectedException;
 import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
+import pt.tecnico.distledger.server.exceptions.InvalidAmountException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc;
@@ -97,7 +98,8 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
             );
             responseObserver.onNext(TransferToResponse.getDefaultInstance());
             responseObserver.onCompleted();
-        } catch (AccountNotFoundException | InsufficientFundsException | ServerUnavailableException e) {
+        } catch (AccountNotFoundException | InsufficientFundsException | InvalidAmountException |
+                 ServerUnavailableException e) {
             log.debug("Error creating transfer: %s", e.getMessage());
             responseObserver.onError(e.toGrpcRuntimeException());
         }
