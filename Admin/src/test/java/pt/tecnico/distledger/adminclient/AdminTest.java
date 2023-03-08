@@ -4,7 +4,6 @@ import org.grpcmock.GrpcMock;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import pt.tecnico.distledger.adminclient.CommandParser;
 import pt.tecnico.distledger.adminclient.grpc.AdminService;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.*;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger;
