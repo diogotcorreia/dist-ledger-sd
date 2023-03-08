@@ -28,10 +28,7 @@ class CreateAccountUserTest {
     private static ByteArrayOutputStream outputStream;
 
     private static final String LOCALHOST = "localhost";
-
-    private static final String createAccountCommand = "createAccount A user1\n";
-
-    private static final String exitCommand = "exit\n";
+    private static final String createAccountCommand = "createAccount A user1\nexit\n";
 
     @BeforeEach
     void setup() {
@@ -44,7 +41,6 @@ class CreateAccountUserTest {
         System.setErr(new PrintStream(outputStream));
     }
 
-
     @Test
     void createAccount() {
         stubFor(
@@ -53,21 +49,20 @@ class CreateAccountUserTest {
                         .willReturn(response(UserDistLedger.CreateAccountResponse.newBuilder().build()))
         );
 
-        final String command = createAccountCommand + exitCommand;
-        inputStream = new ByteArrayInputStream(command.getBytes());
+        inputStream = new ByteArrayInputStream(createAccountCommand.getBytes());
         System.setIn(inputStream);
 
         client.parseInput();
 
         assertEquals(outputStream.toString(), """
-                > Account 'user1' has been created
+                > OK
+
                 >\s""");
     }
 
     @Test
     @SneakyThrows
     void createDuplicatedAccount() {
-
 
         stubFor(
                 unaryMethod(UserServiceGrpc.getCreateAccountMethod())
@@ -80,16 +75,13 @@ class CreateAccountUserTest {
                         )
         );
 
-
-        final String command = createAccountCommand + exitCommand;
-        inputStream = new ByteArrayInputStream(command.getBytes());
+        inputStream = new ByteArrayInputStream(createAccountCommand.getBytes());
         System.setIn(inputStream);
 
         client.parseInput();
 
         assertEquals(outputStream.toString(), """
-                > Error: Account 'user1' already exists
+                > [ERROR] Account 'user1' already exists
                 >\s""");
-
     }
 }

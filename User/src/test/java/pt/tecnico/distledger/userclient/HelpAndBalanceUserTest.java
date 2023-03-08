@@ -26,6 +26,7 @@ class HelpAndBalanceUserTest {
     private static ByteArrayOutputStream outputStream;
 
     private static final String LOCALHOST = "localhost";
+    private static final String balanceCommand = "balance A user1\nexit\n";
 
     @BeforeEach
     void setup() {
@@ -66,14 +67,15 @@ class HelpAndBalanceUserTest {
                         .willReturn(response(UserDistLedger.BalanceResponse.newBuilder().setValue(20).build()))
         );
 
-        final String balanceCommand = "balance A user1\nexit\n";
         inputStream = new ByteArrayInputStream(balanceCommand.getBytes());
         System.setIn(inputStream);
 
         client.parseInput();
 
         assertEquals(outputStream.toString(), """
-                > Balance of user 'user1' is 20
+                > OK
+                20
+
                 >\s""");
     }
 
@@ -84,14 +86,15 @@ class HelpAndBalanceUserTest {
                         .willReturn(response(UserDistLedger.BalanceResponse.newBuilder().setValue(0).build()))
         );
 
-        final String balanceCommand = "balance A user1\nexit\n";
         inputStream = new ByteArrayInputStream(balanceCommand.getBytes());
         System.setIn(inputStream);
 
         client.parseInput();
 
         assertEquals(outputStream.toString(), """
-                > Balance of user 'user1' is 0
+                > OK
+                0
+
                 >\s""");
     }
 
