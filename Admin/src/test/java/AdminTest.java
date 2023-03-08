@@ -4,12 +4,19 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import pt.tecnico.distledger.adminclient.CommandParser;
 import pt.tecnico.distledger.adminclient.grpc.AdminService;
-import pt.tecnico.distledger.userclient.grpc.UserService;
+import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.*;
+import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger;
+import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger.*;
+import pt.ulisboa.tecnico.distledger.contract.admin.AdminServiceGrpc;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.List;
 
+import static org.grpcmock.GrpcMock.response;
+import static org.grpcmock.GrpcMock.stubFor;
+import static org.grpcmock.GrpcMock.unaryMethod;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class AdminTest {
@@ -31,16 +38,7 @@ class AdminTest {
         client = new CommandParser(service);
         outputStream = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outputStream));
-
-        try (UserService userService = new UserService(LOCALHOST, GrpcMock.getGlobalPort())) {
-            // initial operations in the server
-            userService.createAccount("diogo-gaspar");
-            userService.createAccount("diogo-correia");
-            userService.createAccount("tomas-esteves");
-            userService.deleteAccount("tomas-esteves");
-            userService.transferTo("broker", "diogo-gaspar", 500);
-            userService.transferTo("diogo-gaspar", "diogo-correia", 100);
-        }
+        System.setErr(new PrintStream(outputStream));
     }
 
     void parseInput(final @NotNull String command) {
@@ -67,28 +65,76 @@ class AdminTest {
 
     @Test
     void activate() {
+        stubFor(
+                unaryMethod(AdminServiceGrpc.getActivateMethod())
+                        .withRequest(AdminDistLedger.ActivateRequest.getDefaultInstance())
+                        .willReturn(response(AdminDistLedger.ActivateResponse.getDefaultInstance()))
+        );
+
         parseInput("activate " + MAIN_SERVER + "\nexit\n");
 
         assertEquals(outputStream.toString(), """
                 > OK
-                """);
+
+                >\s""");
     }
 
     @Test
     void deactivate() {
+        stubFor(
+                unaryMethod(AdminServiceGrpc.getDeactivateMethod())
+                        .withRequest(AdminDistLedger.DeactivateRequest.getDefaultInstance())
+                        .willReturn(response(AdminDistLedger.DeactivateResponse.getDefaultInstance()))
+        );
         parseInput("deactivate " + MAIN_SERVER + "\nexit\n");
 
         assertEquals(outputStream.toString(), """
                 > OK
-                """);
+
+                >\s""");
     }
 
     @Test
     void getLedgerState() {
+        final List<Operation> operations = List.of(
+                Operation.newBuilder()
+                        .setType(OperationType.OP_CREATE_ACCOUNT)
+                        .setUserId("diogo-gaspar")
+                        .build(),
+                Operation.newBuilder()
+                        .setType(OperationType.OP_CREATE_ACCOUNT)
+                        .setUserId("diogo-correia")
+                        .build(),
+                Operation.newBuilder()
+                        .setType(OperationType.OP_CREATE_ACCOUNT)
+                        .setUserId("tomas-esteves")
+                        .build(),
+                Operation.newBuilder()
+                        .setType(OperationType.OP_DELETE_ACCOUNT)
+                        .setUserId("tomas-esteves")
+                        .build()
+        );
+
+        stubFor(
+                unaryMethod(AdminServiceGrpc.getGetLedgerStateMethod())
+                        .withRequest(GetLedgerStateRequest.getDefaultInstance())
+                        .willReturn(
+                                response(
+                                        GetLedgerStateResponse.newBuilder()
+                                                .setLedgerState(
+                                                        LedgerState.newBuilder()
+                                                                .addAllLedger(operations)
+                                                                .build()
+                                                )
+                                                .build()
+                                )
+                        )
+        );
+
         parseInput("getLedgerState " + MAIN_SERVER + "\nexit\n");
 
         assertEquals(outputStream.toString(), """
-                OK
+                > OK
                 ledger {
                   type: OP_CREATE_ACCOUNT
                   userId: "diogo-gaspar"
@@ -105,22 +151,9 @@ class AdminTest {
                   type: OP_DELETE_ACCOUNT
                   userId: "tomas-esteves"
                 }
-                ledger {
-                  type: OP_TRANSFER_TO
-                  userId: "broker"
-                  destUserId: "diogo-gaspar"
-                  amount: 500
-                }
-                ledger {
-                  type: OP_TRANSFER_TO
-                  userId: "diogo-gaspar"
-                  destUserId: "diogo-correia"
-                  amount: 100
-                }
 
 
-                >\s
-                """);
+                >\s""");
     }
 
     // TODO: add gossip tests whenever method is implemented
