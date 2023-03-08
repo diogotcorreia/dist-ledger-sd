@@ -1,6 +1,6 @@
 package pt.tecnico.distledger.server.domain.operation;
 
-import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions;
+import pt.tecnico.distledger.server.visitor.OperationVisitor;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.OperationType;
 
 public class DeleteOp extends Operation {
@@ -10,11 +10,7 @@ public class DeleteOp extends Operation {
     }
 
     @Override
-    public DistLedgerCommonDefinitions.Operation toProto() {
-        return DistLedgerCommonDefinitions.Operation.newBuilder()
-                .setUserId(getAccount())
-                .setType(getType())
-                .build();
+    public <T> T accept(OperationVisitor<T> visitor) {
+        return visitor.visit(this);
     }
-
 }
