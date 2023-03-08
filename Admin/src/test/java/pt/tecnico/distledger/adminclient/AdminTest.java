@@ -1,3 +1,5 @@
+package pt.tecnico.distledger.adminclient;
+
 import org.grpcmock.GrpcMock;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
@@ -112,6 +114,12 @@ class AdminTest {
                 Operation.newBuilder()
                         .setType(OperationType.OP_DELETE_ACCOUNT)
                         .setUserId("tomas-esteves")
+                        .build(),
+                Operation.newBuilder()
+                        .setType(OperationType.OP_TRANSFER_TO)
+                        .setUserId("broker")
+                        .setDestUserId("diogo-gaspar")
+                        .setAmount(100)
                         .build()
         );
 
@@ -150,6 +158,12 @@ class AdminTest {
                 ledger {
                   type: OP_DELETE_ACCOUNT
                   userId: "tomas-esteves"
+                }
+                ledger {
+                  type: OP_TRANSFER_TO
+                  userId: "broker"
+                  destUserId: "diogo-gaspar"
+                  amount: 100
                 }
 
 
