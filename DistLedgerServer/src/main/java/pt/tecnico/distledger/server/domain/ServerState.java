@@ -36,14 +36,16 @@ public class ServerState {
         createBroker();
     }
 
-    public int getBalance(String userId) throws AccountNotFoundException, ServerUnavailableException {
+    public synchronized int getBalance(String userId) throws AccountNotFoundException, ServerUnavailableException {
         ensureServerIsActive();
         return getAccount(userId)
                 .orElseThrow(() -> new AccountNotFoundException(userId))
                 .getBalance();
     }
 
-    public void createAccount(String userId) throws AccountAlreadyExistsException, ServerUnavailableException {
+    public synchronized void createAccount(
+            String userId
+    ) throws AccountAlreadyExistsException, ServerUnavailableException {
         ensureServerIsActive();
         if (accounts.containsKey(userId)) {
             throw new AccountAlreadyExistsException(userId);
@@ -52,7 +54,7 @@ public class ServerState {
         ledger.add(new CreateOp(userId));
     }
 
-    public void deleteAccount(
+    public synchronized void deleteAccount(
             String userId
     ) throws AccountNotEmptyException, AccountNotFoundException, AccountProtectedException, ServerUnavailableException {
         ensureServerIsActive();
@@ -70,7 +72,7 @@ public class ServerState {
         ledger.add(new DeleteOp(userId));
     }
 
-    public void transferTo(
+    public synchronized void transferTo(
             String fromUserId,
             String toUserId,
             int amount
