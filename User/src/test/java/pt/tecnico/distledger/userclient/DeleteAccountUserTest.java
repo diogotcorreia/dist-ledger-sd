@@ -119,7 +119,8 @@ class DeleteAccountUserTest {
                                 GrpcMock.statusException(
                                         Status.Code.FAILED_PRECONDITION.toStatus()
                                                 .withDescription(
-                                                        "Account user1 cannot be removed, as its balance 10 is not zero.")
+                                                        "Account user1 cannot be removed, as its balance 10 is not zero."
+                                                )
                                 )
                         )
         );

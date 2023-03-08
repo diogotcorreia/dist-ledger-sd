@@ -47,11 +47,13 @@ class TransferToAccountUserTest {
     void transferTo() {
         stubFor(
                 unaryMethod(UserServiceGrpc.getTransferToMethod())
-                        .withRequest(UserDistLedger.TransferToRequest.newBuilder()
-                                .setAccountFrom("user1")
-                                .setAccountTo("user2")
-                                .setAmount(125)
-                                .build())
+                        .withRequest(
+                                UserDistLedger.TransferToRequest.newBuilder()
+                                        .setAccountFrom("user1")
+                                        .setAccountTo("user2")
+                                        .setAmount(125)
+                                        .build()
+                        )
                         .willReturn(response(UserDistLedger.TransferToResponse.newBuilder().build()))
         );
 
@@ -71,11 +73,14 @@ class TransferToAccountUserTest {
     void fromAccountDoesNotExist() {
         stubFor(
                 unaryMethod(UserServiceGrpc.getTransferToMethod())
-                        .withRequest(UserDistLedger.TransferToRequest.newBuilder()
-                                .setAccountFrom("user34")
-                                .setAccountTo("user2")
-                                .setAmount(125)
-                                .build()).willReturn(
+                        .withRequest(
+                                UserDistLedger.TransferToRequest.newBuilder()
+                                        .setAccountFrom("user34")
+                                        .setAccountTo("user2")
+                                        .setAmount(125)
+                                        .build()
+                        )
+                        .willReturn(
                                 GrpcMock.statusException(
                                         Status.Code.INVALID_ARGUMENT.toStatus()
                                                 .withDescription("Account 'user34' not found")
@@ -100,11 +105,14 @@ class TransferToAccountUserTest {
     void ToAccountDoesNotExist() {
         stubFor(
                 unaryMethod(UserServiceGrpc.getTransferToMethod())
-                        .withRequest(UserDistLedger.TransferToRequest.newBuilder()
-                                .setAccountFrom("user1")
-                                .setAccountTo("user34")
-                                .setAmount(125)
-                                .build()).willReturn(
+                        .withRequest(
+                                UserDistLedger.TransferToRequest.newBuilder()
+                                        .setAccountFrom("user1")
+                                        .setAccountTo("user34")
+                                        .setAmount(125)
+                                        .build()
+                        )
+                        .willReturn(
                                 GrpcMock.statusException(
                                         Status.Code.INVALID_ARGUMENT.toStatus()
                                                 .withDescription("Account 'user34' not found")
@@ -129,15 +137,19 @@ class TransferToAccountUserTest {
     void sameAccountTransfer() {
         stubFor(
                 unaryMethod(UserServiceGrpc.getTransferToMethod())
-                        .withRequest(UserDistLedger.TransferToRequest.newBuilder()
-                                .setAccountFrom("user1")
-                                .setAccountTo("user1")
-                                .setAmount(125)
-                                .build()).willReturn(
+                        .withRequest(
+                                UserDistLedger.TransferToRequest.newBuilder()
+                                        .setAccountFrom("user1")
+                                        .setAccountTo("user1")
+                                        .setAmount(125)
+                                        .build()
+                        )
+                        .willReturn(
                                 GrpcMock.statusException(
                                         Status.Code.FAILED_PRECONDITION.toStatus()
                                                 .withDescription(
-                                                        "It is not possible to create a transfer between the same account (from 'user1' to 'user1').")
+                                                        "It is not possible to create a transfer between the same account (from 'user1' to 'user1')."
+                                                )
                                 )
                         )
         );
@@ -159,15 +171,19 @@ class TransferToAccountUserTest {
     void amountBelowZero() {
         stubFor(
                 unaryMethod(UserServiceGrpc.getTransferToMethod())
-                        .withRequest(UserDistLedger.TransferToRequest.newBuilder()
-                                .setAccountFrom("user1")
-                                .setAccountTo("user2")
-                                .setAmount(-1)
-                                .build()).willReturn(
+                        .withRequest(
+                                UserDistLedger.TransferToRequest.newBuilder()
+                                        .setAccountFrom("user1")
+                                        .setAccountTo("user2")
+                                        .setAmount(-1)
+                                        .build()
+                        )
+                        .willReturn(
                                 GrpcMock.statusException(
                                         Status.Code.INVALID_ARGUMENT.toStatus()
                                                 .withDescription(
-                                                        "The given amount (-1) is a non-positive number")
+                                                        "The given amount (-1) is a non-positive number"
+                                                )
                                 )
                         )
         );
@@ -189,15 +205,19 @@ class TransferToAccountUserTest {
     void insufficientAmount() {
         stubFor(
                 unaryMethod(UserServiceGrpc.getTransferToMethod())
-                        .withRequest(UserDistLedger.TransferToRequest.newBuilder()
-                                .setAccountFrom("user1")
-                                .setAccountTo("user2")
-                                .setAmount(1001)
-                                .build()).willReturn(
+                        .withRequest(
+                                UserDistLedger.TransferToRequest.newBuilder()
+                                        .setAccountFrom("user1")
+                                        .setAccountTo("user2")
+                                        .setAmount(1001)
+                                        .build()
+                        )
+                        .willReturn(
                                 GrpcMock.statusException(
                                         Status.Code.FAILED_PRECONDITION.toStatus()
                                                 .withDescription(
-                                                        "Account 'user1' does not have enough funds (expected 1001 but only 1000 are available)")
+                                                        "Account 'user1' does not have enough funds (expected 1001 but only 1000 are available)"
+                                                )
                                 )
                         )
         );
