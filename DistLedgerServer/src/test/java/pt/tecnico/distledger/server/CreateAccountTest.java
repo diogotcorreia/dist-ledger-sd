@@ -1,3 +1,5 @@
+package pt.tecnico.distledger.server;
+
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
