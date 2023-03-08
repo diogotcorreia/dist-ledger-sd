@@ -2,7 +2,6 @@ package pt.tecnico.distledger.adminclient;
 
 import lombok.CustomLog;
 import pt.tecnico.distledger.adminclient.grpc.AdminService;
-import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.LedgerState;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger;
 
 import java.util.Scanner;
