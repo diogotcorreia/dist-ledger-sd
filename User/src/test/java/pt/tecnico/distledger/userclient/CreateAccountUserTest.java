@@ -1,5 +1,7 @@
 package pt.tecnico.distledger.userclient;
 
+import io.grpc.Status;
+import lombok.SneakyThrows;
 import org.grpcmock.GrpcMock;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,6 +41,7 @@ class CreateAccountUserTest {
         client = new CommandParser(service);
         outputStream = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outputStream));
+        System.setErr(new PrintStream(outputStream));
     }
 
 
@@ -59,5 +62,34 @@ class CreateAccountUserTest {
         assertEquals(outputStream.toString(), """
                 > Account 'user1' has been created
                 >\s""");
+    }
+
+    @Test
+    @SneakyThrows
+    void createDuplicatedAccount() {
+
+
+        stubFor(
+                unaryMethod(UserServiceGrpc.getCreateAccountMethod())
+                        .withRequest(UserDistLedger.CreateAccountRequest.newBuilder().setUserId("user1").build())
+                        .willReturn(
+                                GrpcMock.statusException(
+                                        Status.Code.FAILED_PRECONDITION.toStatus()
+                                                .withDescription("Account 'user1' already exists")
+                                )
+                        )
+        );
+
+
+        final String command = createAccountCommand + exitCommand;
+        inputStream = new ByteArrayInputStream(command.getBytes());
+        System.setIn(inputStream);
+
+        client.parseInput();
+
+        assertEquals(outputStream.toString(), """
+                > Error: Account 'user1' already exists
+                >\s""");
+
     }
 }
