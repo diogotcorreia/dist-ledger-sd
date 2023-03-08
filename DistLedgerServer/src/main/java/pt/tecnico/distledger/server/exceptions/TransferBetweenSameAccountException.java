@@ -12,11 +12,13 @@ public class TransferBetweenSameAccountException extends Exception implements Gr
     private final String toAccountId;
 
     public TransferBetweenSameAccountException(String fromAccountId, String toAccountId) {
-        super(String.format(
-                "It is not possible to create a transfer between the same account (from '%s' to '%s').",
-                fromAccountId,
-                toAccountId
-        ));
+        super(
+                String.format(
+                        "It is not possible to create a transfer between the same account (from '%s' to '%s').",
+                        fromAccountId,
+                        toAccountId
+                )
+        );
         this.fromAccountId = fromAccountId;
         this.toAccountId = toAccountId;
     }
