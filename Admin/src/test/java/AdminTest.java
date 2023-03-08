@@ -43,8 +43,7 @@ class AdminTest {
         }
     }
 
-    // FIXME: couldn't think of a better name
-    void perform(final @NotNull String command) {
+    void parse(final @NotNull String command) {
         inputStream = new ByteArrayInputStream(command.getBytes());
         System.setIn(inputStream);
 
@@ -53,7 +52,7 @@ class AdminTest {
 
     @Test
     void help() {
-        perform("help\nexit\n");
+        parse("help\nexit\n");
 
         assertEquals(outputStream.toString(), """
                 > Usage:
@@ -68,7 +67,7 @@ class AdminTest {
 
     @Test
     void activate() {
-        perform("activate " + MAIN_SERVER + "\nexit\n");
+        parse("activate " + MAIN_SERVER + "\nexit\n");
 
         assertEquals(outputStream.toString(), """
                 > OK
@@ -77,7 +76,7 @@ class AdminTest {
 
     @Test
     void deactivate() {
-        perform("deactivate " + MAIN_SERVER + "\nexit\n");
+        parse("deactivate " + MAIN_SERVER + "\nexit\n");
 
         assertEquals(outputStream.toString(), """
                 > OK
@@ -86,7 +85,7 @@ class AdminTest {
 
     @Test
     void getLedgerState() {
-        perform("getLedgerState " + MAIN_SERVER + "\nexit\n");
+        parse("getLedgerState " + MAIN_SERVER + "\nexit\n");
 
         assertEquals(outputStream.toString(), """
                 OK
