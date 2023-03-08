@@ -12,6 +12,7 @@ import pt.tecnico.distledger.server.exceptions.AccountProtectedException;
 import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
 import pt.tecnico.distledger.server.exceptions.InvalidAmountException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
+import pt.tecnico.distledger.server.exceptions.TransferBetweenSameAccountException;
 
 import java.util.List;
 import java.util.Map;
@@ -73,10 +74,14 @@ public class ServerState {
             String fromUserId,
             String toUserId,
             int amount
-    ) throws AccountNotFoundException, InsufficientFundsException, ServerUnavailableException, InvalidAmountException {
+    ) throws AccountNotFoundException, InsufficientFundsException, ServerUnavailableException, InvalidAmountException, TransferBetweenSameAccountException {
         ensureServerIsActive();
         final Account fromAccount = getAccount(fromUserId).orElseThrow(() -> new AccountNotFoundException(fromUserId));
         final Account toAccount = getAccount(toUserId).orElseThrow(() -> new AccountNotFoundException(toUserId));
+
+        if (fromAccount.equals(toAccount)) {
+            throw new TransferBetweenSameAccountException(fromAccount.getUserId(), toAccount.getUserId());
+        }
 
         if (amount <= 0) {
             throw new InvalidAmountException(amount);
