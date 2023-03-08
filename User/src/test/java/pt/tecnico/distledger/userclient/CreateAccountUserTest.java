@@ -63,7 +63,6 @@ class CreateAccountUserTest {
     @Test
     @SneakyThrows
     void createDuplicatedAccount() {
-
         stubFor(
                 unaryMethod(UserServiceGrpc.getCreateAccountMethod())
                         .withRequest(UserDistLedger.CreateAccountRequest.newBuilder().setUserId("user1").build())
