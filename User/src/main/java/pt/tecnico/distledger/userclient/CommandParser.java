@@ -107,7 +107,11 @@ public class CommandParser {
 
         final int balance = userService.balance(username);
         log.debug("Balance of user '%s' is %d%n", username, balance);
-        log.info("OK%n%d%n", balance);
+        log.info("OK");
+        if (balance > 0) {
+            log.info("%d", balance);
+        }
+        log.info("");
     }
 
     private void transferTo(String line) {
