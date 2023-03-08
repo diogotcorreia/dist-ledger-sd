@@ -3,6 +3,7 @@ package pt.tecnico.distledger.adminclient;
 import lombok.CustomLog;
 import pt.tecnico.distledger.adminclient.grpc.AdminService;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.LedgerState;
+import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger;
 
 import java.util.Scanner;
 
@@ -91,8 +92,8 @@ public class CommandParser {
         }
         String server = split[1];
 
-        final LedgerState ledgerState = adminService.getLedgerState(server);
-        log.info("OK%n%s%n", ledgerState);
+        final AdminDistLedger.GetLedgerStateResponse response = adminService.getLedgerState(server);
+        log.info("OK%n%s", response);
     }
 
     @SuppressWarnings("unused")

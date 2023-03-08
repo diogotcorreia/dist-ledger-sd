@@ -45,11 +45,11 @@ public class AdminService extends AdminServiceGrpc.AdminServiceImplBase implemen
         log.debug("Receiving gossip response");
     }
 
-    public LedgerState getLedgerState(String server) {
+    public GetLedgerStateResponse getLedgerState(String server) {
         log.debug("Sending request for getting ledger state");
         final GetLedgerStateResponse response = stub.getLedgerState(GetLedgerStateRequest.newBuilder().build());
         log.debug("Receiving response for getting ledger state");
-        return response.getLedgerState();
+        return response;
     }
 
     @Override
