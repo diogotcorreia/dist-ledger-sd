@@ -3,7 +3,6 @@ package pt.tecnico.distledger.adminclient.grpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import lombok.CustomLog;
-import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.LedgerState;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminServiceGrpc;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminServiceGrpc.*;
@@ -45,11 +44,11 @@ public class AdminService extends AdminServiceGrpc.AdminServiceImplBase implemen
         log.debug("Receiving gossip response");
     }
 
-    public LedgerState getLedgerState(String server) {
+    public GetLedgerStateResponse getLedgerState(String server) {
         log.debug("Sending request for getting ledger state");
         final GetLedgerStateResponse response = stub.getLedgerState(GetLedgerStateRequest.newBuilder().build());
         log.debug("Receiving response for getting ledger state");
-        return response.getLedgerState();
+        return response;
     }
 
     @Override

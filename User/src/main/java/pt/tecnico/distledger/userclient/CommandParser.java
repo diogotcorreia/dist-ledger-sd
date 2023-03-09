@@ -11,11 +11,17 @@ public class CommandParser {
 
     private static final String SPACE = " ";
     private static final String CREATE_ACCOUNT = "createAccount";
+    private static final String CREATE_ACCOUNT_ALIAS = "c";
     private static final String DELETE_ACCOUNT = "deleteAccount";
+    private static final String DELETE_ACCOUNT_ALIAS = "d";
     private static final String TRANSFER_TO = "transferTo";
+    private static final String TRANSFER_TO_ALIAS = "t";
     private static final String BALANCE = "balance";
+    private static final String BALANCE_ALIAS = "b";
     private static final String HELP = "help";
+    private static final String HELP_ALIAS = "h";
     private static final String EXIT = "exit";
+    private static final String EXIT_ALIAS = "e";
 
     private final UserService userService;
 
@@ -35,12 +41,12 @@ public class CommandParser {
 
             try {
                 switch (cmd) {
-                    case CREATE_ACCOUNT -> this.createAccount(line);
-                    case DELETE_ACCOUNT -> this.deleteAccount(line);
-                    case TRANSFER_TO -> this.transferTo(line);
-                    case BALANCE -> this.balance(line);
-                    case HELP -> this.printUsage();
-                    case EXIT -> exit = true;
+                    case CREATE_ACCOUNT, CREATE_ACCOUNT_ALIAS -> this.createAccount(line);
+                    case DELETE_ACCOUNT, DELETE_ACCOUNT_ALIAS -> this.deleteAccount(line);
+                    case TRANSFER_TO, TRANSFER_TO_ALIAS -> this.transferTo(line);
+                    case BALANCE, BALANCE_ALIAS -> this.balance(line);
+                    case HELP, HELP_ALIAS -> this.printUsage();
+                    case EXIT, EXIT_ALIAS -> exit = true;
                     default -> {
                         log.error("Command '%s' does not exist%n%n", cmd);
                         this.printUsage();
@@ -101,7 +107,11 @@ public class CommandParser {
 
         final int balance = userService.balance(username);
         log.debug("Balance of user '%s' is %d%n", username, balance);
-        log.info("OK%n%d%n", balance);
+        log.info("OK");
+        if (balance > 0) {
+            log.info("%d", balance);
+        }
+        log.info("");
     }
 
     private void transferTo(String line) {
