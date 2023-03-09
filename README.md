@@ -50,16 +50,41 @@ mvn clean install
 
 ### Running
 
-Run each module with:
+Run each module (one of user, admin, server and name server) by going into its directory and then running:
 
 ```s
 mvn exec:java
 ```
 
-Optionally, you can customize the given argument and turn on debug messages:
+Optionally, you can customize the given arguments and turn on debug messages:
 
 ```s
 mvn exec:java -Dexec.args="<args here>" -Ddebug
+```
+
+#### Running tests
+
+To run tests, run the following in the project root directory, or alternatively on one of the modules:
+
+```s
+mvn test
+```
+
+### Formatting
+
+This project uses [Spotless](https://github.com/diffplug/spotless) to ensure code formatting rules
+are followed.
+
+It is possible to check if the code adheres to the formatting rules by running:
+
+```s
+mvn spotless:check
+```
+
+Or, alternatively, format the code:
+
+```s
+mvn spotless:apply
 ```
 
 ## Built With
