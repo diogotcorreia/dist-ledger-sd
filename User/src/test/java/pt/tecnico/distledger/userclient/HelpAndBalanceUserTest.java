@@ -97,5 +97,23 @@ class HelpAndBalanceUserTest {
                 >\s""", outputStream.toString());
     }
 
+    @Test
+    void invalidCommand() {
+        final String invalidCommand = "test\nexit\n";
 
+        inputStream = new ByteArrayInputStream(invalidCommand.getBytes());
+        System.setIn(inputStream);
+
+        client.parseInput();
+
+        assertEquals("""
+                > Usage:
+                - createAccount <server> <username>
+                - deleteAccount <server> <username>
+                - balance <server> <username>
+                - transferTo <server> <username_from> <username_to> <amount>
+                - exit
+
+                >\s""", outputStream.toString());
+    }
 }
