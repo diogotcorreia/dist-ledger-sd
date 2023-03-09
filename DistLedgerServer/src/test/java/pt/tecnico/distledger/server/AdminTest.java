@@ -21,21 +21,21 @@ class AdminTest {
 
     @Test
     void changeServerAvailability() {
-        assertTrue(state.isActive());
+        assertTrue(state.getActive().get());
         state.deactivate();
-        assertFalse(state.isActive());
+        assertFalse(state.getActive().get());
         state.activate();
-        assertTrue(state.isActive());
+        assertTrue(state.getActive().get());
     }
 
     @Test
     void changeServerToCurrentAvailability() {
         state.activate();
-        assertTrue(state.isActive());
+        assertTrue(state.getActive().get());
         state.deactivate();
-        assertFalse(state.isActive());
+        assertFalse(state.getActive().get());
         state.deactivate();
-        assertFalse(state.isActive());
+        assertFalse(state.getActive().get());
     }
 
     @Test

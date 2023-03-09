@@ -8,6 +8,7 @@ import pt.tecnico.distledger.server.exceptions.AccountNotFoundException;
 import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
 import pt.tecnico.distledger.server.exceptions.InvalidAmountException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
+import pt.tecnico.distledger.server.exceptions.TransferBetweenSameAccountException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -78,6 +79,13 @@ class TransferToTest {
     @SneakyThrows
     void insufficientAmount() {
         assertThrows(InsufficientFundsException.class, () -> state.transferTo(brokerId, userId, 10000));
+        assertEquals(1, state.getLedger().size());
+    }
+
+    @Test
+    @SneakyThrows
+    void sameUser() {
+        assertThrows(TransferBetweenSameAccountException.class, () -> state.transferTo(brokerId, brokerId, 10));
         assertEquals(1, state.getLedger().size());
     }
 

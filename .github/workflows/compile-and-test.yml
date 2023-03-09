@@ -21,6 +21,6 @@ jobs:
       - name: Check formatting
         run: mvn spotless:check
       - name: Compile code
-        run: mvn clean install
+        run: mvn clean install -DskipTests
       - name: Run tests
         run: mvn test
