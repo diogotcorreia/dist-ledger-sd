@@ -29,7 +29,7 @@ public class CommandParser {
         this.adminService = adminService;
     }
 
-    public void parseInput() {
+    void parseInput() {
         Scanner scanner = new Scanner(System.in);
         boolean exit = false;
 

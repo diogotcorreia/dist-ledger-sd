@@ -53,7 +53,7 @@ class AdminTest {
     void help() {
         parseInput("help\nexit\n");
 
-        assertEquals(outputStream.toString(), """
+        assertEquals("""
                 > Usage:
                 - activate <server>
                 - deactivate <server>
@@ -61,7 +61,7 @@ class AdminTest {
                 - gossip <server>
                 - exit
 
-                >\s""");
+                >\s""", outputStream.toString());
     }
 
     @Test
@@ -74,10 +74,10 @@ class AdminTest {
 
         parseInput("activate " + MAIN_SERVER + "\nexit\n");
 
-        assertEquals(outputStream.toString(), """
+        assertEquals("""
                 > OK
 
-                >\s""");
+                >\s""", outputStream.toString());
     }
 
     @Test
@@ -89,10 +89,10 @@ class AdminTest {
         );
         parseInput("deactivate " + MAIN_SERVER + "\nexit\n");
 
-        assertEquals(outputStream.toString(), """
+        assertEquals("""
                 > OK
 
-                >\s""");
+                >\s""", outputStream.toString());
     }
 
     @Test
@@ -140,33 +140,34 @@ class AdminTest {
 
         parseInput("getLedgerState " + MAIN_SERVER + "\nexit\n");
 
-        assertEquals(outputStream.toString(), """
+        assertEquals("""
                 > OK
-                ledger {
-                  type: OP_CREATE_ACCOUNT
-                  userId: "diogo-gaspar"
-                }
-                ledger {
-                  type: OP_CREATE_ACCOUNT
-                  userId: "diogo-correia"
-                }
-                ledger {
-                  type: OP_CREATE_ACCOUNT
-                  userId: "tomas-esteves"
-                }
-                ledger {
-                  type: OP_DELETE_ACCOUNT
-                  userId: "tomas-esteves"
-                }
-                ledger {
-                  type: OP_TRANSFER_TO
-                  userId: "broker"
-                  destUserId: "diogo-gaspar"
-                  amount: 100
+                ledgerState {
+                  ledger {
+                    type: OP_CREATE_ACCOUNT
+                    userId: "diogo-gaspar"
+                  }
+                  ledger {
+                    type: OP_CREATE_ACCOUNT
+                    userId: "diogo-correia"
+                  }
+                  ledger {
+                    type: OP_CREATE_ACCOUNT
+                    userId: "tomas-esteves"
+                  }
+                  ledger {
+                    type: OP_DELETE_ACCOUNT
+                    userId: "tomas-esteves"
+                  }
+                  ledger {
+                    type: OP_TRANSFER_TO
+                    userId: "broker"
+                    destUserId: "diogo-gaspar"
+                    amount: 100
+                  }
                 }
 
-
-                >\s""");
+                >\s""", outputStream.toString());
     }
 
     // TODO: add gossip tests whenever method is implemented
