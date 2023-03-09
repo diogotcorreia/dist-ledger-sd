@@ -31,7 +31,7 @@ class CreateAccountUserTest {
     private static final String createAccountCommand = "createAccount A user1\nexit\n";
 
     @BeforeEach
-    void setup() {
+    public void setup() {
         GrpcMock.configureFor(GrpcMock.grpcMock(0).build().start());
 
         service = new UserService(LOCALHOST, GrpcMock.getGlobalPort());
@@ -42,7 +42,7 @@ class CreateAccountUserTest {
     }
 
     @Test
-    void createAccount() {
+    public void createAccount() {
         stubFor(
                 unaryMethod(UserServiceGrpc.getCreateAccountMethod())
                         .withRequest(UserDistLedger.CreateAccountRequest.newBuilder().setUserId("user1").build())
