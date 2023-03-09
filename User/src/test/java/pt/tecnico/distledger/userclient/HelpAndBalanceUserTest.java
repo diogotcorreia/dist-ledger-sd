@@ -93,7 +93,6 @@ class HelpAndBalanceUserTest {
 
         assertEquals(outputStream.toString(), """
                 > OK
-                0
 
                 >\s""");
     }
