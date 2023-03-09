@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 @Getter
@@ -27,12 +28,12 @@ public class ServerState {
     private static final String BROKER_ID = "broker";
     private final List<Operation> ledger;
     private final Map<String, Account> accounts;
-    private boolean active;
+    private final AtomicBoolean active;
 
     public ServerState() {
         this.ledger = new CopyOnWriteArrayList<>();
         this.accounts = new ConcurrentHashMap<>();
-        this.active = true;
+        this.active = new AtomicBoolean(true);
         createBroker();
     }
 
@@ -98,18 +99,18 @@ public class ServerState {
     }
 
     public void activate() {
-        this.active = true;
+        this.active.set(true);
     }
 
     public void deactivate() {
-        this.active = false;
+        this.active.set(false);
     }
 
     public void gossip() {
         // TODO
     }
 
-    public Stream<Operation> getLedgerStream() {
+    public synchronized Stream<Operation> getLedgerStream() {
         return ledger.stream();
     }
 
@@ -119,7 +120,7 @@ public class ServerState {
      * @param userId The ID of the account to get.
      * @return An optional with the Account, or an empty optional if the account cannot be found.
      */
-    private Optional<Account> getAccount(String userId) {
+    private synchronized Optional<Account> getAccount(String userId) {
         return Optional.ofNullable(accounts.get(userId));
     }
 
@@ -130,7 +131,7 @@ public class ServerState {
     }
 
     private void ensureServerIsActive() throws ServerUnavailableException {
-        if (!active) {
+        if (!active.get()) {
             throw new ServerUnavailableException("Server is not active");
         }
     }
