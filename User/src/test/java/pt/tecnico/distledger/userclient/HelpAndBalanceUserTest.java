@@ -49,7 +49,7 @@ class HelpAndBalanceUserTest {
 
         client.parseInput();
 
-        assertEquals(outputStream.toString(), """
+        assertEquals("""
                 > Usage:
                 - createAccount <server> <username>
                 - deleteAccount <server> <username>
@@ -57,7 +57,7 @@ class HelpAndBalanceUserTest {
                 - transferTo <server> <username_from> <username_to> <amount>
                 - exit
 
-                >\s""");
+                >\s""", outputStream.toString());
     }
 
     @Test
@@ -72,11 +72,11 @@ class HelpAndBalanceUserTest {
 
         client.parseInput();
 
-        assertEquals(outputStream.toString(), """
+        assertEquals("""
                 > OK
                 20
 
-                >\s""");
+                >\s""", outputStream.toString());
     }
 
     @Test
@@ -91,10 +91,10 @@ class HelpAndBalanceUserTest {
 
         client.parseInput();
 
-        assertEquals(outputStream.toString(), """
+        assertEquals("""
                 > OK
 
-                >\s""");
+                >\s""", outputStream.toString());
     }
 
 

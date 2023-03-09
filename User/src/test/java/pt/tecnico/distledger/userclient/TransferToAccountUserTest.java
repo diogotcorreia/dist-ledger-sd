@@ -62,10 +62,10 @@ class TransferToAccountUserTest {
 
         client.parseInput();
 
-        assertEquals(outputStream.toString(), """
+        assertEquals("""
                 > OK
 
-                >\s""");
+                >\s""", outputStream.toString());
     }
 
     @Test
@@ -95,9 +95,9 @@ class TransferToAccountUserTest {
 
         client.parseInput();
 
-        assertEquals(outputStream.toString(), """
+        assertEquals("""
                 > [ERROR] Account 'user34' not found
-                >\s""");
+                >\s""", outputStream.toString());
     }
 
     @Test
@@ -127,9 +127,9 @@ class TransferToAccountUserTest {
 
         client.parseInput();
 
-        assertEquals(outputStream.toString(), """
+        assertEquals("""
                 > [ERROR] Account 'user34' not found
-                >\s""");
+                >\s""", outputStream.toString());
     }
 
     @Test
@@ -161,9 +161,9 @@ class TransferToAccountUserTest {
 
         client.parseInput();
 
-        assertEquals(outputStream.toString(), """
+        assertEquals("""
                 > [ERROR] It is not possible to create a transfer between the same account (from 'user1' to 'user1').
-                >\s""");
+                >\s""", outputStream.toString());
     }
 
     @Test
@@ -195,9 +195,9 @@ class TransferToAccountUserTest {
 
         client.parseInput();
 
-        assertEquals(outputStream.toString(), """
+        assertEquals("""
                 > [ERROR] The given amount (-1) is a non-positive number
-                >\s""");
+                >\s""", outputStream.toString());
     }
 
     @Test
@@ -229,8 +229,8 @@ class TransferToAccountUserTest {
 
         client.parseInput();
 
-        assertEquals(outputStream.toString(), """
+        assertEquals("""
                 > [ERROR] Account 'user1' does not have enough funds (expected 1001 but only 1000 are available)
-                >\s""");
+                >\s""", outputStream.toString());
     }
 }

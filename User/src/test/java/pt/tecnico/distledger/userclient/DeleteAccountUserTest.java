@@ -54,10 +54,10 @@ class DeleteAccountUserTest {
 
         client.parseInput();
 
-        assertEquals(outputStream.toString(), """
+        assertEquals("""
                 > OK
 
-                >\s""");
+                >\s""", outputStream.toString());
     }
 
     @Test
@@ -79,9 +79,9 @@ class DeleteAccountUserTest {
 
         client.parseInput();
 
-        assertEquals(outputStream.toString(), """
+        assertEquals("""
                 > [ERROR] Account 'user1' not found
-                >\s""");
+                >\s""", outputStream.toString());
     }
 
     @Test
@@ -104,9 +104,9 @@ class DeleteAccountUserTest {
 
         client.parseInput();
 
-        assertEquals(outputStream.toString(), """
+        assertEquals("""
                 > [ERROR] Account broker is protected. It cannot be removed
-                >\s""");
+                >\s""", outputStream.toString());
     }
 
     @Test
@@ -130,8 +130,8 @@ class DeleteAccountUserTest {
 
         client.parseInput();
 
-        assertEquals(outputStream.toString(), """
+        assertEquals("""
                 > [ERROR] Account user1 cannot be removed, as its balance 10 is not zero.
-                >\s""");
+                >\s""", outputStream.toString());
     }
 }

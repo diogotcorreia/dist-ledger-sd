@@ -54,10 +54,10 @@ class CreateAccountUserTest {
 
         client.parseInput();
 
-        assertEquals(outputStream.toString(), """
+        assertEquals("""
                 > OK
 
-                >\s""");
+                >\s""", outputStream.toString());
     }
 
     @Test
@@ -79,8 +79,8 @@ class CreateAccountUserTest {
 
         client.parseInput();
 
-        assertEquals(outputStream.toString(), """
+        assertEquals("""
                 > [ERROR] Account 'user1' already exists
-                >\s""");
+                >\s""", outputStream.toString());
     }
 }
