@@ -128,9 +128,9 @@ public class CommandParser {
 
         userService.transferTo(from, dest, amount);
         if (amount == 1) {
-            log.debug("1 coin has been transfered from account '%s' account '%s'%n", from, dest);
+            log.debug("1 coin has been transferred from account '%s' account '%s'%n", from, dest);
         } else {
-            log.debug("%d coins have been transfered from account '%s' account '%s'%n", amount, from, dest);
+            log.debug("%d coins have been transferred from account '%s' account '%s'%n", amount, from, dest);
         }
         log.info("OK%n");
     }

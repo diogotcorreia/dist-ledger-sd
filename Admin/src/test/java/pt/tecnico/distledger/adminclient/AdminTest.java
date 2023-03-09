@@ -172,4 +172,21 @@ class AdminTest {
 
     // TODO: add gossip tests whenever method is implemented
 
+    @Test
+    void invalidCommand() {
+        parseInput("test\nexit\n");
+
+        assertEquals("""
+                > [ERROR] Command 'test' does not exist
+
+                Usage:
+                - activate <server>
+                - deactivate <server>
+                - getLedgerState <server>
+                - gossip <server>
+                - exit
+
+                >\s""", outputStream.toString());
+    }
+
 }
