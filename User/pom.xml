@@ -24,6 +24,7 @@
 
         <version.maven-compiler-plugin>3.8.1</version.maven-compiler-plugin>
         <version.exec-maven-plugin>3.0.0</version.exec-maven-plugin>
+        <version.org.grpcmock.grpcmock-junit5>0.5.3</version.org.grpcmock.grpcmock-junit5>
 
         <mainclass>pt.tecnico.distledger.userclient.UserClientMain</mainclass>
         <server.host>localhost</server.host>
@@ -52,13 +53,7 @@
         <dependency>
             <groupId>org.grpcmock</groupId>
             <artifactId>grpcmock-junit5</artifactId>
-            <version>0.5.3</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>pt.tecnico.sdis.2023.A04</groupId>
-            <artifactId>DistLedgerServer</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${version.org.grpcmock.grpcmock-junit5}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
