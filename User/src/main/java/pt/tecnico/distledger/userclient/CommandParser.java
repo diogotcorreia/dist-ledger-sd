@@ -58,8 +58,12 @@ public class CommandParser {
                 } else {
                     log.error(e.getMessage());
                 }
+                if (e.getStatus().getCause() != null) {
+                    e.getStatus().getCause().printStackTrace();
+                }
             } catch (Exception e) {
                 log.error(e.getMessage());
+                e.printStackTrace();
             }
         }
     }

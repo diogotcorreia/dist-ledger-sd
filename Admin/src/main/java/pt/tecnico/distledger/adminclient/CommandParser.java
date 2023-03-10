@@ -1,5 +1,6 @@
 package pt.tecnico.distledger.adminclient;
 
+import io.grpc.StatusRuntimeException;
 import lombok.CustomLog;
 import pt.tecnico.distledger.adminclient.grpc.AdminService;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger;
@@ -38,19 +39,32 @@ public class CommandParser {
             String line = scanner.nextLine().trim();
             String cmd = line.split(SPACE)[0];
 
-            switch (cmd) {
-                case ACTIVATE, ACTIVATE_ALIAS -> this.activate(line);
-                case DEACTIVATE, DEACTIVATE_ALIAS -> this.deactivate(line);
-                case GET_LEDGER_STATE, GET_LEDGER_STATE_ALIAS -> this.dump(line);
-                case GOSSIP, GOSSIP_ALIAS -> this.gossip(line);
-                case HELP, HELP_ALIAS -> this.printUsage();
-                case EXIT, EXIT_ALIAS -> exit = true;
-                default -> {
-                    log.error("Command '%s' does not exist%n", cmd);
-                    this.printUsage();
+            try {
+                switch (cmd) {
+                    case ACTIVATE, ACTIVATE_ALIAS -> this.activate(line);
+                    case DEACTIVATE, DEACTIVATE_ALIAS -> this.deactivate(line);
+                    case GET_LEDGER_STATE, GET_LEDGER_STATE_ALIAS -> this.dump(line);
+                    case GOSSIP, GOSSIP_ALIAS -> this.gossip(line);
+                    case HELP, HELP_ALIAS -> this.printUsage();
+                    case EXIT, EXIT_ALIAS -> exit = true;
+                    default -> {
+                        log.error("Command '%s' does not exist%n", cmd);
+                        this.printUsage();
+                    }
                 }
+            } catch (StatusRuntimeException e) {
+                if (e.getStatus().getDescription() != null) {
+                    log.error(e.getStatus().getDescription());
+                } else {
+                    log.error(e.getMessage());
+                }
+                if (e.getStatus().getCause() != null) {
+                    e.getStatus().getCause().printStackTrace();
+                }
+            } catch (Exception e) {
+                log.error(e.getMessage());
+                e.printStackTrace();
             }
-
         }
     }
 
