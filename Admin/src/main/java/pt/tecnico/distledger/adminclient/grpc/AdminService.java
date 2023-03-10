@@ -3,12 +3,16 @@ package pt.tecnico.distledger.adminclient.grpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import lombok.CustomLog;
-import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger.*;
+import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger.ActivateRequest;
+import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger.DeactivateRequest;
+import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger.GetLedgerStateRequest;
+import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger.GetLedgerStateResponse;
+import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger.GossipRequest;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminServiceGrpc;
-import pt.ulisboa.tecnico.distledger.contract.admin.AdminServiceGrpc.*;
+import pt.ulisboa.tecnico.distledger.contract.admin.AdminServiceGrpc.AdminServiceBlockingStub;
 
 @CustomLog(topic = "Service")
-public class AdminService extends AdminServiceGrpc.AdminServiceImplBase implements AutoCloseable {
+public class AdminService implements AutoCloseable {
 
     private final ManagedChannel channel;
 
@@ -22,7 +26,6 @@ public class AdminService extends AdminServiceGrpc.AdminServiceImplBase implemen
     }
 
     public void activate(String server) {
-        // TODO: server is useful from phase 2 onwards
         log.debug("Sending request to activate server");
         // noinspection ResultOfMethodCallIgnored
         stub.activate(ActivateRequest.newBuilder().build());
@@ -30,7 +33,6 @@ public class AdminService extends AdminServiceGrpc.AdminServiceImplBase implemen
     }
 
     public void deactivate(String server) {
-        // TODO: server is useful from phase 2 onwards
         log.debug("Sending request to deactivate server");
         // noinspection ResultOfMethodCallIgnored
         stub.deactivate(DeactivateRequest.newBuilder().build());

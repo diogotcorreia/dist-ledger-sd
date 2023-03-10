@@ -12,7 +12,7 @@ import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.TransferToRequ
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc;
 
 @CustomLog(topic = "Service")
-public class UserService extends UserServiceGrpc.UserServiceImplBase implements AutoCloseable {
+public class UserService implements AutoCloseable {
 
     private final ManagedChannel channel;
     // blocking stub (for now)
