@@ -19,5 +19,4 @@ public class ServerDoesNotExistException extends Exception implements GrpcSerial
     public Status.Code getStatusCode() {
         return Status.Code.INVALID_ARGUMENT;
     }
-
 }

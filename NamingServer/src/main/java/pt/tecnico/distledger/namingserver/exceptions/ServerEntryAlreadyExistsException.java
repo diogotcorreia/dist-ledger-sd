@@ -16,5 +16,7 @@ public class ServerEntryAlreadyExistsException extends Exception implements Grpc
     }
 
     @Override
-    public Status.Code getStatusCode() { return Status.Code.ALREADY_EXISTS; }
+    public Status.Code getStatusCode() {
+        return Status.Code.ALREADY_EXISTS;
+    }
 }
