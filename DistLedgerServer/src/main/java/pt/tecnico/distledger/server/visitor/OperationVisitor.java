@@ -4,12 +4,12 @@ import pt.tecnico.distledger.server.domain.operation.CreateOp;
 import pt.tecnico.distledger.server.domain.operation.DeleteOp;
 import pt.tecnico.distledger.server.domain.operation.TransferOp;
 
-public abstract class OperationVisitor<T> {
+public abstract class OperationVisitor {
 
-    public abstract T visit(CreateOp operation);
+    public abstract void visit(CreateOp operation);
 
-    public abstract T visit(DeleteOp operation);
+    public abstract void visit(DeleteOp operation);
 
-    public abstract T visit(TransferOp operation);
+    public abstract void visit(TransferOp operation);
 
 }
