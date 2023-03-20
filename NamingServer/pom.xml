@@ -26,7 +26,6 @@
         <version.exec-maven-plugin>3.0.0</version.exec-maven-plugin>
 
         <mainclass>pt.tecnico.distledger.namingserver.NamingServerMain</mainclass>
-        <server.port>5001</server.port>
 
         <spotless.java.eclipse.file>${project.basedir}${file.separator}..${file.separator}formatter-config.xml</spotless.java.eclipse.file>
     </properties>

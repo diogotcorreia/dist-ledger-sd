@@ -7,8 +7,8 @@ message ServerAddress {
 }
 
 message ServerInfo {
-  ServerAddress address = 2;
-  string qualifier = 3;
+  ServerAddress address = 1;
+  string qualifier = 2;
 }
 
 message RegisterServerRequest {
@@ -17,7 +17,7 @@ message RegisterServerRequest {
   string qualifier = 3;
 }
 
-message RegisterServerResponse { }
+message RegisterServerResponse {}
 
 message LookupServerRequest {
   string serviceName = 1;
@@ -33,7 +33,7 @@ message DeleteServerRequest {
   ServerAddress address = 2;
 }
 
-message DeleteServerResponse { }
+message DeleteServerResponse {}
 
 service NamingServerService {
   rpc registerServer(RegisterServerRequest) returns (RegisterServerResponse) {}
