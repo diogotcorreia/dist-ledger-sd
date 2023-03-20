@@ -3,7 +3,7 @@ package pt.tecnico.distledger.server.service;
 import io.grpc.stub.StreamObserver;
 import lombok.CustomLog;
 import pt.tecnico.distledger.server.domain.ServerState;
-import pt.tecnico.distledger.server.visitor.ConvertOperationToGrpcVisitor;
+import pt.tecnico.distledger.server.visitor.ConvertOperationsToGrpcVisitor;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.LedgerState;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger.ActivateRequest;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger.ActivateResponse;
@@ -62,12 +62,11 @@ public class AdminDistLedgerServiceImpl extends AdminServiceGrpc.AdminServiceImp
             StreamObserver<GetLedgerStateResponse> responseObserver
     ) {
         log.debug("Ledger state has been requested");
+        final ConvertOperationsToGrpcVisitor visitor = new ConvertOperationsToGrpcVisitor();
+        serverState.operateOverLedger(visitor);
+
         final LedgerState ledgerState = LedgerState.newBuilder()
-                .addAllLedger(
-                        serverState.getLedgerStream()
-                                .map(op -> op.accept(new ConvertOperationToGrpcVisitor()))
-                                .toList()
-                )
+                .addAllLedger(visitor.getLedger())
                 .build();
 
         responseObserver.onNext(
