@@ -10,4 +10,5 @@ public record ServerAddress(String host, int port) {
                 .setPort(this.port)
                 .build();
     }
+
 }

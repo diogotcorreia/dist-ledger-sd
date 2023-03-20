@@ -11,29 +11,32 @@ import pt.tecnico.distledger.namingserver.service.NamingServerServiceImpl;
 @CustomLog
 public class NamingServerMain {
 
+    private static final int PORT = 5001;
+
     public static void main(String[] args) throws Exception {
         Logger.setDebug(System.getProperty("debug") != null);
 
         if (args.length != 0) {
-            log.error("Argument(s) present!");
+            log.error("The Naming Server does not accept any arguments.");
+            log.error("The Server is located at localhost:" + PORT);
             log.error("Usage: mvn exec:java");
             System.exit(1);
         }
 
-        final int namingServerPort = 5001;
 
         final NamingServer namingServer = new NamingServer();
         final BindableService namingServerService = new NamingServerServiceImpl(namingServer);
 
-        Server server = ServerBuilder.forPort(namingServerPort)
+        Server server = ServerBuilder.forPort(PORT)
                 .addService(namingServerService)
                 .build();
 
         server.start();
 
-        log.info("Naming Server started, listening on port " + namingServerPort);
+        log.info("Naming Server started, listening on port " + PORT);
         log.debug("Debug mode is active");
 
         server.awaitTermination();
     }
+
 }

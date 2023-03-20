@@ -12,4 +12,5 @@ public record ServerEntry(ServerAddress address, String qualifier) {
                 .setQualifier(qualifier)
                 .build();
     }
+
 }
