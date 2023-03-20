@@ -14,6 +14,6 @@ public abstract class Operation {
         this.type = type;
     }
 
-    public abstract <T> T accept(OperationVisitor<T> visitor);
+    public abstract void accept(OperationVisitor visitor);
 
 }

@@ -13,6 +13,7 @@ import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
 import pt.tecnico.distledger.server.exceptions.InvalidAmountException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.server.exceptions.TransferBetweenSameAccountException;
+import pt.tecnico.distledger.server.visitor.OperationVisitor;
 
 import java.util.List;
 import java.util.Map;
@@ -20,7 +21,6 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Stream;
 
 @Getter
 public class ServerState {
@@ -110,8 +110,8 @@ public class ServerState {
         // TODO
     }
 
-    public synchronized Stream<Operation> getLedgerStream() {
-        return ledger.stream();
+    public synchronized void operateOverLedger(OperationVisitor visitor) {
+        ledger.forEach(operation -> operation.accept(visitor));
     }
 
     /**
