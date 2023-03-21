@@ -62,10 +62,11 @@ public class AdminDistLedgerServiceImpl extends AdminServiceGrpc.AdminServiceImp
             StreamObserver<GetLedgerStateResponse> responseObserver
     ) {
         log.debug("Ledger state has been requested");
+        final ConvertOperationsToGrpcVisitor visitor = new ConvertOperationsToGrpcVisitor();
+        serverState.operateOverLedger(visitor);
+
         final LedgerState ledgerState = LedgerState.newBuilder()
-                .addAllLedger(
-                        serverState.g
-                )
+                .addAllLedger(visitor.getLedger())
                 .build();
 
         responseObserver.onNext(
