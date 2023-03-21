@@ -4,8 +4,8 @@ import lombok.Getter;
 import pt.tecnico.distledger.namingserver.exceptions.ServerDoesNotExistException;
 import pt.tecnico.distledger.namingserver.exceptions.ServerEntryAlreadyExistsException;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @Getter
 public class ServiceEntry {
@@ -16,10 +16,10 @@ public class ServiceEntry {
 
     public ServiceEntry(String serviceName) {
         this.serviceName = serviceName;
-        servers = new ArrayList<>();
+        servers = new CopyOnWriteArrayList<>();
     }
 
-    public void addServer(
+    public void addServerEntry(
             ServerAddress serverAddress,
             String serverQualifier
     ) throws ServerEntryAlreadyExistsException {
@@ -29,7 +29,7 @@ public class ServiceEntry {
         servers.add(new ServerEntry(serverAddress, serverQualifier));
     }
 
-    public List<ServerEntry> getServers(String qualifier) {
+    public List<ServerEntry> getServerEntriesWithQualifier(String qualifier) {
         return qualifier == null || qualifier.isEmpty()
                 ? servers
                 : servers
@@ -38,7 +38,7 @@ public class ServiceEntry {
                         .toList();
     }
 
-    public void delete(ServerAddress serverAddress) throws ServerDoesNotExistException {
+    public void removeServerEntry(ServerAddress serverAddress) throws ServerDoesNotExistException {
         if (!servers.removeIf(serverEntry -> serverEntry.address().equals(serverAddress))) {
             throw new ServerDoesNotExistException(serviceName);
         }

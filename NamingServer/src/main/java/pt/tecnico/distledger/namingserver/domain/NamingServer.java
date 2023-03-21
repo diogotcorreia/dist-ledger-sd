@@ -25,12 +25,12 @@ public class NamingServer {
     ) throws ServerEntryAlreadyExistsException {
         services
                 .computeIfAbsent(serviceName, ServiceEntry::new)
-                .addServer(serverAddress, serverQualifier);
+                .addServerEntry(serverAddress, serverQualifier);
     }
 
     public List<ServerEntry> lookup(String serviceName, String qualifier) {
         return services.containsKey(serviceName)
-                ? services.get(serviceName).getServers(qualifier)
+                ? services.get(serviceName).getServerEntriesWithQualifier(qualifier)
                 : Collections.emptyList();
     }
 
@@ -41,6 +41,10 @@ public class NamingServer {
         if (!services.containsKey(serviceName)) {
             throw new ServerDoesNotExistException(serviceName);
         }
-        services.get(serviceName).delete(serverAddress);
+        ServiceEntry service = services.get(serviceName);
+        service.removeServerEntry(serverAddress);
+        if (service.getServers().isEmpty()) {
+            services.remove(serviceName);
+        }
     }
 }
