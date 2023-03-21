@@ -6,6 +6,7 @@ import io.grpc.ServerBuilder;
 import lombok.CustomLog;
 import pt.tecnico.distledger.common.Logger;
 import pt.tecnico.distledger.server.domain.ServerState;
+import pt.tecnico.distledger.server.grpc.NamingServerService;
 import pt.tecnico.distledger.server.service.AdminDistLedgerServiceImpl;
 import pt.tecnico.distledger.server.service.CrossServerDistLedgerServiceImpl;
 import pt.tecnico.distledger.server.service.UserDistLedgerServiceImpl;
@@ -52,7 +53,9 @@ public class ServerMain {
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             log.info("Server shutting down");
-            serverState.shutdown(port);
+            try (var namingServerService = new NamingServerService()) {
+                namingServerService.removeServer(port);
+            }
         }));
 
         server.awaitTermination();

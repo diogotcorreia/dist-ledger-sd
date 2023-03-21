@@ -13,8 +13,12 @@ import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
 import pt.tecnico.distledger.server.exceptions.InvalidAmountException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.server.exceptions.TransferBetweenSameAccountException;
+import pt.tecnico.distledger.server.grpc.CrossServerService;
+import pt.tecnico.distledger.server.grpc.NamingServerService;
+import pt.tecnico.distledger.server.visitor.ConvertOperationsToGrpcVisitor;
 import pt.tecnico.distledger.server.visitor.ExecuteOperationVisitor;
 import pt.tecnico.distledger.server.visitor.OperationVisitor;
+import pt.ulisboa.tecnico.distledger.contract.namingserver.NamingServerDistLedger.ServerInfo;
 
 import java.util.List;
 import java.util.Map;
@@ -145,8 +149,21 @@ public class ServerState {
     }
 
     private void sendLedger() {
-        try (final CrossServerService crossServerService = new CrossServerService()) {
-            crossServerService.sendLedger(ledger);
+        List<ServerInfo> serverList;
+        try (var namingServerService = new NamingServerService()) {
+            serverList = namingServerService.getServerList()
+                    .stream()
+                    .filter(serverInfo -> !serverInfo.getQualifier().equals("A"))
+                    .toList();
+        }
+
+        ConvertOperationsToGrpcVisitor visitor = new ConvertOperationsToGrpcVisitor();
+        operateOverLedger(visitor);
+
+        for (ServerInfo serverInfo : serverList) {
+            try (var serverService = new CrossServerService(serverInfo)) {
+                serverService.sendLedger(visitor.getLedger());
+            }
         }
     }
 
@@ -175,4 +192,5 @@ public class ServerState {
     public synchronized void ensureServersAreReachable() throws ServerUnavailableException {
         // TODO
     }
+
 }
