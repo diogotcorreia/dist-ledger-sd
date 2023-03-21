@@ -19,7 +19,7 @@ public class AddressFactory {
         if (port < 1024 || port > 65535) {
             throw new ServerWithInvalidParametersException(host, port);
         }
-        return new ServerAddress(address.getHost(), port);
+        return new ServerAddress(host, port);
     }
 
 }
