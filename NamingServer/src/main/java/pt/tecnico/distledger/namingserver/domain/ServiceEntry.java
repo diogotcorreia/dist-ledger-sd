@@ -43,5 +43,5 @@ public class ServiceEntry {
             throw new ServerDoesNotExistException(serviceName);
         }
     }
-    
+
 }

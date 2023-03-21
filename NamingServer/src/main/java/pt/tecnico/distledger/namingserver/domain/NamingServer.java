@@ -3,7 +3,6 @@ package pt.tecnico.distledger.namingserver.domain;
 import lombok.Getter;
 import pt.tecnico.distledger.namingserver.exceptions.ServerDoesNotExistException;
 import pt.tecnico.distledger.namingserver.exceptions.ServerEntryAlreadyExistsException;
-import pt.ulisboa.tecnico.distledger.contract.namingserver.NamingServerDistLedger;
 
 import java.util.Collections;
 import java.util.List;
@@ -21,13 +20,12 @@ public class NamingServer {
 
     public void register(
             String serviceName,
-            String host,
-            int port,
+            ServerAddress serverAddress,
             String serverQualifier
     ) throws ServerEntryAlreadyExistsException {
         services
                 .computeIfAbsent(serviceName, ServiceEntry::new)
-                .addServer(new ServerAddress(host, port), serverQualifier);
+                .addServer(serverAddress, serverQualifier);
     }
 
     public List<ServerEntry> lookup(String serviceName, String qualifier) {
@@ -38,12 +36,11 @@ public class NamingServer {
 
     public void delete(
             String serviceName,
-            NamingServerDistLedger.ServerAddress serverAddress
+            ServerAddress serverAddress
     ) throws ServerDoesNotExistException {
         if (!services.containsKey(serviceName)) {
             throw new ServerDoesNotExistException(serviceName);
         }
-        services.get(serviceName).delete(new ServerAddress(serverAddress.getHost(), serverAddress.getPort()));
+        services.get(serviceName).delete(serverAddress);
     }
-    
 }
