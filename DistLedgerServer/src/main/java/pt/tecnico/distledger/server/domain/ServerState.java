@@ -13,6 +13,7 @@ import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
 import pt.tecnico.distledger.server.exceptions.InvalidAmountException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.server.exceptions.TransferBetweenSameAccountException;
+import pt.tecnico.distledger.server.visitor.ExecuteOperationVisitor;
 import pt.tecnico.distledger.server.visitor.OperationVisitor;
 
 import java.util.List;
@@ -21,20 +22,28 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 @Getter
 public class ServerState {
 
     private static final String BROKER_ID = "broker";
+    private static final String PRIMARY_SERVER = "A";
     private final List<Operation> ledger;
     private final Map<String, Account> accounts;
     private final AtomicBoolean active;
+    private final boolean isPrimary;
 
-    public ServerState() {
+    public ServerState(int port, String qualifier) {
         this.ledger = new CopyOnWriteArrayList<>();
         this.accounts = new ConcurrentHashMap<>();
         this.active = new AtomicBoolean(true);
         createBroker();
+        this.isPrimary = qualifier.equals(PRIMARY_SERVER);
+
+        try (final NamingServerService namingServerService = new NamingServerService()) {
+            namingServerService.register(port, qualifier);
+        }
     }
 
     public synchronized int getBalance(String userId) throws AccountNotFoundException, ServerUnavailableException {
@@ -48,6 +57,7 @@ public class ServerState {
             String userId
     ) throws AccountAlreadyExistsException, ServerUnavailableException {
         ensureServerIsActive();
+        ensureServersAreReachable(); // FIXME: this probably doesn't work, as the servers may become unreachable after this check; maybe a try-catch around the whole method?
         if (accounts.containsKey(userId)) {
             throw new AccountAlreadyExistsException(userId);
         }
@@ -59,6 +69,7 @@ public class ServerState {
             String userId
     ) throws AccountNotEmptyException, AccountNotFoundException, AccountProtectedException, ServerUnavailableException {
         ensureServerIsActive();
+        ensureServersAreReachable(); // FIXME: this probably doesn't work, as the servers may become unreachable after this check; maybe a try-catch around the whole method?
         final int balance = getAccount(userId)
                 .orElseThrow(() -> new AccountNotFoundException(userId))
                 .getBalance();
@@ -79,6 +90,7 @@ public class ServerState {
             int amount
     ) throws AccountNotFoundException, InsufficientFundsException, ServerUnavailableException, InvalidAmountException, TransferBetweenSameAccountException {
         ensureServerIsActive();
+        ensureServersAreReachable(); // FIXME: this probably doesn't work, as the servers may become unreachable after this check; maybe a try-catch around the whole method?
         final Account fromAccount = getAccount(fromUserId).orElseThrow(() -> new AccountNotFoundException(fromUserId));
         final Account toAccount = getAccount(toUserId).orElseThrow(() -> new AccountNotFoundException(toUserId));
 
@@ -114,6 +126,30 @@ public class ServerState {
         ledger.forEach(operation -> operation.accept(visitor));
     }
 
+    public synchronized Stream<Operation> getLedgerStream() {
+        return ledger.stream();
+    }
+
+    public synchronized void setLedger(List<Operation> ledger) {
+        this.ledger.clear();
+        this.accounts.clear();
+        this.ledger.addAll(ledger);
+        createBroker();
+        generateAccountsFromLedger();
+    }
+
+    public synchronized void generateAccountsFromLedger() {
+        ledger.forEach(
+                operation -> operation.accept(new ExecuteOperationVisitor(this.accounts))
+        );
+    }
+
+    private void sendLedger() {
+        try (final CrossServerService crossServerService = new CrossServerService()) {
+            crossServerService.sendLedger(ledger);
+        }
+    }
+
     /**
      * Get an account by its ID.
      *
@@ -134,5 +170,9 @@ public class ServerState {
         if (!active.get()) {
             throw new ServerUnavailableException("Server is not active");
         }
+    }
+
+    public synchronized void ensureServersAreReachable() throws ServerUnavailableException {
+        // TODO
     }
 }

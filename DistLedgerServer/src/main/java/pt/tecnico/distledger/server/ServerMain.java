@@ -31,11 +31,9 @@ public class ServerMain {
             System.exit(1);
         }
         final int port = portOpt.getAsInt();
+        final String qualifier = args[1];
 
-        // Ignore the second argument (for now)
-        // final String serverQualifier = args[1];
-
-        ServerState serverState = new ServerState();
+        ServerState serverState = new ServerState(port, qualifier);
 
         final BindableService userImpl = new UserDistLedgerServiceImpl(serverState);
         final BindableService adminImpl = new AdminDistLedgerServiceImpl(serverState);
@@ -52,11 +50,16 @@ public class ServerMain {
         log.info("Server started, listening on port " + port);
         log.debug("Debug mode is active");
 
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            log.info("Server shutting down");
+            serverState.shutdown(port);
+        }));
+
         server.awaitTermination();
     }
 
     /**
-     * Parses a string as a valid non-priviledged port number (1024-65535).
+     * Parses a string as a valid non-privileged port number (1024-65535).
      *
      * @param portStr A string containing the port number.
      * @return An empty optional if the port is invalid, or an optional wrapping the parsed port number.
