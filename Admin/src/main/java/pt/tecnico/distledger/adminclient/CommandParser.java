@@ -3,7 +3,7 @@ package pt.tecnico.distledger.adminclient;
 import io.grpc.StatusRuntimeException;
 import lombok.CustomLog;
 import pt.tecnico.distledger.adminclient.grpc.AdminService;
-import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger;
+import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger.*;
 
 import java.util.Scanner;
 
@@ -35,7 +35,7 @@ public class CommandParser {
         boolean exit = false;
 
         while (!exit) {
-            System.out.print("> ");
+            log.info("> ");
             String line = scanner.nextLine().trim();
             String cmd = line.split(SPACE)[0];
 
@@ -105,7 +105,7 @@ public class CommandParser {
         }
         String server = split[1];
 
-        final AdminDistLedger.GetLedgerStateResponse response = adminService.getLedgerState(server);
+        final GetLedgerStateResponse response = adminService.getLedgerState(server);
         log.info("OK%n%s", response);
     }
 
@@ -116,7 +116,7 @@ public class CommandParser {
     }
 
     private void printUsage() {
-        System.out.println(
+        log.info(
                 """
                         Usage:
                         - activate <server>
