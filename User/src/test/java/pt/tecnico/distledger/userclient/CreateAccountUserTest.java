@@ -27,14 +27,13 @@ class CreateAccountUserTest {
     private static ByteArrayInputStream inputStream;
     private static ByteArrayOutputStream outputStream;
 
-    private static final String LOCALHOST = "localhost";
     private static final String createAccountCommand = "createAccount A user1\nexit\n";
 
     @BeforeEach
     public void setup() {
         GrpcMock.configureFor(GrpcMock.grpcMock(0).build().start());
 
-        service = new UserService(LOCALHOST, GrpcMock.getGlobalPort());
+        service = new UserService();
         client = new CommandParser(service);
         outputStream = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outputStream));

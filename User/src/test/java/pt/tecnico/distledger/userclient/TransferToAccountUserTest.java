@@ -27,7 +27,6 @@ class TransferToAccountUserTest {
     private static ByteArrayInputStream inputStream;
     private static ByteArrayOutputStream outputStream;
 
-    private static final String LOCALHOST = "localhost";
 
     // Assuming user1 has 1000 and user2 has 500
     private static final String transferToCommand = "transferTo A user1 user2 125\nexit\n";
@@ -36,7 +35,7 @@ class TransferToAccountUserTest {
     void setup() {
         GrpcMock.configureFor(GrpcMock.grpcMock(0).build().start());
 
-        service = new UserService(LOCALHOST, GrpcMock.getGlobalPort());
+        service = new UserService();
         client = new CommandParser(service);
         outputStream = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outputStream));

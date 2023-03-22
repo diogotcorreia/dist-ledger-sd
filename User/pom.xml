@@ -80,10 +80,6 @@
                 <version>${version.exec-maven-plugin}</version>
                 <configuration>
                     <mainClass>${mainclass}</mainClass>
-                    <arguments>
-                        <argument>${server.host}</argument>
-                        <argument>${server.port}</argument>
-                    </arguments>
                 </configuration>
                 <executions>
                     <execution>

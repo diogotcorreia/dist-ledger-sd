@@ -35,7 +35,7 @@ public class CommandParser {
         boolean exit = false;
 
         while (!exit) {
-            System.out.print("> ");
+            log.info("> ");
             String line = scanner.nextLine().trim();
             String cmd = line.split(SPACE)[0];
 
@@ -79,7 +79,7 @@ public class CommandParser {
         String server = split[1];
         String username = split[2];
 
-        userService.createAccount(username);
+        userService.createAccount(server, username);
         log.debug("Account '%s' has been created%n", username);
         log.info("OK%n");
     }
@@ -94,7 +94,7 @@ public class CommandParser {
         String server = split[1];
         String username = split[2];
 
-        userService.deleteAccount(username);
+        userService.deleteAccount(server, username);
         log.debug("Account '%s' has been deleted%n", username);
         log.info("OK%n");
     }
@@ -109,7 +109,7 @@ public class CommandParser {
         String server = split[1];
         String username = split[2];
 
-        final int balance = userService.balance(username);
+        final int balance = userService.balance(server, username);
         log.debug("Balance of user '%s' is %d%n", username, balance);
         log.info("OK");
         if (balance > 0) {
@@ -130,7 +130,7 @@ public class CommandParser {
         String dest = split[3];
         Integer amount = Integer.valueOf(split[4]);
 
-        userService.transferTo(from, dest, amount);
+        userService.transferTo(server, from, dest, amount);
         if (amount == 1) {
             log.debug("1 coin has been transferred from account '%s' account '%s'%n", from, dest);
         } else {
@@ -140,7 +140,7 @@ public class CommandParser {
     }
 
     private void printUsage() {
-        System.out.println(
+        log.info(
                 """
                         Usage:
                         - createAccount <server> <username>
