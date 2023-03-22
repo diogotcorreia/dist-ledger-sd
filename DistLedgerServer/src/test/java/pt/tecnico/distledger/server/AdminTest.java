@@ -45,7 +45,7 @@ class AdminTest {
 
     @Test
     void emptyLedgerStream() {
-        assertEquals(0, state.getLedgerStream().count());
+        assertEquals(0, state.getLedger().size());
     }
 
     @Test
@@ -53,13 +53,19 @@ class AdminTest {
     void nonEmptyLedgerStream() {
         final String userId = "user1";
         state.createAccount(userId);
-        assertEquals(1, state.getLedgerStream().count());
+        assertEquals(1, state.getLedger().size());
         state.transferTo(brokerId, userId, 10);
-        assertEquals(2, state.getLedgerStream().count());
+        assertEquals(2, state.getLedger().size());
         state.transferTo(userId, brokerId, 10);
-        assertEquals(3, state.getLedgerStream().count());
+        assertEquals(3, state.getLedger().size());
+        state.deactivate();
+        assertEquals(3, state.getLedger().size());
+        state.activate();
+        assertEquals(3, state.getLedger().size());
+        state.getBalance(userId);
+        assertEquals(3, state.getLedger().size());
         state.deleteAccount(userId);
-        assertEquals(4, state.getLedgerStream().count());
+        assertEquals(4, state.getLedger().size());
     }
 
 }
