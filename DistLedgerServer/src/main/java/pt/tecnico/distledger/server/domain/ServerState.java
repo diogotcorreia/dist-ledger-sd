@@ -1,6 +1,8 @@
 package pt.tecnico.distledger.server.domain;
 
 import lombok.Getter;
+import lombok.val;
+import org.jetbrains.annotations.VisibleForTesting;
 import pt.tecnico.distledger.server.domain.operation.CreateOp;
 import pt.tecnico.distledger.server.domain.operation.DeleteOp;
 import pt.tecnico.distledger.server.domain.operation.Operation;
@@ -26,28 +28,32 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 @Getter
 public class ServerState {
 
     private static final String BROKER_ID = "broker";
-    private static final String PRIMARY_SERVER = "A";
     private final List<Operation> ledger;
     private final Map<String, Account> accounts;
     private final AtomicBoolean active;
     private final boolean isPrimary;
+    private final Consumer<Operation> writeOperationCallback;
 
-    public ServerState(int port, String qualifier) {
+    @VisibleForTesting
+    public ServerState() {
+        this(true, op -> {
+        });
+    }
+
+    public ServerState(boolean isPrimary, Consumer<Operation> writeOperationCallback) {
         this.ledger = new CopyOnWriteArrayList<>();
         this.accounts = new ConcurrentHashMap<>();
         this.active = new AtomicBoolean(true);
         createBroker();
-        this.isPrimary = qualifier.equals(PRIMARY_SERVER);
-
-        try (final NamingServerService namingServerService = new NamingServerService()) {
-            namingServerService.register(port, qualifier);
-        }
+        this.isPrimary = isPrimary;
+        this.writeOperationCallback = writeOperationCallback;
     }
 
     public synchronized int getBalance(String userId) throws AccountNotFoundException, ServerUnavailableException {
@@ -61,19 +67,22 @@ public class ServerState {
             String userId
     ) throws AccountAlreadyExistsException, ServerUnavailableException {
         ensureServerIsActive();
-        ensureServersAreReachable(); // FIXME: this probably doesn't work, as the servers may become unreachable after this check; maybe a try-catch around the whole method?
         if (accounts.containsKey(userId)) {
             throw new AccountAlreadyExistsException(userId);
         }
+
+        val pendingOperation = new CreateOp(userId);
+
+        writeOperationCallback.accept(pendingOperation); // may fail
+
         accounts.put(userId, new Account(userId));
-        ledger.add(new CreateOp(userId));
+        ledger.add(pendingOperation);
     }
 
     public synchronized void deleteAccount(
             String userId
     ) throws AccountNotEmptyException, AccountNotFoundException, AccountProtectedException, ServerUnavailableException {
         ensureServerIsActive();
-        ensureServersAreReachable(); // FIXME: this probably doesn't work, as the servers may become unreachable after this check; maybe a try-catch around the whole method?
         final int balance = getAccount(userId)
                 .orElseThrow(() -> new AccountNotFoundException(userId))
                 .getBalance();
@@ -84,8 +93,12 @@ public class ServerState {
             throw new AccountNotEmptyException(userId, balance);
         }
 
+        val pendingOperation = new DeleteOp(userId);
+
+        writeOperationCallback.accept(pendingOperation); // may fail
+
         accounts.remove(userId);
-        ledger.add(new DeleteOp(userId));
+        ledger.add(pendingOperation);
     }
 
     public synchronized void transferTo(
@@ -94,7 +107,6 @@ public class ServerState {
             int amount
     ) throws AccountNotFoundException, InsufficientFundsException, ServerUnavailableException, InvalidAmountException, TransferBetweenSameAccountException {
         ensureServerIsActive();
-        ensureServersAreReachable(); // FIXME: this probably doesn't work, as the servers may become unreachable after this check; maybe a try-catch around the whole method?
         final Account fromAccount = getAccount(fromUserId).orElseThrow(() -> new AccountNotFoundException(fromUserId));
         final Account toAccount = getAccount(toUserId).orElseThrow(() -> new AccountNotFoundException(toUserId));
 
@@ -109,9 +121,13 @@ public class ServerState {
         if (fromAccount.getBalance() < amount) {
             throw new InsufficientFundsException(fromUserId, amount, fromAccount.getBalance());
         }
+        val pendingOperation = new TransferOp(fromUserId, toUserId, amount);
+
+        writeOperationCallback.accept(pendingOperation); // may fail
+
         fromAccount.decreaseBalance(amount);
         toAccount.increaseBalance(amount);
-        ledger.add(new TransferOp(fromUserId, toUserId, amount));
+        ledger.add(pendingOperation);
     }
 
     public void activate() {
@@ -130,11 +146,8 @@ public class ServerState {
         ledger.forEach(operation -> operation.accept(visitor));
     }
 
-    public synchronized Stream<Operation> getLedgerStream() {
-        return ledger.stream();
-    }
-
     public synchronized void setLedger(List<Operation> ledger) {
+        // TODO check if active?
         this.ledger.clear();
         this.accounts.clear();
         this.ledger.addAll(ledger);
@@ -143,28 +156,8 @@ public class ServerState {
     }
 
     public synchronized void generateAccountsFromLedger() {
-        ledger.forEach(
-                operation -> operation.accept(new ExecuteOperationVisitor(this.accounts))
-        );
-    }
-
-    private void sendLedger() {
-        List<ServerInfo> serverList;
-        try (var namingServerService = new NamingServerService()) {
-            serverList = namingServerService.getServerList()
-                    .stream()
-                    .filter(serverInfo -> !serverInfo.getQualifier().equals("A"))
-                    .toList();
-        }
-
-        ConvertOperationsToGrpcVisitor visitor = new ConvertOperationsToGrpcVisitor();
-        operateOverLedger(visitor);
-
-        for (ServerInfo serverInfo : serverList) {
-            try (var serverService = new CrossServerService(serverInfo)) {
-                serverService.sendLedger(visitor.getLedger());
-            }
-        }
+        val visitor = new ExecuteOperationVisitor(this.accounts);
+        ledger.forEach(operation -> operation.accept(visitor));
     }
 
     /**
@@ -187,10 +180,6 @@ public class ServerState {
         if (!active.get()) {
             throw new ServerUnavailableException("Server is not active");
         }
-    }
-
-    public synchronized void ensureServersAreReachable() throws ServerUnavailableException {
-        // TODO
     }
 
 }

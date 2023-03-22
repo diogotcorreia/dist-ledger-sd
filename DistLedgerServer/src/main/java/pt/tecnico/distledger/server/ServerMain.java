@@ -4,9 +4,8 @@ import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import lombok.CustomLog;
+import lombok.val;
 import pt.tecnico.distledger.common.Logger;
-import pt.tecnico.distledger.server.domain.ServerState;
-import pt.tecnico.distledger.server.grpc.NamingServerService;
 import pt.tecnico.distledger.server.service.AdminDistLedgerServiceImpl;
 import pt.tecnico.distledger.server.service.CrossServerDistLedgerServiceImpl;
 import pt.tecnico.distledger.server.service.UserDistLedgerServiceImpl;
@@ -34,8 +33,9 @@ public class ServerMain {
         final int port = portOpt.getAsInt();
         final String qualifier = args[1];
 
-        ServerState serverState = new ServerState(port, qualifier);
+        final ServerCoordinator serverCoordinator = new ServerCoordinator(port, qualifier);
 
+        val serverState = serverCoordinator.getServerState();
         final BindableService userImpl = new UserDistLedgerServiceImpl(serverState);
         final BindableService adminImpl = new AdminDistLedgerServiceImpl(serverState);
         final BindableService crossServerImpl = new CrossServerDistLedgerServiceImpl(serverState);
@@ -48,14 +48,22 @@ public class ServerMain {
 
         server.start();
 
-        log.info("Server started, listening on port " + port);
+        log.info("Server started, listening on port %d", port);
         log.debug("Debug mode is active");
+
+        try {
+            serverCoordinator.registerOnNamingServer();
+        } catch (Exception e) {
+            log.error("Failed to register server on naming server");
+            e.printStackTrace();
+            System.exit(1);
+        }
+        log.info("Registered server on naming server with qualifier %s", qualifier);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             log.info("Server shutting down");
-            try (var namingServerService = new NamingServerService()) {
-                namingServerService.removeServer(port);
-            }
+            serverCoordinator.unregisterFromNamingServer();
+            serverCoordinator.shutdown();
         }));
 
         server.awaitTermination();
