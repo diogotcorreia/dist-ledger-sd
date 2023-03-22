@@ -65,7 +65,7 @@ public class ServerCoordinator {
                 populatePeersCache();
             }
             long unsuccessfulCount = sendLedgerToServers(visitor);
-            if (unsuccessfulCount <= 0 && peersCache.size() > 0) {
+            if (unsuccessfulCount == 0 && peersCache.size() > 0) {
                 return;
             }
             peersCache.invalidateAll();
