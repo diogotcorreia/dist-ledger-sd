@@ -1,6 +1,8 @@
 package pt.tecnico.distledger.server.domain;
 
 import lombok.Getter;
+import lombok.val;
+import org.jetbrains.annotations.VisibleForTesting;
 import pt.tecnico.distledger.server.domain.operation.CreateOp;
 import pt.tecnico.distledger.server.domain.operation.DeleteOp;
 import pt.tecnico.distledger.server.domain.operation.Operation;
@@ -11,8 +13,11 @@ import pt.tecnico.distledger.server.exceptions.AccountNotFoundException;
 import pt.tecnico.distledger.server.exceptions.AccountProtectedException;
 import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
 import pt.tecnico.distledger.server.exceptions.InvalidAmountException;
+import pt.tecnico.distledger.server.exceptions.PropagationException;
+import pt.tecnico.distledger.server.exceptions.ReadOnlyException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.server.exceptions.TransferBetweenSameAccountException;
+import pt.tecnico.distledger.server.visitor.ExecuteOperationVisitor;
 import pt.tecnico.distledger.server.visitor.OperationVisitor;
 
 import java.util.List;
@@ -21,6 +26,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 @Getter
 public class ServerState {
@@ -29,12 +35,22 @@ public class ServerState {
     private final List<Operation> ledger;
     private final Map<String, Account> accounts;
     private final AtomicBoolean active;
+    private final boolean isPrimary;
+    private final Consumer<Operation> writeOperationCallback;
 
+    @VisibleForTesting
     public ServerState() {
+        this(true, op -> {
+        });
+    }
+
+    public ServerState(boolean isPrimary, Consumer<Operation> writeOperationCallback) {
         this.ledger = new CopyOnWriteArrayList<>();
         this.accounts = new ConcurrentHashMap<>();
         this.active = new AtomicBoolean(true);
         createBroker();
+        this.isPrimary = isPrimary;
+        this.writeOperationCallback = writeOperationCallback;
     }
 
     public synchronized int getBalance(String userId) throws AccountNotFoundException, ServerUnavailableException {
@@ -46,19 +62,25 @@ public class ServerState {
 
     public synchronized void createAccount(
             String userId
-    ) throws AccountAlreadyExistsException, ServerUnavailableException {
+    ) throws AccountAlreadyExistsException, ServerUnavailableException, PropagationException, ReadOnlyException {
         ensureServerIsActive();
+        ensureServerIsPrimary();
         if (accounts.containsKey(userId)) {
             throw new AccountAlreadyExistsException(userId);
         }
+
+        val pendingOperation = new CreateOp(userId);
+        propagateOperation(pendingOperation);
+
         accounts.put(userId, new Account(userId));
-        ledger.add(new CreateOp(userId));
+        ledger.add(pendingOperation);
     }
 
     public synchronized void deleteAccount(
             String userId
-    ) throws AccountNotEmptyException, AccountNotFoundException, AccountProtectedException, ServerUnavailableException {
+    ) throws AccountNotEmptyException, AccountNotFoundException, AccountProtectedException, ServerUnavailableException, PropagationException, ReadOnlyException {
         ensureServerIsActive();
+        ensureServerIsPrimary();
         final int balance = getAccount(userId)
                 .orElseThrow(() -> new AccountNotFoundException(userId))
                 .getBalance();
@@ -69,16 +91,20 @@ public class ServerState {
             throw new AccountNotEmptyException(userId, balance);
         }
 
+        val pendingOperation = new DeleteOp(userId);
+        propagateOperation(pendingOperation);
+
         accounts.remove(userId);
-        ledger.add(new DeleteOp(userId));
+        ledger.add(pendingOperation);
     }
 
     public synchronized void transferTo(
             String fromUserId,
             String toUserId,
             int amount
-    ) throws AccountNotFoundException, InsufficientFundsException, ServerUnavailableException, InvalidAmountException, TransferBetweenSameAccountException {
+    ) throws AccountNotFoundException, InsufficientFundsException, ServerUnavailableException, InvalidAmountException, TransferBetweenSameAccountException, PropagationException, ReadOnlyException {
         ensureServerIsActive();
+        ensureServerIsPrimary();
         final Account fromAccount = getAccount(fromUserId).orElseThrow(() -> new AccountNotFoundException(fromUserId));
         final Account toAccount = getAccount(toUserId).orElseThrow(() -> new AccountNotFoundException(toUserId));
 
@@ -93,9 +119,12 @@ public class ServerState {
         if (fromAccount.getBalance() < amount) {
             throw new InsufficientFundsException(fromUserId, amount, fromAccount.getBalance());
         }
+        val pendingOperation = new TransferOp(fromUserId, toUserId, amount);
+        propagateOperation(pendingOperation);
+
         fromAccount.decreaseBalance(amount);
         toAccount.increaseBalance(amount);
-        ledger.add(new TransferOp(fromUserId, toUserId, amount));
+        ledger.add(pendingOperation);
     }
 
     public void activate() {
@@ -111,6 +140,20 @@ public class ServerState {
     }
 
     public synchronized void operateOverLedger(OperationVisitor visitor) {
+        ledger.forEach(operation -> operation.accept(visitor));
+    }
+
+    public synchronized void setLedger(List<Operation> ledger) throws ServerUnavailableException {
+        ensureServerIsActive();
+        this.ledger.clear();
+        this.accounts.clear();
+        this.ledger.addAll(ledger);
+        createBroker();
+        generateAccountsFromLedger();
+    }
+
+    public synchronized void generateAccountsFromLedger() {
+        val visitor = new ExecuteOperationVisitor(this.accounts);
         ledger.forEach(operation -> operation.accept(visitor));
     }
 
@@ -134,5 +177,23 @@ public class ServerState {
         if (!active.get()) {
             throw new ServerUnavailableException("Server is not active");
         }
+    }
+
+    public void ensureServerIsPrimary() throws ReadOnlyException {
+        if (!isPrimary) {
+            throw new ReadOnlyException();
+        }
+    }
+
+    public void propagateOperation(Operation operation) throws PropagationException {
+        try {
+            writeOperationCallback.accept(operation); // may fail
+        } catch (RuntimeException e) {
+            if (e.getCause()instanceof PropagationException e2) {
+                throw e2;
+            }
+            throw e;
+        }
+
     }
 }

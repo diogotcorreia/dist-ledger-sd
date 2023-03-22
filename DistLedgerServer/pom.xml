@@ -26,8 +26,6 @@
         <version.exec-maven-plugin>3.0.0</version.exec-maven-plugin>
 
         <mainclass>pt.tecnico.distledger.server.ServerMain</mainclass>
-        <server.port>2001</server.port>
-        <server.qual>A</server.qual>
 
         <spotless.java.eclipse.file>${project.basedir}${file.separator}..${file.separator}formatter-config.xml</spotless.java.eclipse.file>
     </properties>
@@ -66,10 +64,6 @@
                 <version>${version.exec-maven-plugin}</version>
                 <configuration>
                     <mainClass>${mainclass}</mainClass>
-                    <arguments>
-                        <argument>${server.port}</argument>
-                        <argument>${server.qual}</argument>
-                    </arguments>
                 </configuration>
                 <executions>
                     <execution>

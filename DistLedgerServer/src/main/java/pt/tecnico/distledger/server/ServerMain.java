@@ -4,8 +4,8 @@ import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import lombok.CustomLog;
+import lombok.val;
 import pt.tecnico.distledger.common.Logger;
-import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.service.AdminDistLedgerServiceImpl;
 import pt.tecnico.distledger.server.service.CrossServerDistLedgerServiceImpl;
 import pt.tecnico.distledger.server.service.UserDistLedgerServiceImpl;
@@ -31,12 +31,16 @@ public class ServerMain {
             System.exit(1);
         }
         final int port = portOpt.getAsInt();
+        final String qualifier = args[1];
 
-        // Ignore the second argument (for now)
-        // final String serverQualifier = args[1];
+        if (qualifier == null || qualifier.isEmpty()) {
+            log.error("Qualifier must be a non-empty string");
+            System.exit(1);
+        }
 
-        ServerState serverState = new ServerState();
+        final ServerCoordinator serverCoordinator = new ServerCoordinator(port, qualifier);
 
+        val serverState = serverCoordinator.getServerState();
         final BindableService userImpl = new UserDistLedgerServiceImpl(serverState);
         final BindableService adminImpl = new AdminDistLedgerServiceImpl(serverState);
         final BindableService crossServerImpl = new CrossServerDistLedgerServiceImpl(serverState);
@@ -49,14 +53,29 @@ public class ServerMain {
 
         server.start();
 
-        log.info("Server started, listening on port " + port);
+        log.info("Server started, listening on port %d", port);
         log.debug("Debug mode is active");
+
+        try {
+            serverCoordinator.registerOnNamingServer();
+        } catch (Exception e) {
+            log.error("Failed to register server on naming server");
+            e.printStackTrace();
+            System.exit(1);
+        }
+        log.info("Registered server on naming server with qualifier %s", qualifier);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            log.info("Server shutting down");
+            serverCoordinator.unregisterFromNamingServer();
+            serverCoordinator.shutdown();
+        }));
 
         server.awaitTermination();
     }
 
     /**
-     * Parses a string as a valid non-priviledged port number (1024-65535).
+     * Parses a string as a valid non-privileged port number (1024-65535).
      *
      * @param portStr A string containing the port number.
      * @return An empty optional if the port is invalid, or an optional wrapping the parsed port number.
