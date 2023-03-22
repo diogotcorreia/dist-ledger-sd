@@ -86,5 +86,5 @@ public class NamingServerService implements AutoCloseable {
     public void close() {
         channel.shutdown();
     }
-    
+
 }

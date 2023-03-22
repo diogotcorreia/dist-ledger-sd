@@ -1,6 +1,5 @@
 package pt.tecnico.distledger.common;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,7 +51,7 @@ public class CacheableMap<K, V> {
         return this.map.values().stream().map(CacheEntry::value);
     }
 
-    public record CacheEntry<T>(T value, long expiryTime) {
+    public record CacheEntry<T> (T value, long expiryTime) {
         public boolean isValid() {
             return System.currentTimeMillis() < expiryTime;
         }

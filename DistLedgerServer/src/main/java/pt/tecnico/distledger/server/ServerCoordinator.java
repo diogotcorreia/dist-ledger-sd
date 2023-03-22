@@ -5,6 +5,7 @@ import com.google.common.cache.CacheBuilder;
 import lombok.Getter;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.domain.operation.Operation;
+import pt.tecnico.distledger.server.exceptions.PropagationException;
 import pt.tecnico.distledger.server.grpc.CrossServerService;
 import pt.tecnico.distledger.server.grpc.NamingServerService;
 import pt.tecnico.distledger.server.visitor.ConvertOperationsToGrpcVisitor;
@@ -15,6 +16,8 @@ import java.util.concurrent.TimeUnit;
 public class ServerCoordinator {
 
     private static final String PRIMARY_SERVER = "A";
+
+    private static final int MAX_RETRIES = 3;
 
     private final int port;
     private final String qualifier;
@@ -48,40 +51,54 @@ public class ServerCoordinator {
     }
 
     public void propagateLedgerStateToAllServers(Operation pendingOperation) {
-        if (peersCache.size() == 0) {
-            namingServerService.getServerList()
-                    .stream()
-                    .filter(serverInfo -> !serverInfo.getQualifier().equals(qualifier))
-                    .forEach(serverInfo -> peersCache.put(serverInfo, new CrossServerService(serverInfo)));
-        }
-
         ConvertOperationsToGrpcVisitor visitor = new ConvertOperationsToGrpcVisitor();
         serverState.operateOverLedger(visitor);
         pendingOperation.accept(visitor);
 
-        // TODO handle errors?
-        // TODO retry again
-        long successfulCount = peersCache.asMap()
+        long attemps = 0;
+
+        do {
+            if (peersCache.size() == 0) {
+                populatePeersCache();
+            }
+            long unsuccessfulCount = sendLedgerToServers(visitor);
+            if (unsuccessfulCount <= 0) {
+                return;
+            }
+            peersCache.invalidateAll();
+        } while (attemps++ < MAX_RETRIES);
+
+        throw new RuntimeException(new PropagationException());
+    }
+
+    private void populatePeersCache() {
+        namingServerService.getServerList()
+                .stream()
+                .filter(serverInfo -> !serverInfo.getQualifier().equals(qualifier))
+                .forEach(serverInfo -> peersCache.put(serverInfo, new CrossServerService(serverInfo)));
+    }
+
+    /**
+     * @param visitor visitor with ledger to send
+     * @return number of unsuccessful attempts
+     */
+    private long sendLedgerToServers(ConvertOperationsToGrpcVisitor visitor) {
+        return peersCache.asMap()
                 .entrySet()
                 .stream()
                 .map(service -> {
                     try {
                         service.getValue().sendLedger(visitor.getLedger());
-                        return true;
+                        return false;
                     } catch (Exception e) {
                         // TODO log?
                         e.printStackTrace();
                         peersCache.invalidate(service.getKey());
-                        return false;
+                        return true;
                     }
                 })
                 .filter(Boolean::booleanValue)
                 .count();
-
-        if (successfulCount < 1) {
-            // TODO change exception
-            throw new RuntimeException("can't propagate stuff");
-        }
     }
 
 }

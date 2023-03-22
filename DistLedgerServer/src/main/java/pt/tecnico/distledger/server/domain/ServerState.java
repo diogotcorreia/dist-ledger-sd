@@ -13,14 +13,11 @@ import pt.tecnico.distledger.server.exceptions.AccountNotFoundException;
 import pt.tecnico.distledger.server.exceptions.AccountProtectedException;
 import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
 import pt.tecnico.distledger.server.exceptions.InvalidAmountException;
+import pt.tecnico.distledger.server.exceptions.PropagationException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.server.exceptions.TransferBetweenSameAccountException;
-import pt.tecnico.distledger.server.grpc.CrossServerService;
-import pt.tecnico.distledger.server.grpc.NamingServerService;
-import pt.tecnico.distledger.server.visitor.ConvertOperationsToGrpcVisitor;
 import pt.tecnico.distledger.server.visitor.ExecuteOperationVisitor;
 import pt.tecnico.distledger.server.visitor.OperationVisitor;
-import pt.ulisboa.tecnico.distledger.contract.namingserver.NamingServerDistLedger.ServerInfo;
 
 import java.util.List;
 import java.util.Map;
@@ -29,7 +26,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 @Getter
 public class ServerState {
@@ -65,15 +61,14 @@ public class ServerState {
 
     public synchronized void createAccount(
             String userId
-    ) throws AccountAlreadyExistsException, ServerUnavailableException {
+    ) throws AccountAlreadyExistsException, ServerUnavailableException, PropagationException {
         ensureServerIsActive();
         if (accounts.containsKey(userId)) {
             throw new AccountAlreadyExistsException(userId);
         }
 
         val pendingOperation = new CreateOp(userId);
-
-        writeOperationCallback.accept(pendingOperation); // may fail
+        propagateOperation(pendingOperation);
 
         accounts.put(userId, new Account(userId));
         ledger.add(pendingOperation);
@@ -81,7 +76,7 @@ public class ServerState {
 
     public synchronized void deleteAccount(
             String userId
-    ) throws AccountNotEmptyException, AccountNotFoundException, AccountProtectedException, ServerUnavailableException {
+    ) throws AccountNotEmptyException, AccountNotFoundException, AccountProtectedException, ServerUnavailableException, PropagationException {
         ensureServerIsActive();
         final int balance = getAccount(userId)
                 .orElseThrow(() -> new AccountNotFoundException(userId))
@@ -94,8 +89,7 @@ public class ServerState {
         }
 
         val pendingOperation = new DeleteOp(userId);
-
-        writeOperationCallback.accept(pendingOperation); // may fail
+        propagateOperation(pendingOperation);
 
         accounts.remove(userId);
         ledger.add(pendingOperation);
@@ -105,7 +99,7 @@ public class ServerState {
             String fromUserId,
             String toUserId,
             int amount
-    ) throws AccountNotFoundException, InsufficientFundsException, ServerUnavailableException, InvalidAmountException, TransferBetweenSameAccountException {
+    ) throws AccountNotFoundException, InsufficientFundsException, ServerUnavailableException, InvalidAmountException, TransferBetweenSameAccountException, PropagationException {
         ensureServerIsActive();
         final Account fromAccount = getAccount(fromUserId).orElseThrow(() -> new AccountNotFoundException(fromUserId));
         final Account toAccount = getAccount(toUserId).orElseThrow(() -> new AccountNotFoundException(toUserId));
@@ -122,8 +116,7 @@ public class ServerState {
             throw new InsufficientFundsException(fromUserId, amount, fromAccount.getBalance());
         }
         val pendingOperation = new TransferOp(fromUserId, toUserId, amount);
-
-        writeOperationCallback.accept(pendingOperation); // may fail
+        propagateOperation(pendingOperation);
 
         fromAccount.decreaseBalance(amount);
         toAccount.increaseBalance(amount);
@@ -182,4 +175,15 @@ public class ServerState {
         }
     }
 
+    public void propagateOperation(Operation operation) throws PropagationException {
+        try {
+            writeOperationCallback.accept(operation); // may fail
+        } catch (RuntimeException e) {
+            if (e.getCause() instanceof PropagationException e2) {
+                throw e2;
+            }
+            throw e;
+        }
+
+    }
 }
