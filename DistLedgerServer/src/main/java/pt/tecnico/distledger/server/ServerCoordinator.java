@@ -14,10 +14,12 @@ import pt.ulisboa.tecnico.distledger.contract.namingserver.NamingServerDistLedge
 
 import java.util.concurrent.TimeUnit;
 
-@CustomLog
+@CustomLog(topic = "Server Coordinator")
 public class ServerCoordinator {
 
     private static final String PRIMARY_SERVER = "A";
+
+    private static final int TIMEOUT = 2;
 
     private static final int MAX_RETRIES = 3;
 
@@ -27,9 +29,8 @@ public class ServerCoordinator {
     @Getter
     private final ServerState serverState;
 
-
     private final Cache<ServerInfo, CrossServerService> peersCache = CacheBuilder.newBuilder()
-            .expireAfterWrite(2, TimeUnit.MINUTES)
+            .expireAfterWrite(TIMEOUT, TimeUnit.MINUTES)
             .build();
 
     private final NamingServerService namingServerService = new NamingServerService();

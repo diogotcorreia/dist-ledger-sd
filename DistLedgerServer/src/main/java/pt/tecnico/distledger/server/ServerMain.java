@@ -33,6 +33,11 @@ public class ServerMain {
         final int port = portOpt.getAsInt();
         final String qualifier = args[1];
 
+        if (qualifier == null || qualifier.isEmpty()) {
+            log.error("Qualifier must be a non-empty string");
+            System.exit(1);
+        }
+
         final ServerCoordinator serverCoordinator = new ServerCoordinator(port, qualifier);
 
         val serverState = serverCoordinator.getServerState();
