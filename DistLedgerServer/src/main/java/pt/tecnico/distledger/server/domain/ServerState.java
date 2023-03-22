@@ -14,6 +14,7 @@ import pt.tecnico.distledger.server.exceptions.AccountProtectedException;
 import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
 import pt.tecnico.distledger.server.exceptions.InvalidAmountException;
 import pt.tecnico.distledger.server.exceptions.PropagationException;
+import pt.tecnico.distledger.server.exceptions.ReadOnlyException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.server.exceptions.TransferBetweenSameAccountException;
 import pt.tecnico.distledger.server.visitor.ExecuteOperationVisitor;
@@ -61,8 +62,9 @@ public class ServerState {
 
     public synchronized void createAccount(
             String userId
-    ) throws AccountAlreadyExistsException, ServerUnavailableException, PropagationException {
+    ) throws AccountAlreadyExistsException, ServerUnavailableException, PropagationException, ReadOnlyException {
         ensureServerIsActive();
+        ensureServerIsPrimary();
         if (accounts.containsKey(userId)) {
             throw new AccountAlreadyExistsException(userId);
         }
@@ -76,8 +78,9 @@ public class ServerState {
 
     public synchronized void deleteAccount(
             String userId
-    ) throws AccountNotEmptyException, AccountNotFoundException, AccountProtectedException, ServerUnavailableException, PropagationException {
+    ) throws AccountNotEmptyException, AccountNotFoundException, AccountProtectedException, ServerUnavailableException, PropagationException, ReadOnlyException {
         ensureServerIsActive();
+        ensureServerIsPrimary();
         final int balance = getAccount(userId)
                 .orElseThrow(() -> new AccountNotFoundException(userId))
                 .getBalance();
@@ -99,8 +102,9 @@ public class ServerState {
             String fromUserId,
             String toUserId,
             int amount
-    ) throws AccountNotFoundException, InsufficientFundsException, ServerUnavailableException, InvalidAmountException, TransferBetweenSameAccountException, PropagationException {
+    ) throws AccountNotFoundException, InsufficientFundsException, ServerUnavailableException, InvalidAmountException, TransferBetweenSameAccountException, PropagationException, ReadOnlyException {
         ensureServerIsActive();
+        ensureServerIsPrimary();
         final Account fromAccount = getAccount(fromUserId).orElseThrow(() -> new AccountNotFoundException(fromUserId));
         final Account toAccount = getAccount(toUserId).orElseThrow(() -> new AccountNotFoundException(toUserId));
 
@@ -139,8 +143,8 @@ public class ServerState {
         ledger.forEach(operation -> operation.accept(visitor));
     }
 
-    public synchronized void setLedger(List<Operation> ledger) {
-        // TODO check if active?
+    public synchronized void setLedger(List<Operation> ledger) throws ServerUnavailableException {
+        ensureServerIsActive();
         this.ledger.clear();
         this.accounts.clear();
         this.ledger.addAll(ledger);
@@ -175,11 +179,17 @@ public class ServerState {
         }
     }
 
+    public void ensureServerIsPrimary() throws ReadOnlyException {
+        if (!isPrimary) {
+            throw new ReadOnlyException();
+        }
+    }
+
     public void propagateOperation(Operation operation) throws PropagationException {
         try {
             writeOperationCallback.accept(operation); // may fail
         } catch (RuntimeException e) {
-            if (e.getCause()instanceof PropagationException e2) {
+            if (e.getCause() instanceof PropagationException e2) {
                 throw e2;
             }
             throw e;

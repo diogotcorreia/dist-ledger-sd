@@ -94,7 +94,7 @@ public class ServerCoordinator {
                         service.getValue().sendLedger(visitor.getLedger());
                         return false;
                     } catch (Exception e) {
-                        log.error("Failed to send ledger to server: %d", service.getKey().getQualifier());
+                        log.error("Failed to send ledger to server: %s", service.getKey().getQualifier());
                         peersCache.invalidate(service.getKey());
                         return true;
                     }

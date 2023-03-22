@@ -10,6 +10,7 @@ import pt.tecnico.distledger.server.exceptions.AccountProtectedException;
 import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
 import pt.tecnico.distledger.server.exceptions.InvalidAmountException;
 import pt.tecnico.distledger.server.exceptions.PropagationException;
+import pt.tecnico.distledger.server.exceptions.ReadOnlyException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.server.exceptions.TransferBetweenSameAccountException;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.*;
@@ -55,7 +56,8 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
             log.debug("Account '%s' has been created", request.getUserId());
             responseObserver.onNext(CreateAccountResponse.getDefaultInstance());
             responseObserver.onCompleted();
-        } catch (AccountAlreadyExistsException | ServerUnavailableException | PropagationException e) {
+        } catch (AccountAlreadyExistsException | ServerUnavailableException | PropagationException |
+                 ReadOnlyException e) {
             log.debug("Error creating account: %s", e.getMessage());
             responseObserver.onError(e.toGrpcRuntimeException());
         }
@@ -73,7 +75,7 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
             responseObserver.onNext(DeleteAccountResponse.getDefaultInstance());
             responseObserver.onCompleted();
         } catch (AccountNotEmptyException | AccountNotFoundException | AccountProtectedException |
-                 ServerUnavailableException | PropagationException e) {
+                 ServerUnavailableException | PropagationException | ReadOnlyException e) {
             log.debug("Error deleting account: %s", e.getMessage());
             responseObserver.onError(e.toGrpcRuntimeException());
         }
@@ -101,7 +103,8 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
             responseObserver.onNext(TransferToResponse.getDefaultInstance());
             responseObserver.onCompleted();
         } catch (AccountNotFoundException | InsufficientFundsException | InvalidAmountException |
-                 ServerUnavailableException | TransferBetweenSameAccountException | PropagationException e) {
+                 ServerUnavailableException | TransferBetweenSameAccountException | PropagationException |
+                 ReadOnlyException e) {
             log.debug("Error creating transfer: %s", e.getMessage());
             responseObserver.onError(e.toGrpcRuntimeException());
         }
