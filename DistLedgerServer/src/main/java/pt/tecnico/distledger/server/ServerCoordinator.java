@@ -2,6 +2,7 @@ package pt.tecnico.distledger.server;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import lombok.CustomLog;
 import lombok.Getter;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.domain.operation.Operation;
@@ -13,6 +14,7 @@ import pt.ulisboa.tecnico.distledger.contract.namingserver.NamingServerDistLedge
 
 import java.util.concurrent.TimeUnit;
 
+@CustomLog
 public class ServerCoordinator {
 
     private static final String PRIMARY_SERVER = "A";
@@ -55,7 +57,7 @@ public class ServerCoordinator {
         serverState.operateOverLedger(visitor);
         pendingOperation.accept(visitor);
 
-        long attemps = 0;
+        long attempts = 0;
 
         do {
             if (peersCache.size() == 0) {
@@ -66,7 +68,7 @@ public class ServerCoordinator {
                 return;
             }
             peersCache.invalidateAll();
-        } while (attemps++ < MAX_RETRIES);
+        } while (attempts++ < MAX_RETRIES);
 
         throw new RuntimeException(new PropagationException());
     }
@@ -79,7 +81,7 @@ public class ServerCoordinator {
     }
 
     /**
-     * @param visitor visitor with ledger to send
+     * @param visitor visitor with ledger to send to servers
      * @return number of unsuccessful attempts
      */
     private long sendLedgerToServers(ConvertOperationsToGrpcVisitor visitor) {
@@ -91,8 +93,7 @@ public class ServerCoordinator {
                         service.getValue().sendLedger(visitor.getLedger());
                         return false;
                     } catch (Exception e) {
-                        // TODO log?
-                        e.printStackTrace();
+                        log.error("Failed to send ledger to server: %d", service.getKey().getQualifier());
                         peersCache.invalidate(service.getKey());
                         return true;
                     }

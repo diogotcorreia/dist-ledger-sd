@@ -27,8 +27,7 @@
 
         <mainclass>pt.tecnico.distledger.namingserver.NamingServerMain</mainclass>
 
-        <spotless.java.eclipse.file>${project.basedir}${file.separator}..${file.separator}formatter-config.xml
-        </spotless.java.eclipse.file>
+        <spotless.java.eclipse.file>${project.basedir}${file.separator}..${file.separator}formatter-config.xml</spotless.java.eclipse.file>
     </properties>
 
     <dependencies>
