@@ -14,7 +14,7 @@ public class AdminClientMain {
 
         // check arguments
         if (args.length != 0) {
-            log.error("Argument(s) present!");
+            log.error("The admin client does not accept any arguments.");
             log.error("Usage: mvn exec:java");
             System.exit(1);
         }
