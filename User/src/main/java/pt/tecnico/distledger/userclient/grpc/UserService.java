@@ -4,6 +4,7 @@ import io.grpc.StatusRuntimeException;
 import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
 import pt.tecnico.distledger.common.connection.ServerResolver;
+import pt.tecnico.distledger.common.exceptions.ServerUnresolvableException;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.BalanceRequest;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.BalanceResponse;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.CreateAccountRequest;
@@ -17,7 +18,10 @@ public class UserService implements AutoCloseable {
 
     private final ServerResolver<UserServiceBlockingStub> serverResolver;
 
-    public void createAccount(String qualifier, String username) throws StatusRuntimeException {
+    public void createAccount(
+            String qualifier,
+            String username
+    ) throws StatusRuntimeException, ServerUnresolvableException {
         log.debug("[Server '%s'] Sending request to create account for '%s'", qualifier, username);
         // noinspection ResultOfMethodCallIgnored
         serverResolver.resolveStub(qualifier)
@@ -29,7 +33,10 @@ public class UserService implements AutoCloseable {
         log.debug("[Server '%s'] Received response to create account for '%s'", qualifier, username);
     }
 
-    public void deleteAccount(String qualifier, String username) throws StatusRuntimeException {
+    public void deleteAccount(
+            String qualifier,
+            String username
+    ) throws StatusRuntimeException, ServerUnresolvableException {
         log.debug("[Server '%s'] Sending request to delete account for '%s'", qualifier, username);
         // noinspection ResultOfMethodCallIgnored
         serverResolver.resolveStub(qualifier)
@@ -41,7 +48,7 @@ public class UserService implements AutoCloseable {
         log.debug("[Server '%s'] Received response to delete account for '%s'", qualifier, username);
     }
 
-    public int balance(String qualifier, String username) throws StatusRuntimeException {
+    public int balance(String qualifier, String username) throws StatusRuntimeException, ServerUnresolvableException {
         log.debug("Sending request to get balance for '%s'", username);
         final BalanceResponse response = serverResolver.resolveStub(qualifier)
                 .balance(
@@ -59,7 +66,12 @@ public class UserService implements AutoCloseable {
     }
 
 
-    public void transferTo(String qualifier, String from, String to, Integer amount) throws StatusRuntimeException {
+    public void transferTo(
+            String qualifier,
+            String from,
+            String to,
+            Integer amount
+    ) throws StatusRuntimeException, ServerUnresolvableException {
         log.debug(
                 "[Server '%s'] Sending request to create transfer of %d coin(s) from '%s' to '%s'",
                 qualifier,

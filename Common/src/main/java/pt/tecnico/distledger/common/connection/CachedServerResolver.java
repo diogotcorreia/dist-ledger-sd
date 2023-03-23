@@ -2,12 +2,11 @@ package pt.tecnico.distledger.common.connection;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
 import io.grpc.stub.AbstractBlockingStub;
 import lombok.CustomLog;
 import lombok.val;
 import org.jetbrains.annotations.NotNull;
+import pt.tecnico.distledger.common.exceptions.ServerUnresolvableException;
 import pt.ulisboa.tecnico.distledger.contract.namingserver.NamingServerDistLedger.LookupServerRequest;
 import pt.ulisboa.tecnico.distledger.contract.namingserver.NamingServerDistLedger.ServerAddress;
 import pt.ulisboa.tecnico.distledger.contract.namingserver.NamingServerDistLedger.ServerInfo;
@@ -45,6 +44,10 @@ public class CachedServerResolver<T extends AbstractBlockingStub<T>> implements 
         createNamingServerStub();
     }
 
+    /**
+     * Create a channel and stub to the naming server, if they do not exist yet.
+     * If they exist, nothing is executed.
+     */
     private void createNamingServerStub() {
         if (namingServerChannel != null && !namingServerChannel.isShutdown()) {
             return;
@@ -55,10 +58,16 @@ public class CachedServerResolver<T extends AbstractBlockingStub<T>> implements 
         this.namingServerStub = NamingServerServiceGrpc.newBlockingStub(namingServerChannel);
     }
 
-    public @NotNull ServerInfo resolveAddress(@NotNull String qualifier) {
+    /**
+     * Resolve the address of a server given its qualifier, through the naming server.
+     *
+     * @param qualifier The qualifier of the server to resolve.
+     * @return The address of the resolved server.
+     * @throws ServerUnresolvableException if the server cannot be resolved.
+     */
+    private @NotNull ServerAddress resolveAddress(@NotNull String qualifier) throws ServerUnresolvableException {
         createNamingServerStub(); // ensure connection to naming server
 
-        // TODO cache response
         val lookupResponse = this.namingServerStub.lookupServer(
                 LookupServerRequest.newBuilder()
                         .setServiceName(SERVER_SERVICE_NAME)
@@ -69,17 +78,18 @@ public class CachedServerResolver<T extends AbstractBlockingStub<T>> implements 
         return lookupResponse.getServerInfoList()
                 .stream()
                 .findFirst()
-                .orElseThrow(() -> new StatusRuntimeException(Status.NOT_FOUND.withDescription("Server not found"))); // TODO
+                .map(ServerInfo::getAddress)
+                .orElseThrow(() -> new ServerUnresolvableException(qualifier));
     }
 
     @Override
-    public synchronized @NotNull T resolveStub(@NotNull String qualifier) {
+    public synchronized @NotNull T resolveStub(@NotNull String qualifier) throws ServerUnresolvableException {
         val cachedPair = this.channelStubPairMap.get(qualifier);
         if (cachedPair != null && !cachedPair.channel().isShutdown()) {
             return cachedPair.stub();
         }
 
-        final ServerAddress address = resolveAddress(qualifier).getAddress();
+        final ServerAddress address = resolveAddress(qualifier);
         final String host = address.getHost();
         final int port = address.getPort();
 

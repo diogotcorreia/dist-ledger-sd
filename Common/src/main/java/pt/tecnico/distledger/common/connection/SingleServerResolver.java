@@ -9,6 +9,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
+/**
+ * A server resolver that always resolves to the same server, independently of the given qualifier.
+ * Mainly used for testing.
+ *
+ * @param <T> The type of the stub.
+ */
 @RequiredArgsConstructor
 @CustomLog(topic = "SingleServerResolver")
 public class SingleServerResolver<T extends AbstractBlockingStub<T>> implements ServerResolver<T> {

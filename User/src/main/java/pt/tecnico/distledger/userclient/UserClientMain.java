@@ -15,7 +15,7 @@ public class UserClientMain {
 
         // check arguments
         if (args.length != 0) {
-            log.error("The Client does not accept any arguments.");
+            log.error("The user client does not accept any arguments.");
             log.error("Usage: mvn exec:java");
             System.exit(1);
         }

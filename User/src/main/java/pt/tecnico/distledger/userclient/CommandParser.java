@@ -2,6 +2,7 @@ package pt.tecnico.distledger.userclient;
 
 import io.grpc.StatusRuntimeException;
 import lombok.CustomLog;
+import pt.tecnico.distledger.common.exceptions.ServerUnresolvableException;
 import pt.tecnico.distledger.userclient.grpc.UserService;
 
 import java.util.Scanner;
@@ -61,6 +62,8 @@ public class CommandParser {
                 if (e.getStatus().getCause() != null) {
                     e.getStatus().getCause().printStackTrace();
                 }
+            } catch (ServerUnresolvableException e) {
+                log.error(e.getMessage());
             } catch (Exception e) {
                 log.error(e.getMessage());
                 e.printStackTrace();
@@ -68,7 +71,7 @@ public class CommandParser {
         }
     }
 
-    private void createAccount(String line) {
+    private void createAccount(String line) throws ServerUnresolvableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 3) {
@@ -84,7 +87,7 @@ public class CommandParser {
         log.info("OK%n");
     }
 
-    private void deleteAccount(String line) {
+    private void deleteAccount(String line) throws ServerUnresolvableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 3) {
@@ -99,7 +102,7 @@ public class CommandParser {
         log.info("OK%n");
     }
 
-    private void balance(String line) {
+    private void balance(String line) throws ServerUnresolvableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 3) {
@@ -118,7 +121,7 @@ public class CommandParser {
         log.info("");
     }
 
-    private void transferTo(String line) {
+    private void transferTo(String line) throws ServerUnresolvableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 5) {

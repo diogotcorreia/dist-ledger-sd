@@ -2,6 +2,7 @@ package pt.tecnico.distledger.common.connection;
 
 import io.grpc.stub.AbstractBlockingStub;
 import org.jetbrains.annotations.NotNull;
+import pt.tecnico.distledger.common.exceptions.ServerUnresolvableException;
 
 /**
  * Manages channels and stubs transparently.
@@ -17,7 +18,7 @@ public interface ServerResolver<T extends AbstractBlockingStub<T>> extends AutoC
      * @return The stub.
      */
     @NotNull
-    T resolveStub(@NotNull String qualifier);
+    T resolveStub(@NotNull String qualifier) throws ServerUnresolvableException;
 
     /**
      * Close all currently opened channels.
