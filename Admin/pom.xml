@@ -27,8 +27,6 @@
         <version.org.grpcmock.grpcmock-junit5>0.5.3</version.org.grpcmock.grpcmock-junit5>
 
         <mainclass>pt.tecnico.distledger.adminclient.AdminClientMain</mainclass>
-        <server.host>localhost</server.host>
-        <server.port>2001</server.port>
 
         <spotless.java.eclipse.file>${project.basedir}${file.separator}..${file.separator}formatter-config.xml</spotless.java.eclipse.file>
     </properties>
@@ -80,10 +78,6 @@
                 <version>${version.exec-maven-plugin}</version>
                 <configuration>
                     <mainClass>${mainclass}</mainClass>
-                    <arguments>
-                        <argument>${server.host}</argument>
-                        <argument>${server.port}</argument>
-                    </arguments>
                 </configuration>
                 <executions>
                     <execution>
