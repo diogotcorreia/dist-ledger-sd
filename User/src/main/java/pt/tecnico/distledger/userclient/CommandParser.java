@@ -2,6 +2,7 @@ package pt.tecnico.distledger.userclient;
 
 import io.grpc.StatusRuntimeException;
 import lombok.CustomLog;
+import pt.tecnico.distledger.common.exceptions.ServerUnresolvableException;
 import pt.tecnico.distledger.userclient.grpc.UserService;
 
 import java.util.Scanner;
@@ -61,6 +62,8 @@ public class CommandParser {
                 if (e.getStatus().getCause() != null) {
                     e.getStatus().getCause().printStackTrace();
                 }
+            } catch (ServerUnresolvableException e) {
+                log.error(e.getMessage());
             } catch (Exception e) {
                 log.error(e.getMessage());
                 e.printStackTrace();
@@ -68,7 +71,7 @@ public class CommandParser {
         }
     }
 
-    private void createAccount(String line) {
+    private void createAccount(String line) throws ServerUnresolvableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 3) {
@@ -79,12 +82,12 @@ public class CommandParser {
         String server = split[1];
         String username = split[2];
 
-        userService.createAccount(username);
+        userService.createAccount(server, username);
         log.debug("Account '%s' has been created%n", username);
         log.info("OK%n");
     }
 
-    private void deleteAccount(String line) {
+    private void deleteAccount(String line) throws ServerUnresolvableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 3) {
@@ -94,12 +97,12 @@ public class CommandParser {
         String server = split[1];
         String username = split[2];
 
-        userService.deleteAccount(username);
+        userService.deleteAccount(server, username);
         log.debug("Account '%s' has been deleted%n", username);
         log.info("OK%n");
     }
 
-    private void balance(String line) {
+    private void balance(String line) throws ServerUnresolvableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 3) {
@@ -109,7 +112,7 @@ public class CommandParser {
         String server = split[1];
         String username = split[2];
 
-        final int balance = userService.balance(username);
+        final int balance = userService.balance(server, username);
         log.debug("Balance of user '%s' is %d%n", username, balance);
         log.info("OK");
         if (balance > 0) {
@@ -118,7 +121,7 @@ public class CommandParser {
         log.info("");
     }
 
-    private void transferTo(String line) {
+    private void transferTo(String line) throws ServerUnresolvableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 5) {
@@ -130,7 +133,7 @@ public class CommandParser {
         String dest = split[3];
         Integer amount = Integer.valueOf(split[4]);
 
-        userService.transferTo(from, dest, amount);
+        userService.transferTo(server, from, dest, amount);
         if (amount == 1) {
             log.debug("1 coin has been transferred from account '%s' account '%s'%n", from, dest);
         } else {
@@ -140,7 +143,7 @@ public class CommandParser {
     }
 
     private void printUsage() {
-        System.out.println(
+        log.info(
                 """
                         Usage:
                         - createAccount <server> <username>

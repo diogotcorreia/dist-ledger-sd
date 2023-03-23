@@ -27,6 +27,15 @@
         <spotless.java.eclipse.file>${project.basedir}${file.separator}..${file.separator}formatter-config.xml</spotless.java.eclipse.file>
     </properties>
 
+    <dependencies>
+        <!-- contract brings gRPC dependencies with it -->
+        <dependency>
+            <groupId>pt.tecnico.sdis.2023.A04</groupId>
+            <artifactId>Contract</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+
     <build>
         <!-- Plug-ins allow for the reuse of common build logic across multiple projects.
              They do this by executing an "action" in the context of a project's description. -->

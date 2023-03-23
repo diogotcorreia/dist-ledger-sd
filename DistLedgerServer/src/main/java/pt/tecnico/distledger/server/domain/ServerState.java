@@ -164,18 +164,15 @@ public class ServerState {
         ledger.forEach(operation -> operation.accept(visitor));
     }
 
-    public synchronized void setLedger(List<Operation> ledger) throws ServerUnavailableException {
+    public synchronized void setLedger(List<Operation> newOperations) throws ServerUnavailableException {
         ensureServerIsActive();
-        this.ledger.clear();
-        this.accounts.clear();
-        this.ledger.addAll(ledger);
-        createBroker();
-        generateAccountsFromLedger();
+        this.ledger.addAll(newOperations);
+        updateAccountsFromLedger(newOperations);
     }
 
-    public synchronized void generateAccountsFromLedger() {
+    public synchronized void updateAccountsFromLedger(List<Operation> newOperations) {
         val visitor = new ExecuteOperationVisitor(this.accounts);
-        ledger.forEach(operation -> operation.accept(visitor));
+        newOperations.forEach(operation -> operation.accept(visitor));
     }
 
     /**

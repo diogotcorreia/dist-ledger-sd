@@ -55,7 +55,6 @@ public class ServerCoordinator {
 
     public void propagateLedgerStateToAllServers(Operation pendingOperation) {
         ConvertOperationsToGrpcVisitor visitor = new ConvertOperationsToGrpcVisitor();
-        serverState.operateOverLedger(visitor);
         pendingOperation.accept(visitor);
 
         long attempts = 0;
