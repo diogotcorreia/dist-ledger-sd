@@ -35,7 +35,7 @@ public class CommandParser {
         boolean exit = false;
 
         while (!exit) {
-            log.info("> ");
+            System.out.print("> ");
             String line = scanner.nextLine().trim();
             String cmd = line.split(SPACE)[0];
 
