@@ -1,10 +1,12 @@
 package pt.tecnico.distledger.adminclient;
 
+import lombok.val;
 import org.grpcmock.GrpcMock;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import pt.tecnico.distledger.adminclient.grpc.AdminService;
+import pt.tecnico.distledger.common.connection.SingleServerResolver;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.*;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger.*;
@@ -35,7 +37,9 @@ class AdminTest {
     void setup() {
         GrpcMock.configureFor(GrpcMock.grpcMock(0).build().start());
 
-        service = new AdminService(LOCALHOST, GrpcMock.getGlobalPort());
+        val resolver =
+                new SingleServerResolver<>(LOCALHOST, GrpcMock.getGlobalPort(), AdminServiceGrpc::newBlockingStub);
+        service = new AdminService(resolver);
         client = new CommandParser(service);
         outputStream = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outputStream));
