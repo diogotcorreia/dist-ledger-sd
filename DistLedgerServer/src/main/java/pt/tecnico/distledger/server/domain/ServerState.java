@@ -136,9 +136,9 @@ public class ServerState {
         Account fromAccount = null;
         Account toAccount = null;
         try {
-            final Account account1 = getAccount(swapOrder ? toUserId : fromUserId)
+            final Account account1 = getThreadSafeAccount(swapOrder ? toUserId : fromUserId)
                     .orElseThrow(() -> new AccountNotFoundException(fromUserId));
-            final Account account2 = getAccount(swapOrder ? fromUserId : toUserId)
+            final Account account2 = getThreadSafeAccount(swapOrder ? fromUserId : toUserId)
                     .orElseThrow(() -> new AccountNotFoundException(toUserId));
             fromAccount = swapOrder ? account2 : account1;
             toAccount = swapOrder ? account1 : account2;
