@@ -45,7 +45,7 @@ public class NamingServer {
         if (service == null) {
             throw new ServerDoesNotExistException(serviceName);
         }
-        
+
         service.removeServerEntry(serverAddress);
         if (service.getServers().isEmpty()) {
             synchronized (services) {

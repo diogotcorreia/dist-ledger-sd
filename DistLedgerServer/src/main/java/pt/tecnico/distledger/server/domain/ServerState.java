@@ -60,20 +60,26 @@ public class ServerState {
                 .getBalance();
     }
 
-    public synchronized void createAccount(
+    public void createAccount(
             String userId
     ) throws AccountAlreadyExistsException, ServerUnavailableException, PropagationException, ReadOnlyException {
         ensureServerIsActive();
         ensureServerIsPrimary();
-        if (accounts.containsKey(userId)) {
-            throw new AccountAlreadyExistsException(userId);
+
+        CreateOp pendingOperation;
+
+        synchronized (accounts) {
+            if (accounts.containsKey(userId)) {
+                throw new AccountAlreadyExistsException(userId);
+            }
+            pendingOperation = new CreateOp(userId);
+            propagateOperation(pendingOperation);
+
+            accounts.put(userId, new Account(userId));
         }
-
-        val pendingOperation = new CreateOp(userId);
-        propagateOperation(pendingOperation);
-
-        accounts.put(userId, new Account(userId));
-        ledger.add(pendingOperation);
+        synchronized (ledger) {
+            ledger.add(pendingOperation);
+        }
     }
 
     public synchronized void deleteAccount(
@@ -81,21 +87,28 @@ public class ServerState {
     ) throws AccountNotEmptyException, AccountNotFoundException, AccountProtectedException, ServerUnavailableException, PropagationException, ReadOnlyException {
         ensureServerIsActive();
         ensureServerIsPrimary();
-        final int balance = getAccount(userId)
-                .orElseThrow(() -> new AccountNotFoundException(userId))
-                .getBalance();
-        if (userId.equals(BROKER_ID)) {
-            throw new AccountProtectedException(userId);
-        }
-        if (balance != 0) {
-            throw new AccountNotEmptyException(userId, balance);
-        }
 
-        val pendingOperation = new DeleteOp(userId);
-        propagateOperation(pendingOperation);
+        DeleteOp pendingOperation;
 
-        accounts.remove(userId);
-        ledger.add(pendingOperation);
+        synchronized (accounts) {
+            final int balance = getAccount(userId)
+                    .orElseThrow(() -> new AccountNotFoundException(userId))
+                    .getBalance();
+            if (userId.equals(BROKER_ID)) {
+                throw new AccountProtectedException(userId);
+            }
+            if (balance != 0) {
+                throw new AccountNotEmptyException(userId, balance);
+            }
+
+            pendingOperation = new DeleteOp(userId);
+            propagateOperation(pendingOperation);
+
+            accounts.remove(userId);
+        }
+        synchronized (ledger) {
+            ledger.add(pendingOperation);
+        }
     }
 
     public synchronized void transferTo(
@@ -105,26 +118,34 @@ public class ServerState {
     ) throws AccountNotFoundException, InsufficientFundsException, ServerUnavailableException, InvalidAmountException, TransferBetweenSameAccountException, PropagationException, ReadOnlyException {
         ensureServerIsActive();
         ensureServerIsPrimary();
-        final Account fromAccount = getAccount(fromUserId).orElseThrow(() -> new AccountNotFoundException(fromUserId));
-        final Account toAccount = getAccount(toUserId).orElseThrow(() -> new AccountNotFoundException(toUserId));
 
-        if (fromAccount.equals(toAccount)) {
-            throw new TransferBetweenSameAccountException(fromAccount.getUserId(), toAccount.getUserId());
+        TransferOp pendingOperation;
+
+        synchronized (accounts) {
+            final Account fromAccount =
+                    getAccount(fromUserId).orElseThrow(() -> new AccountNotFoundException(fromUserId));
+            final Account toAccount = getAccount(toUserId).orElseThrow(() -> new AccountNotFoundException(toUserId));
+
+            if (fromAccount.equals(toAccount)) {
+                throw new TransferBetweenSameAccountException(fromAccount.getUserId(), toAccount.getUserId());
+            }
+
+            if (amount <= 0) {
+                throw new InvalidAmountException(amount);
+            }
+
+            if (fromAccount.getBalance() < amount) {
+                throw new InsufficientFundsException(fromUserId, amount, fromAccount.getBalance());
+            }
+            pendingOperation = new TransferOp(fromUserId, toUserId, amount);
+            propagateOperation(pendingOperation);
+
+            fromAccount.decreaseBalance(amount);
+            toAccount.increaseBalance(amount);
         }
-
-        if (amount <= 0) {
-            throw new InvalidAmountException(amount);
+        synchronized (ledger) {
+            ledger.add(pendingOperation);
         }
-
-        if (fromAccount.getBalance() < amount) {
-            throw new InsufficientFundsException(fromUserId, amount, fromAccount.getBalance());
-        }
-        val pendingOperation = new TransferOp(fromUserId, toUserId, amount);
-        propagateOperation(pendingOperation);
-
-        fromAccount.decreaseBalance(amount);
-        toAccount.increaseBalance(amount);
-        ledger.add(pendingOperation);
     }
 
     public void activate() {
