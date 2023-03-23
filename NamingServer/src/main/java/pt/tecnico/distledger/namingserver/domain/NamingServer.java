@@ -38,13 +38,20 @@ public class NamingServer {
             String serviceName,
             ServerAddress serverAddress
     ) throws ServerDoesNotExistException {
-        if (!services.containsKey(serviceName)) {
+        ServiceEntry service;
+        synchronized (services) {
+            service = services.get(serviceName);
+        }
+        if (service == null) {
             throw new ServerDoesNotExistException(serviceName);
         }
-        ServiceEntry service = services.get(serviceName);
+        
         service.removeServerEntry(serverAddress);
         if (service.getServers().isEmpty()) {
-            services.remove(serviceName);
+            synchronized (services) {
+                services.remove(serviceName);
+            }
         }
     }
+
 }

@@ -29,7 +29,8 @@ public class ServiceEntry {
         servers.add(new ServerEntry(serverAddress, serverQualifier));
     }
 
-    public List<ServerEntry> getServerEntriesWithQualifier(String qualifier) {
+
+    public synchronized List<ServerEntry> getServerEntriesWithQualifier(String qualifier) {
         return qualifier == null || qualifier.isEmpty()
                 ? servers
                 : servers
@@ -38,7 +39,7 @@ public class ServiceEntry {
                         .toList();
     }
 
-    public void removeServerEntry(ServerAddress serverAddress) throws ServerDoesNotExistException {
+    public synchronized void removeServerEntry(ServerAddress serverAddress) throws ServerDoesNotExistException {
         if (!servers.removeIf(serverEntry -> serverEntry.address().equals(serverAddress))) {
             throw new ServerDoesNotExistException(serviceName);
         }
