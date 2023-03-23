@@ -1,8 +1,11 @@
 package pt.tecnico.distledger.adminclient;
 
 import lombok.CustomLog;
+import lombok.val;
 import pt.tecnico.distledger.adminclient.grpc.AdminService;
 import pt.tecnico.distledger.common.Logger;
+import pt.tecnico.distledger.common.connection.CachedServerResolver;
+import pt.ulisboa.tecnico.distledger.contract.admin.AdminServiceGrpc;
 
 @CustomLog(topic = "AdminClientMain")
 public class AdminClientMain {
@@ -16,7 +19,8 @@ public class AdminClientMain {
             System.exit(1);
         }
 
-        try (var adminService = new AdminService()) {
+        val resolver = new CachedServerResolver<>(AdminServiceGrpc::newBlockingStub);
+        try (var adminService = new AdminService(resolver)) {
             CommandParser parser = new CommandParser(adminService);
             parser.parseInput();
         }

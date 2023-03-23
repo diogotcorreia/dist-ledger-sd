@@ -3,6 +3,7 @@ package pt.tecnico.distledger.adminclient;
 import io.grpc.StatusRuntimeException;
 import lombok.CustomLog;
 import pt.tecnico.distledger.adminclient.grpc.AdminService;
+import pt.tecnico.distledger.common.exceptions.ServerUnresolvableException;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger.*;
 
 import java.util.Scanner;
@@ -35,7 +36,7 @@ public class CommandParser {
         boolean exit = false;
 
         while (!exit) {
-            log.info("> ");
+            System.out.print("> ");
             String line = scanner.nextLine().trim();
             String cmd = line.split(SPACE)[0];
 
@@ -61,6 +62,8 @@ public class CommandParser {
                 if (e.getStatus().getCause() != null) {
                     e.getStatus().getCause().printStackTrace();
                 }
+            } catch (ServerUnresolvableException e) {
+                log.error(e.getMessage());
             } catch (Exception e) {
                 log.error(e.getMessage());
                 e.printStackTrace();
@@ -68,7 +71,7 @@ public class CommandParser {
         }
     }
 
-    private void activate(String line) {
+    private void activate(String line) throws ServerUnresolvableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 2) {
@@ -82,7 +85,7 @@ public class CommandParser {
         log.info("OK%n");
     }
 
-    private void deactivate(String line) {
+    private void deactivate(String line) throws ServerUnresolvableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 2) {
@@ -96,7 +99,7 @@ public class CommandParser {
         log.info("OK%n");
     }
 
-    private void dump(String line) {
+    private void dump(String line) throws ServerUnresolvableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 2) {
@@ -109,10 +112,16 @@ public class CommandParser {
         log.info("OK%n%s", response);
     }
 
-    @SuppressWarnings("unused")
-    private void gossip(String line) {
-        /* TODO Phase-3 */
-        adminService.gossip();
+    private void gossip(String line) throws ServerUnresolvableException {
+        String[] split = line.split(SPACE);
+
+        if (split.length != 2) {
+            this.printUsage();
+            return;
+        }
+        String server = split[1];
+
+        adminService.gossip(server);
     }
 
     private void printUsage() {
