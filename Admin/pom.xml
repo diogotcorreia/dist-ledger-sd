@@ -28,8 +28,7 @@
 
         <mainclass>pt.tecnico.distledger.adminclient.AdminClientMain</mainclass>
 
-        <spotless.java.eclipse.file>${project.basedir}${file.separator}..${file.separator}formatter-config.xml
-        </spotless.java.eclipse.file>
+        <spotless.java.eclipse.file>${project.basedir}${file.separator}..${file.separator}formatter-config.xml</spotless.java.eclipse.file>
     </properties>
 
     <!-- Dependencies are code archives - JARs -
