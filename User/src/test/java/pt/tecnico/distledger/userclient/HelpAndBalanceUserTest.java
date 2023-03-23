@@ -1,8 +1,11 @@
 package pt.tecnico.distledger.userclient;
 
+import lombok.val;
 import org.grpcmock.GrpcMock;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import pt.tecnico.distledger.common.connection.SingleServerResolver;
 import pt.tecnico.distledger.userclient.grpc.UserService;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger;
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc;
@@ -32,10 +35,17 @@ class HelpAndBalanceUserTest {
     void setup() {
         GrpcMock.configureFor(GrpcMock.grpcMock(0).build().start());
 
-        service = new UserService(LOCALHOST, GrpcMock.getGlobalPort());
+        val resolver =
+                new SingleServerResolver<>(LOCALHOST, GrpcMock.getGlobalPort(), UserServiceGrpc::newBlockingStub);
+        service = new UserService(resolver);
         client = new CommandParser(service);
         outputStream = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outputStream));
+    }
+
+    @AfterEach
+    public void destroy() {
+        service.close();
     }
 
     @Test
