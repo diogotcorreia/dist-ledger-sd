@@ -29,7 +29,6 @@ public class ServiceEntry {
         servers.add(new ServerEntry(serverAddress, serverQualifier));
     }
 
-
     public synchronized List<ServerEntry> getServerEntriesWithQualifier(String qualifier) {
         return qualifier == null || qualifier.isEmpty()
                 ? servers

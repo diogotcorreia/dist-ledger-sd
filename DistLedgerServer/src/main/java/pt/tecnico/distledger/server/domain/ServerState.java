@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 @Getter
 public class ServerState {
@@ -69,6 +70,7 @@ public class ServerState {
         ensureServerIsPrimary();
 
         synchronized (accounts) {
+            // After the lock is granted, we need to re-check the server state
             ensureServerIsActive();
             ensureServerIsPrimary();
 
@@ -95,6 +97,7 @@ public class ServerState {
             account = getThreadSafeAccount(userId)
                     .orElseThrow(() -> new AccountNotFoundException(userId));
 
+            // After the lock is granted, we need to re-check the server state
             ensureServerIsActive();
             ensureServerIsPrimary();
 
@@ -131,18 +134,41 @@ public class ServerState {
             throw new TransferBetweenSameAccountException(fromUserId, toUserId);
         }
 
-        boolean swapOrder = fromUserId.compareTo(toUserId) > 0;
+        /* In order to avoid deadlocks, such as the case below, a standardized order must be defined for lock retrievals.
+         *
+         * Thread A: Transfer Request from dtc to dmg
+         * Thread B: Transfer Request from dmg to dtc
+         *
+         * This leads to a deadlock (in naive implementations), as A would get dtc's lock, B would get dmg's lock, and then
+         * none of them would be able to get the other's lock.
+         *
+         * The chosen order is rather simple: the locks are retrieved in ascending order of the user ids.
+         */
+
+        List<String> users = Stream.of(fromUserId, toUserId).sorted().toList();
 
         Account fromAccount = null;
         Account toAccount = null;
-        try {
-            final Account account1 = getThreadSafeAccount(swapOrder ? toUserId : fromUserId)
-                    .orElseThrow(() -> new AccountNotFoundException(fromUserId));
-            final Account account2 = getThreadSafeAccount(swapOrder ? fromUserId : toUserId)
-                    .orElseThrow(() -> new AccountNotFoundException(toUserId));
-            fromAccount = swapOrder ? account2 : account1;
-            toAccount = swapOrder ? account1 : account2;
 
+        try {
+            final String firstUser = users.get(0);
+            final String secondUser = users.get(1);
+            final Account firstAccount = getThreadSafeAccount(firstUser)
+                    .orElseThrow(() -> new AccountNotFoundException(firstUser));
+            final Account secondAccount = getThreadSafeAccount(secondUser)
+                    .orElseThrow(() -> new AccountNotFoundException(secondUser));
+
+            if (firstUser.equals(fromUserId)) {
+                fromAccount = firstAccount;
+                toAccount = secondAccount;
+            } else {
+                fromAccount = secondAccount;
+                toAccount = firstAccount;
+            }
+
+            // After the locks are granted, we need to re-check the server state
+            ensureServerIsActive();
+            ensureServerIsPrimary();
 
             if (amount <= 0) {
                 throw new InvalidAmountException(amount);
@@ -207,7 +233,7 @@ public class ServerState {
     /**
      * Same as {@link ServerState#getAccount(String)}, but locks the {@link Account} object.
      * <p>
-     * IMPORTANT: It is responsibility of the caller to release the lock.
+     * IMPORTANT: The caller is responsible for releasing the lock.
      *
      * @param userId The ID of the account to get.
      * @return An optional with the Account, or an empty optional if the account cannot be found.
