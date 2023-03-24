@@ -8,13 +8,11 @@ import lombok.Getter;
 @Getter
 public class ServerWithInvalidParametersException extends Exception implements GrpcSerializableException {
 
-    private final String host;
-    private final int port;
+    private final String qualifier;
 
-    public ServerWithInvalidParametersException(String host, int port) {
-        super(String.format("Server with invalid parameters: %s:%d", host, port));
-        this.host = host;
-        this.port = port;
+    public ServerWithInvalidParametersException(String qualifier) {
+        super(String.format("Server with invalid qualifier: %s", qualifier));
+        this.qualifier = qualifier;
     }
 
     @Override
