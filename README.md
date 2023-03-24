@@ -22,9 +22,13 @@ code dependency management, to ensure your code runs using the correct component
 
 ## Getting Started
 
-The overall system is made up of several modules. The main server is the _DistLedgerServer_. The clients are the _User_ 
-and the _Admin_. The definition of messages and services is in the _Contract_. The future naming server
-is the _NamingServer_.
+The overall system is made up of several modules. The server's logic is implemented in _DistLedgerServer_. The clients are the _User_ 
+and the _Admin_. The definition of messages and services is in the _Contract_. The naming server
+is the _NamingServer_. There's also a _Common_ module, where our custom Logger and Server Resolvers
+are implemented.
+Note that the _DistLedgerServer_ also contains the logic for the _ServerCoordinator_, which is responsible for
+coordinating the servers (currently two, in a primary-backup configuration) and ensuring proper
+information replication.
 
 See the [Project Statement](https://github.com/tecnico-distsys/DistLedger) for a complete domain and system description.
 
@@ -56,7 +60,7 @@ Run each module (one of user, admin, server and name server) by going into its d
 mvn exec:java
 ```
 
-Optionally, you can customize the given arguments and turn on debug messages:
+Optionally, you can customize the given arguments (note that some modules don't accept them) and turn on debug messages:
 
 ```s
 mvn exec:java -Dexec.args="<args here>" -Ddebug
