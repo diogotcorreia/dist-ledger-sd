@@ -3,6 +3,7 @@ package pt.tecnico.distledger.namingserver.domain;
 import lombok.Getter;
 import pt.tecnico.distledger.namingserver.exceptions.ServerDoesNotExistException;
 import pt.tecnico.distledger.namingserver.exceptions.ServerEntryAlreadyExistsException;
+import pt.tecnico.distledger.namingserver.exceptions.ServerWithInvalidParametersException;
 
 import java.util.Collections;
 import java.util.List;
@@ -22,7 +23,7 @@ public class NamingServer {
             String serviceName,
             ServerAddress serverAddress,
             String serverQualifier
-    ) throws ServerEntryAlreadyExistsException {
+    ) throws ServerEntryAlreadyExistsException, ServerWithInvalidParametersException {
         services
                 .computeIfAbsent(serviceName, ServiceEntry::new)
                 .addServerEntry(serverAddress, serverQualifier);
