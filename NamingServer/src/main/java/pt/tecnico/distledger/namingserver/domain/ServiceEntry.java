@@ -25,8 +25,8 @@ public class ServiceEntry {
             String serverQualifier
     ) throws ServerWithInvalidParametersException, ServerEntryAlreadyExistsException {
         // TODO: remove this for phase 3
-        if (serverQualifier == null || serverQualifier.isEmpty() ||
-                (!serverQualifier.equals("A") && !serverQualifier.equals("B"))) {
+        if (serverQualifier == null || serverQualifier.isEmpty() || (!serverQualifier.equals("A") && !serverQualifier
+                .equals("B"))) {
             throw new ServerWithInvalidParametersException(serverQualifier);
         }
         if (servers.stream()
