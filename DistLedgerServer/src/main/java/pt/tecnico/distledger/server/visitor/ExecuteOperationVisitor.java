@@ -16,7 +16,7 @@ public class ExecuteOperationVisitor extends OperationVisitor {
     }
 
     @Override
-    public synchronized void visit(CreateOp operation) {
+    public void visit(CreateOp operation) {
         accounts.put(
                 operation.getAccount(),
                 new Account(operation.getAccount())
@@ -24,12 +24,12 @@ public class ExecuteOperationVisitor extends OperationVisitor {
     }
 
     @Override
-    public synchronized void visit(DeleteOp operation) {
+    public void visit(DeleteOp operation) {
         accounts.remove(operation.getAccount());
     }
 
     @Override
-    public synchronized void visit(TransferOp operation) {
+    public void visit(TransferOp operation) {
         Account from = accounts.get(operation.getAccount());
         Account to = accounts.get(operation.getDestAccount());
         from.decreaseBalance(operation.getAmount());
