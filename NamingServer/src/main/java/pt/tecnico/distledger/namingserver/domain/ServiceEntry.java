@@ -33,7 +33,7 @@ public class ServiceEntry {
                             serverEntry -> serverEntry.address().equals(serverAddress) || serverEntry.qualifier()
                                     .equals(serverQualifier)
                     )) {
-                throw new ServerEntryAlreadyExistsException(serverQualifier);
+                throw new ServerEntryAlreadyExistsException(serverAddress, serverQualifier, serviceName);
             }
             servers.add(new ServerEntry(serverAddress, serverQualifier));
         }
@@ -51,7 +51,7 @@ public class ServiceEntry {
 
     public void removeServerEntry(ServerAddress serverAddress) throws ServerDoesNotExistException {
         if (!servers.removeIf(serverEntry -> serverEntry.address().equals(serverAddress))) {
-            throw new ServerDoesNotExistException(serviceName);
+            throw new ServerDoesNotExistException(serverAddress, serviceName);
         }
     }
 

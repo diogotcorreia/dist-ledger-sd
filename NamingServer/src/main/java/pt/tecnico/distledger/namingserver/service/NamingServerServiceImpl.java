@@ -37,13 +37,13 @@ public class NamingServerServiceImpl extends NamingServerServiceImplBase {
     public void registerServer(RegisterServerRequest request, StreamObserver<RegisterServerResponse> responseObserver) {
         try {
             var address = createAddressFactory.createAddressFromGrpc(request.getAddress());
-            log.debug("Registering server " + address + " for service " + request.getServiceName());
+            log.debug("Registering server %s on service %s", address, request.getServiceName());
             namingServer.register(
                     request.getServiceName(),
                     address,
                     request.getQualifier()
             );
-            log.debug("Server registered");
+            log.debug("Server %s registered on service %s", address, request.getServiceName());
             responseObserver.onNext(RegisterServerResponse.getDefaultInstance());
             responseObserver.onCompleted();
         } catch (ServerEntryAlreadyExistsException | AddressWithInvalidParametersException |
@@ -55,14 +55,22 @@ public class NamingServerServiceImpl extends NamingServerServiceImplBase {
 
     @Override
     public void lookupServer(LookupServerRequest request, StreamObserver<LookupServerResponse> responseObserver) {
-        log.debug("Looking up servers for service " + request.getServiceName());
+        log.debug(
+                "Looking up servers for service %s with qualifier %s",
+                request.getServiceName(),
+                request.getQualifier()
+        );
         final List<ServerInfo> servers = namingServer
                 .lookup(request.getServiceName(), request.getQualifier())
                 .stream()
                 .map(this::convertEntryToGrpc)
                 .toList();
         final LookupServerResponse response = LookupServerResponse.newBuilder().addAllServerInfo(servers).build();
-        log.debug("Server list created");
+        log.debug(
+                "Replying with server list for service %s with qualifier %s",
+                request.getServiceName(),
+                request.getQualifier()
+        );
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
@@ -71,9 +79,9 @@ public class NamingServerServiceImpl extends NamingServerServiceImplBase {
     public void deleteServer(DeleteServerRequest request, StreamObserver<DeleteServerResponse> responseObserver) {
         try {
             var address = createAddressFactory.createAddressFromGrpc(request.getAddress());
-            log.debug("Deleting server " + address + " for service " + request.getServiceName());
+            log.debug("Deleting server %s for service %s", address, request.getServiceName());
             namingServer.delete(request.getServiceName(), address);
-            log.debug("Server deleted");
+            log.debug("Server %s deleted from service", address, request.getServiceName());
             responseObserver.onNext(DeleteServerResponse.getDefaultInstance());
             responseObserver.onCompleted();
         } catch (ServerDoesNotExistException | AddressWithInvalidParametersException e) {
