@@ -38,7 +38,7 @@ public class NamingServer {
     ) throws ServerDoesNotExistException {
         ServiceEntry service = services.get(serviceName);
         if (service == null) {
-            throw new ServerDoesNotExistException(serviceName);
+            throw new ServerDoesNotExistException(serverAddress, serviceName);
         }
 
         service.removeServerEntry(serverAddress);

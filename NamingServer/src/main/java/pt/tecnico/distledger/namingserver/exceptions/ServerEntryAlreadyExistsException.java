@@ -3,16 +3,21 @@ package pt.tecnico.distledger.namingserver.exceptions;
 import io.grpc.Status;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import pt.tecnico.distledger.namingserver.domain.ServerAddress;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter
 public class ServerEntryAlreadyExistsException extends Exception implements GrpcSerializableException {
 
-    private final String serverName;
-
-    public ServerEntryAlreadyExistsException(String serverName) {
-        super(String.format("Not possible to register the server %s", serverName));
-        this.serverName = serverName;
+    public ServerEntryAlreadyExistsException(ServerAddress address, String qualifier, String serviceName) {
+        super(
+                String.format(
+                        "Not possible to register the server %s with qualifier %s on service %s",
+                        address,
+                        qualifier,
+                        serviceName
+                )
+        );
     }
 
     @Override
