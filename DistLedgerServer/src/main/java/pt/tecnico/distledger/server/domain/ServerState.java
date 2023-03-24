@@ -2,6 +2,7 @@ package pt.tecnico.distledger.server.domain;
 
 import lombok.Getter;
 import lombok.val;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 import pt.tecnico.distledger.server.domain.operation.CreateOp;
 import pt.tecnico.distledger.server.domain.operation.DeleteOp;
@@ -27,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 @Getter
 public class ServerState {
@@ -53,78 +55,148 @@ public class ServerState {
         this.writeOperationCallback = writeOperationCallback;
     }
 
-    public synchronized int getBalance(String userId) throws AccountNotFoundException, ServerUnavailableException {
+    public int getBalance(String userId) throws AccountNotFoundException, ServerUnavailableException {
         ensureServerIsActive();
+
         return getAccount(userId)
                 .orElseThrow(() -> new AccountNotFoundException(userId))
                 .getBalance();
     }
 
-    public synchronized void createAccount(
-            String userId
+    public void createAccount(
+            @NotNull String userId
     ) throws AccountAlreadyExistsException, ServerUnavailableException, PropagationException, ReadOnlyException {
         ensureServerIsActive();
         ensureServerIsPrimary();
-        if (accounts.containsKey(userId)) {
-            throw new AccountAlreadyExistsException(userId);
+
+        synchronized (accounts) {
+            // After the lock is granted, we need to re-check the server state
+            ensureServerIsActive();
+            ensureServerIsPrimary();
+
+            if (accounts.containsKey(userId)) {
+                throw new AccountAlreadyExistsException(userId);
+            }
+
+            CreateOp pendingOperation = new CreateOp(userId);
+            synchronized (ledger) {
+                propagateOperation(pendingOperation);
+                ledger.add(pendingOperation);
+            }
+
+            accounts.put(userId, new Account(userId));
         }
-
-        val pendingOperation = new CreateOp(userId);
-        propagateOperation(pendingOperation);
-
-        accounts.put(userId, new Account(userId));
-        ledger.add(pendingOperation);
     }
 
-    public synchronized void deleteAccount(
-            String userId
+    public void deleteAccount(
+            @NotNull String userId
     ) throws AccountNotEmptyException, AccountNotFoundException, AccountProtectedException, ServerUnavailableException, PropagationException, ReadOnlyException {
         ensureServerIsActive();
         ensureServerIsPrimary();
-        final int balance = getAccount(userId)
-                .orElseThrow(() -> new AccountNotFoundException(userId))
-                .getBalance();
-        if (userId.equals(BROKER_ID)) {
-            throw new AccountProtectedException(userId);
-        }
-        if (balance != 0) {
-            throw new AccountNotEmptyException(userId, balance);
-        }
 
-        val pendingOperation = new DeleteOp(userId);
-        propagateOperation(pendingOperation);
+        Account account = null;
+        try {
+            account = getThreadSafeAccount(userId)
+                    .orElseThrow(() -> new AccountNotFoundException(userId));
 
-        accounts.remove(userId);
-        ledger.add(pendingOperation);
+            // After the lock is granted, we need to re-check the server state
+            ensureServerIsActive();
+            ensureServerIsPrimary();
+
+            if (userId.equals(BROKER_ID)) {
+                throw new AccountProtectedException(userId);
+            }
+
+            final int balance = account.getBalance();
+            if (balance != 0) {
+                throw new AccountNotEmptyException(userId, balance);
+            }
+
+            DeleteOp pendingOperation = new DeleteOp(userId);
+            synchronized (ledger) {
+                propagateOperation(pendingOperation);
+                ledger.add(pendingOperation);
+            }
+
+            accounts.remove(userId);
+        } finally {
+            if (account != null) {
+                account.getLock().unlock();
+            }
+        }
     }
 
-    public synchronized void transferTo(
-            String fromUserId,
-            String toUserId,
+    public void transferTo(
+            @NotNull String fromUserId,
+            @NotNull String toUserId,
             int amount
     ) throws AccountNotFoundException, InsufficientFundsException, ServerUnavailableException, InvalidAmountException, TransferBetweenSameAccountException, PropagationException, ReadOnlyException {
         ensureServerIsActive();
         ensureServerIsPrimary();
-        final Account fromAccount = getAccount(fromUserId).orElseThrow(() -> new AccountNotFoundException(fromUserId));
-        final Account toAccount = getAccount(toUserId).orElseThrow(() -> new AccountNotFoundException(toUserId));
 
-        if (fromAccount.equals(toAccount)) {
-            throw new TransferBetweenSameAccountException(fromAccount.getUserId(), toAccount.getUserId());
+        if (fromUserId.equals(toUserId)) {
+            throw new TransferBetweenSameAccountException(fromUserId, toUserId);
         }
 
-        if (amount <= 0) {
-            throw new InvalidAmountException(amount);
-        }
+        /* In order to avoid deadlocks, such as the case below, a standardized order must be defined for lock retrievals.
+         *
+         * Thread A: Transfer Request from dtc to dmg
+         * Thread B: Transfer Request from dmg to dtc
+         *
+         * This leads to a deadlock (in naive implementations), as A would get dtc's lock, B would get dmg's lock, and then
+         * none of them would be able to get the other's lock.
+         *
+         * The chosen order is rather simple: the locks are retrieved in ascending order of the user ids.
+         */
 
-        if (fromAccount.getBalance() < amount) {
-            throw new InsufficientFundsException(fromUserId, amount, fromAccount.getBalance());
-        }
-        val pendingOperation = new TransferOp(fromUserId, toUserId, amount);
-        propagateOperation(pendingOperation);
+        List<String> users = Stream.of(fromUserId, toUserId).sorted().toList();
 
-        fromAccount.decreaseBalance(amount);
-        toAccount.increaseBalance(amount);
-        ledger.add(pendingOperation);
+        Account fromAccount = null;
+        Account toAccount = null;
+
+        try {
+            final String firstUser = users.get(0);
+            final String secondUser = users.get(1);
+            final Account firstAccount = getThreadSafeAccount(firstUser)
+                    .orElseThrow(() -> new AccountNotFoundException(firstUser));
+            final Account secondAccount = getThreadSafeAccount(secondUser)
+                    .orElseThrow(() -> new AccountNotFoundException(secondUser));
+
+            if (firstUser.equals(fromUserId)) {
+                fromAccount = firstAccount;
+                toAccount = secondAccount;
+            } else {
+                fromAccount = secondAccount;
+                toAccount = firstAccount;
+            }
+
+            // After the locks are granted, we need to re-check the server state
+            ensureServerIsActive();
+            ensureServerIsPrimary();
+
+            if (amount <= 0) {
+                throw new InvalidAmountException(amount);
+            }
+
+            if (fromAccount.getBalance() < amount) {
+                throw new InsufficientFundsException(fromUserId, amount, fromAccount.getBalance());
+            }
+            TransferOp pendingOperation = new TransferOp(fromUserId, toUserId, amount);
+            synchronized (ledger) {
+                propagateOperation(pendingOperation);
+                ledger.add(pendingOperation);
+            }
+
+            fromAccount.decreaseBalance(amount);
+            toAccount.increaseBalance(amount);
+        } finally {
+            if (fromAccount != null) {
+                fromAccount.getLock().unlock();
+            }
+            if (toAccount != null) {
+                toAccount.getLock().unlock();
+            }
+        }
     }
 
     public void activate() {
@@ -139,7 +211,7 @@ public class ServerState {
         // TODO
     }
 
-    public synchronized void operateOverLedger(OperationVisitor visitor) {
+    public void operateOverLedger(OperationVisitor visitor) {
         ledger.forEach(operation -> operation.accept(visitor));
     }
 
@@ -160,8 +232,33 @@ public class ServerState {
      * @param userId The ID of the account to get.
      * @return An optional with the Account, or an empty optional if the account cannot be found.
      */
-    private synchronized Optional<Account> getAccount(String userId) {
+    private Optional<Account> getAccount(String userId) {
         return Optional.ofNullable(accounts.get(userId));
+    }
+
+    /**
+     * Same as {@link ServerState#getAccount(String)}, but locks the {@link Account} object.
+     * <p>
+     * IMPORTANT: The caller is responsible for releasing the lock.
+     *
+     * @param userId The ID of the account to get.
+     * @return An optional with the Account, or an empty optional if the account cannot be found.
+     * @see ServerState#getAccount(String)
+     */
+    private Optional<Account> getThreadSafeAccount(String userId) {
+        val accountOpt = getAccount(userId);
+        if (accountOpt.isPresent()) {
+            // Obtain lock
+            accountOpt.get().getLock().lock();
+
+            // Re-check if the account still exists
+            if (accounts.get(userId) != accountOpt.get()) {
+                // If it doesn't, unlock it (so if any thread is also waiting, it can know the account has been deleted)
+                accountOpt.get().getLock().unlock();
+                return Optional.empty();
+            }
+        }
+        return accountOpt;
     }
 
     private void createBroker() {

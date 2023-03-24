@@ -8,16 +8,13 @@ import pt.tecnico.distledger.namingserver.exceptions.ServerWithInvalidParameters
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
 public class NamingServer {
 
-    private final Map<String, ServiceEntry> services;
-
-    public NamingServer() {
-        services = new ConcurrentHashMap<>();
-    }
+    private final Map<String, ServiceEntry> services = new ConcurrentHashMap<>();
 
     public void register(
             String serviceName,
@@ -30,22 +27,21 @@ public class NamingServer {
     }
 
     public List<ServerEntry> lookup(String serviceName, String qualifier) {
-        return services.containsKey(serviceName)
-                ? services.get(serviceName).getServerEntriesWithQualifier(qualifier)
-                : Collections.emptyList();
+        return Optional.ofNullable(services.get(serviceName))
+                .map(service -> service.getServerEntriesWithQualifier(qualifier))
+                .orElseGet(Collections::emptyList);
     }
 
     public void delete(
             String serviceName,
             ServerAddress serverAddress
     ) throws ServerDoesNotExistException {
-        if (!services.containsKey(serviceName)) {
+        ServiceEntry service = services.get(serviceName);
+        if (service == null) {
             throw new ServerDoesNotExistException(serviceName);
         }
-        ServiceEntry service = services.get(serviceName);
+
         service.removeServerEntry(serverAddress);
-        if (service.getServers().isEmpty()) {
-            services.remove(serviceName);
-        }
     }
+
 }

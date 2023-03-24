@@ -1,24 +1,22 @@
 package pt.tecnico.distledger.namingserver.domain;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import pt.tecnico.distledger.namingserver.exceptions.ServerDoesNotExistException;
 import pt.tecnico.distledger.namingserver.exceptions.ServerEntryAlreadyExistsException;
 import pt.tecnico.distledger.namingserver.exceptions.ServerWithInvalidParametersException;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Getter
+@RequiredArgsConstructor
 public class ServiceEntry {
 
     private final String serviceName;
 
-    private final List<ServerEntry> servers;
-
-    public ServiceEntry(String serviceName) {
-        this.serviceName = serviceName;
-        servers = new CopyOnWriteArrayList<>();
-    }
+    private final List<ServerEntry> servers = new CopyOnWriteArrayList<>();
 
     public void addServerEntry(
             ServerAddress serverAddress,
@@ -29,23 +27,26 @@ public class ServiceEntry {
                 .equals("B"))) {
             throw new ServerWithInvalidParametersException(serverQualifier);
         }
-        if (servers.stream()
-                .anyMatch(
-                        serverEntry -> serverEntry.address().equals(serverAddress) || serverEntry.qualifier()
-                                .equals(serverQualifier)
-                )) {
-            throw new ServerEntryAlreadyExistsException(serverQualifier);
+        synchronized (servers) {
+            if (servers.stream()
+                    .anyMatch(
+                            serverEntry -> serverEntry.address().equals(serverAddress) || serverEntry.qualifier()
+                                    .equals(serverQualifier)
+                    )) {
+                throw new ServerEntryAlreadyExistsException(serverQualifier);
+            }
+            servers.add(new ServerEntry(serverAddress, serverQualifier));
         }
-        servers.add(new ServerEntry(serverAddress, serverQualifier));
     }
 
     public List<ServerEntry> getServerEntriesWithQualifier(String qualifier) {
-        return qualifier == null || qualifier.isEmpty()
-                ? servers
-                : servers
-                        .stream()
-                        .filter(serverEntry -> serverEntry.qualifier().equals(qualifier))
-                        .toList();
+        if (qualifier == null || qualifier.isEmpty()) {
+            return Collections.unmodifiableList(servers);
+        }
+        return servers
+                .stream()
+                .filter(serverEntry -> serverEntry.qualifier().equals(qualifier))
+                .toList();
     }
 
     public void removeServerEntry(ServerAddress serverAddress) throws ServerDoesNotExistException {

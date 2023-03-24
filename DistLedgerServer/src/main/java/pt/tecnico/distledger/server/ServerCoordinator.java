@@ -87,7 +87,7 @@ public class ServerCoordinator {
     private long sendLedgerToServers(ConvertOperationsToGrpcVisitor visitor) {
         return peersCache.asMap()
                 .entrySet()
-                .stream()
+                .parallelStream()
                 .map(service -> {
                     try {
                         service.getValue().sendLedger(visitor.getLedger());
