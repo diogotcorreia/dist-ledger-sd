@@ -77,16 +77,18 @@ public class ServerState {
             if (accounts.containsKey(userId)) {
                 throw new AccountAlreadyExistsException(userId);
             }
-            // TODO perhaps concurrency here can be improved?
+
             CreateOp pendingOperation = new CreateOp(userId);
-            propagateOperation(pendingOperation);
+            synchronized (ledger) {
+                propagateOperation(pendingOperation);
+                ledger.add(pendingOperation);
+            }
 
             accounts.put(userId, new Account(userId));
-            ledger.add(pendingOperation);
         }
     }
 
-    public synchronized void deleteAccount(
+    public void deleteAccount(
             @NotNull String userId
     ) throws AccountNotEmptyException, AccountNotFoundException, AccountProtectedException, ServerUnavailableException, PropagationException, ReadOnlyException {
         ensureServerIsActive();
@@ -111,10 +113,12 @@ public class ServerState {
             }
 
             DeleteOp pendingOperation = new DeleteOp(userId);
-            propagateOperation(pendingOperation);
+            synchronized (ledger) {
+                propagateOperation(pendingOperation);
+                ledger.add(pendingOperation);
+            }
 
             accounts.remove(userId);
-            ledger.add(pendingOperation);
         } finally {
             if (account != null) {
                 account.getLock().unlock();
@@ -178,11 +182,13 @@ public class ServerState {
                 throw new InsufficientFundsException(fromUserId, amount, fromAccount.getBalance());
             }
             TransferOp pendingOperation = new TransferOp(fromUserId, toUserId, amount);
-            propagateOperation(pendingOperation);
+            synchronized (ledger) {
+                propagateOperation(pendingOperation);
+                ledger.add(pendingOperation);
+            }
 
             fromAccount.decreaseBalance(amount);
             toAccount.increaseBalance(amount);
-            ledger.add(pendingOperation);
         } finally {
             if (fromAccount != null) {
                 fromAccount.getLock().unlock();
@@ -205,7 +211,7 @@ public class ServerState {
         // TODO
     }
 
-    public synchronized void operateOverLedger(OperationVisitor visitor) {
+    public void operateOverLedger(OperationVisitor visitor) {
         ledger.forEach(operation -> operation.accept(visitor));
     }
 
