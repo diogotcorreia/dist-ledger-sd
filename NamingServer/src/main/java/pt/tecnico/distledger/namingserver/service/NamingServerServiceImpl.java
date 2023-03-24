@@ -3,12 +3,14 @@ package pt.tecnico.distledger.namingserver.service;
 import io.grpc.stub.StreamObserver;
 import lombok.CustomLog;
 import pt.tecnico.distledger.namingserver.domain.NamingServer;
+import pt.tecnico.distledger.namingserver.domain.ServerAddress;
 import pt.tecnico.distledger.namingserver.domain.ServerEntry;
 import pt.tecnico.distledger.namingserver.exceptions.AddressWithInvalidParametersException;
 import pt.tecnico.distledger.namingserver.exceptions.ServerDoesNotExistException;
 import pt.tecnico.distledger.namingserver.exceptions.ServerEntryAlreadyExistsException;
 import pt.tecnico.distledger.namingserver.exceptions.ServerWithInvalidParametersException;
 import pt.tecnico.distledger.namingserver.factory.AddressFactory;
+import pt.ulisboa.tecnico.distledger.contract.namingserver.NamingServerDistLedger;
 import pt.ulisboa.tecnico.distledger.contract.namingserver.NamingServerDistLedger.DeleteServerRequest;
 import pt.ulisboa.tecnico.distledger.contract.namingserver.NamingServerDistLedger.DeleteServerResponse;
 import pt.ulisboa.tecnico.distledger.contract.namingserver.NamingServerDistLedger.LookupServerRequest;
@@ -57,7 +59,7 @@ public class NamingServerServiceImpl extends NamingServerServiceImplBase {
         final List<ServerInfo> servers = namingServer
                 .lookup(request.getServiceName(), request.getQualifier())
                 .stream()
-                .map(ServerEntry::convertEntryToGrpc)
+                .map(this::convertEntryToGrpc)
                 .toList();
         final LookupServerResponse response = LookupServerResponse.newBuilder().addAllServerInfo(servers).build();
         log.debug("Server list created");
@@ -78,6 +80,23 @@ public class NamingServerServiceImpl extends NamingServerServiceImplBase {
             log.debug("Error deleting server: %s", e.getMessage());
             responseObserver.onError(e.toGrpcRuntimeException());
         }
+    }
+
+    private ServerInfo convertEntryToGrpc(ServerEntry serverEntry) {
+        return ServerInfo
+                .newBuilder()
+                .setAddress(
+                        convertAddressToGrpc(serverEntry.address())
+                )
+                .setQualifier(serverEntry.qualifier())
+                .build();
+    }
+
+    private NamingServerDistLedger.ServerAddress convertAddressToGrpc(ServerAddress address) {
+        return NamingServerDistLedger.ServerAddress.newBuilder()
+                .setHost(address.host())
+                .setPort(address.port())
+                .build();
     }
 
 }
