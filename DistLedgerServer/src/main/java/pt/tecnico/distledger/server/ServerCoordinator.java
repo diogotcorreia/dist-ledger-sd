@@ -63,12 +63,12 @@ public class ServerCoordinator {
             if (peersCache.size() == 0) {
                 populatePeersCache();
             }
-            long unsuccessfulCount = sendLedgerToServers(visitor);
-            if (unsuccessfulCount == 0 && peersCache.size() > 0) {
+            long successfulCount = sendLedgerToServers(visitor);
+            if (successfulCount == peersCache.size() && peersCache.size() > 0) {
                 return;
             }
             peersCache.invalidateAll();
-        } while (attempts++ < MAX_RETRIES);
+        } while (++attempts < MAX_RETRIES);
 
         throw new RuntimeException(new PropagationException());
     }
@@ -82,7 +82,7 @@ public class ServerCoordinator {
 
     /**
      * @param visitor visitor with ledger to send to servers
-     * @return number of unsuccessful attempts
+     * @return number of successful attempts
      */
     private long sendLedgerToServers(ConvertOperationsToGrpcVisitor visitor) {
         return peersCache.asMap()
@@ -91,11 +91,11 @@ public class ServerCoordinator {
                 .map(service -> {
                     try {
                         service.getValue().sendLedger(visitor.getLedger());
-                        return false;
+                        return true;
                     } catch (Exception e) {
                         log.error("Failed to send ledger to server: %s", service.getKey().getQualifier());
                         peersCache.invalidate(service.getKey());
-                        return true;
+                        return false;
                     }
                 })
                 .filter(Boolean::booleanValue)
