@@ -1,6 +1,5 @@
 package pt.tecnico.distledger.namingserver.domain;
 
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import pt.tecnico.distledger.namingserver.exceptions.ServerDoesNotExistException;

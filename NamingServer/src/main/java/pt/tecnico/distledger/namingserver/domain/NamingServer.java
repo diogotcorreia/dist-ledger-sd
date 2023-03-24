@@ -1,7 +1,6 @@
 package pt.tecnico.distledger.namingserver.domain;
 
 import lombok.Getter;
-import lombok.val;
 import pt.tecnico.distledger.namingserver.exceptions.ServerDoesNotExistException;
 import pt.tecnico.distledger.namingserver.exceptions.ServerEntryAlreadyExistsException;
 import pt.tecnico.distledger.namingserver.exceptions.ServerWithInvalidParametersException;
