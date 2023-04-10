@@ -41,7 +41,6 @@ public class VectorClock {
      */
     public void incrementClock(@NotNull String serverId) {
         timestamps.merge(serverId, 1, Integer::sum);
-        timestamps.compute(serverId, (k, v) -> v == null ? 1 : v + 1);
     }
 
     /**
