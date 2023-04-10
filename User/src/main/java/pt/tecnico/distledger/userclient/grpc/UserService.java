@@ -1,8 +1,10 @@
 package pt.tecnico.distledger.userclient.grpc;
 
 import io.grpc.StatusRuntimeException;
+import lombok.AllArgsConstructor;
 import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
+import pt.tecnico.distledger.common.VectorClock;
 import pt.tecnico.distledger.common.connection.ServerResolver;
 import pt.tecnico.distledger.common.exceptions.ServerUnresolvableException;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.BalanceRequest;
@@ -21,7 +23,7 @@ public class UserService implements AutoCloseable {
 
     private final ServerResolver<UserServiceBlockingStub> serverResolver;
 
-    private final VectorClock vectorClock;
+    private final VectorClock vectorClock = new VectorClock();
 
     public void createAccount(
             String qualifier,
@@ -36,7 +38,7 @@ public class UserService implements AutoCloseable {
                                 .build()
                 );
         log.debug("[Server '%s'] Received response to create account for '%s'", qualifier, username);
-        vectorClock.updateVectorClock(response.getNewTimestampMap());
+        vectorClock.updateVectorClock(new VectorClock(response.getNewTimestampMap()));
     }
 
     public void deleteAccount(
@@ -69,7 +71,7 @@ public class UserService implements AutoCloseable {
                 username,
                 response.getValue()
         );
-        vectorClock.updateVectorClock(response.getNewTimestampMap());
+        vectorClock.updateVectorClock(new VectorClock(response.getNewTimestampMap()));
         return response.getValue();
     }
 
@@ -103,7 +105,7 @@ public class UserService implements AutoCloseable {
                 from,
                 to
         );
-        vectorClock.updateVectorClock(response.getNewTimestampMap());
+        vectorClock.updateVectorClock(new VectorClock(response.getNewTimestampMap()));
     }
 
     @Override
