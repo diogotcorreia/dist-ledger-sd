@@ -17,8 +17,6 @@ import java.util.concurrent.TimeUnit;
 @CustomLog(topic = "Server Coordinator")
 public class ServerCoordinator {
 
-    private static final String PRIMARY_SERVER = "A";
-
     private static final int TIMEOUT = 2;
 
     private static final int MAX_RETRIES = 3;
@@ -28,6 +26,7 @@ public class ServerCoordinator {
 
     @Getter
     private final ServerState serverState;
+    private String toQualifier;
 
     private final Cache<ServerInfo, CrossServerService> peersCache = CacheBuilder.newBuilder()
             .expireAfterWrite(TIMEOUT, TimeUnit.MINUTES)
@@ -38,7 +37,7 @@ public class ServerCoordinator {
     public ServerCoordinator(int port, String qualifier) {
         this.port = port;
         this.qualifier = qualifier;
-        this.serverState = new ServerState(qualifier.equals(PRIMARY_SERVER), this::propagateLedgerStateToAllServers);
+        this.serverState = new ServerState(qualifier, this::propagateLedgerStateToAllServers);
     }
 
     public void registerOnNamingServer() {

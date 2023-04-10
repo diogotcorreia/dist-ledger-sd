@@ -20,6 +20,8 @@ public class ConvertOperationsToGrpcVisitor extends OperationVisitor {
                 DistLedgerCommonDefinitions.Operation.newBuilder()
                         .setUserId(operation.getAccount())
                         .setType(operation.getType())
+                        .putAllPrevTimestamp(operation.getPrevTimestamp().getTimestamps())
+                        .putAllUniqueTimestamp(operation.getNewTimestamp().getTimestamps())
                         .build()
         );
     }
@@ -30,6 +32,8 @@ public class ConvertOperationsToGrpcVisitor extends OperationVisitor {
                 DistLedgerCommonDefinitions.Operation.newBuilder()
                         .setUserId(operation.getAccount())
                         .setType(operation.getType())
+                        .putAllPrevTimestamp(operation.getPrevTimestamp().getTimestamps())
+                        .putAllUniqueTimestamp(operation.getNewTimestamp().getTimestamps())
                         .build()
         );
     }
