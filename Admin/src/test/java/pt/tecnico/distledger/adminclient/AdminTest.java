@@ -62,7 +62,7 @@ class AdminTest {
                 - activate <server>
                 - deactivate <server>
                 - getLedgerState <server>
-                - gossip <server>
+                - gossip <serverFrom> <serverTo>
                 - exit
 
                 >\s""", outputStream.toString());
