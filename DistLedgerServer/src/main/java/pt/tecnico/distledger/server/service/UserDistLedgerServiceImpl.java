@@ -14,7 +14,14 @@ import pt.tecnico.distledger.server.exceptions.PropagationException;
 import pt.tecnico.distledger.server.exceptions.ReadOnlyException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.server.exceptions.TransferBetweenSameAccountException;
-import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.*;
+import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.BalanceRequest;
+import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.BalanceResponse;
+import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.CreateAccountRequest;
+import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.CreateAccountResponse;
+import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.DeleteAccountRequest;
+import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.DeleteAccountResponse;
+import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.TransferToRequest;
+import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.TransferToResponse;
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc;
 
 @CustomLog(topic = "User Service")
@@ -40,7 +47,7 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
             log.debug("Account '%s' has a balance of %d coin(s)", request.getUserId(), output.value());
             final BalanceResponse response = BalanceResponse.newBuilder()
                     .setValue(output.value())
-                    .putAllNewTimestamp(output.updatedTS().getTimestamps())
+                    .putAllNewTimestamp(output.newTimestamp().getTimestamps())
                     .build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
@@ -64,8 +71,8 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
             log.debug("Account '%s' has been created", request.getUserId());
             responseObserver.onNext(
                     CreateAccountResponse.newBuilder()
-                    .putAllNewTimestamp(output.updatedTS().getTimestamps())
-                    .build()
+                            .putAllNewTimestamp(output.newTimestamp().getTimestamps())
+                            .build()
             );
             responseObserver.onCompleted();
         } catch (AccountAlreadyExistsException | ServerUnavailableException | PropagationException |
@@ -119,8 +126,8 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
             );
             responseObserver.onNext(
                     TransferToResponse.newBuilder()
-                    .putAllNewTimestamp(output.updatedTS().getTimestamps())
-                    .build()
+                            .putAllNewTimestamp(output.newTimestamp().getTimestamps())
+                            .build()
             );
             responseObserver.onCompleted();
         } catch (AccountNotFoundException | InsufficientFundsException | InvalidAmountException |

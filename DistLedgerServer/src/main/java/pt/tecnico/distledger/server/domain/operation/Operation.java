@@ -12,13 +12,18 @@ public abstract class Operation {
     private final String account;
     private final OperationType type;
     private final VectorClock prevTimestamp;
-    private final VectorClock newTimestamp;
+    private final VectorClock uniqueTimestamp;
 
-    protected Operation(String fromAccount, OperationType type, VectorClock prevTimestamp, VectorClock newTimestamp) {
+    protected Operation(
+            String fromAccount,
+            OperationType type,
+            VectorClock prevTimestamp,
+            VectorClock uniqueTimestamp
+    ) {
         this.account = fromAccount;
         this.type = type;
         this.prevTimestamp = prevTimestamp;
-        this.newTimestamp = newTimestamp;
+        this.uniqueTimestamp = uniqueTimestamp;
     }
 
     public abstract void accept(OperationVisitor visitor);
