@@ -87,6 +87,7 @@ public class ServerState {
         synchronized (accounts) {
             // After the lock is granted, we need to re-check the server state
             ensureServerIsActive();
+            ensureServerIsPrimary();
 
             if (accounts.containsKey(userId)) {
                 throw new AccountAlreadyExistsException(userId);
@@ -98,6 +99,8 @@ public class ServerState {
                 propagateOperation(pendingOperation);
                 ledger.add(pendingOperation);
             }
+
+            accounts.put(userId, new Account(userId));
 
             log.debug("Replica's current timestamp: {}", null);
             return new OperationOutput<>(null, null);
@@ -117,6 +120,7 @@ public class ServerState {
 
             // After the lock is granted, we need to re-check the server state
             ensureServerIsActive();
+            ensureServerIsPrimary();
 
             if (userId.equals(BROKER_ID)) {
                 throw new AccountProtectedException(userId);
@@ -203,6 +207,9 @@ public class ServerState {
                 propagateOperation(pendingOperation);
                 ledger.add(pendingOperation);
             }
+
+            fromAccount.decreaseBalance(amount);
+            toAccount.increaseBalance(amount);
         } finally {
             if (fromAccount != null) {
                 fromAccount.getLock().unlock();

@@ -28,6 +28,7 @@ public class ServerCoordinator {
 
     @Getter
     private final ServerState serverState;
+
     private final Cache<ServerInfo, CrossServerService> peersCache = CacheBuilder.newBuilder()
             .expireAfterWrite(TIMEOUT, TimeUnit.MINUTES)
             .build();
