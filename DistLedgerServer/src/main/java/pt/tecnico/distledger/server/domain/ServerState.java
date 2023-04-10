@@ -44,17 +44,13 @@ public class ServerState {
     private final boolean isPrimary;
     private final Consumer<Operation> writeOperationCallback;
 
-
     @VisibleForTesting
     public ServerState() {
         this(true, op -> {
         });
     }
 
-    public ServerState(
-            boolean isPrimary,
-            Consumer<Operation> writeOperationCallback
-    ) {
+    public ServerState(boolean isPrimary, Consumer<Operation> writeOperationCallback) {
         this.ledger = new CopyOnWriteArrayList<>();
         this.accounts = new ConcurrentHashMap<>();
         this.active = new AtomicBoolean(true);
@@ -64,8 +60,7 @@ public class ServerState {
     }
 
     public OperationOutput<Integer> getBalance(
-            String userId,
-            VectorClock prevTimestamp
+            String userId, VectorClock prevTimestamp
     ) throws AccountNotFoundException, ServerUnavailableException {
         ensureServerIsActive();
 
@@ -78,8 +73,7 @@ public class ServerState {
     }
 
     public OperationOutput<Void> createAccount(
-            @NotNull String userId,
-            VectorClock prevTimestamp
+            @NotNull String userId, VectorClock prevTimestamp
     ) throws AccountAlreadyExistsException, ServerUnavailableException, PropagationException, ReadOnlyException {
         ensureServerIsActive();
         ensureServerIsPrimary();
@@ -94,14 +88,12 @@ public class ServerState {
             }
 
             CreateOp pendingOperation = new CreateOp(userId, prevTimestamp, null);
-
             synchronized (ledger) {
                 propagateOperation(pendingOperation);
                 ledger.add(pendingOperation);
             }
 
             accounts.put(userId, new Account(userId));
-
             log.debug("Replica's current timestamp: {}", null);
             return new OperationOutput<>(null, null);
         }
@@ -200,9 +192,7 @@ public class ServerState {
             if (fromAccount.getBalance() < amount) {
                 throw new InsufficientFundsException(fromUserId, amount, fromAccount.getBalance());
             }
-
             TransferOp pendingOperation = new TransferOp(fromUserId, toUserId, amount, prevTimestamp, null);
-
             synchronized (ledger) {
                 propagateOperation(pendingOperation);
                 ledger.add(pendingOperation);
@@ -306,7 +296,7 @@ public class ServerState {
         try {
             writeOperationCallback.accept(operation); // may fail
         } catch (RuntimeException e) {
-            if (e.getCause()instanceof PropagationException e2) {
+            if (e.getCause() instanceof PropagationException e2) {
                 throw e2;
             }
             throw e;
