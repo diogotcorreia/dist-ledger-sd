@@ -8,9 +8,12 @@ import pt.tecnico.distledger.common.exceptions.ServerUnresolvableException;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.BalanceRequest;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.BalanceResponse;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.CreateAccountRequest;
+import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.CreateAccountResponse;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.DeleteAccountRequest;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.TransferToRequest;
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc.UserServiceBlockingStub;
+
+import static pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.*;
 
 @CustomLog(topic = "Service")
 @RequiredArgsConstructor
@@ -18,19 +21,22 @@ public class UserService implements AutoCloseable {
 
     private final ServerResolver<UserServiceBlockingStub> serverResolver;
 
+    private final VectorClock vectorClock;
+
     public void createAccount(
             String qualifier,
             String username
     ) throws StatusRuntimeException, ServerUnresolvableException {
         log.debug("[Server '%s'] Sending request to create account for '%s'", qualifier, username);
-        // noinspection ResultOfMethodCallIgnored
-        serverResolver.resolveStub(qualifier)
+        CreateAccountResponse response = serverResolver.resolveStub(qualifier)
                 .createAccount(
                         CreateAccountRequest.newBuilder()
                                 .setUserId(username)
+                                .putAllPrevTimestamp(vectorClock.getTimestamps())
                                 .build()
                 );
         log.debug("[Server '%s'] Received response to create account for '%s'", qualifier, username);
+        vectorClock.updateVectorClock(response.getNewTimestampMap());
     }
 
     public void deleteAccount(
@@ -54,6 +60,7 @@ public class UserService implements AutoCloseable {
                 .balance(
                         BalanceRequest.newBuilder()
                                 .setUserId(username)
+                                .putAllPrevTimestamp(vectorClock.getTimestamps())
                                 .build()
                 );
         log.debug(
@@ -62,6 +69,7 @@ public class UserService implements AutoCloseable {
                 username,
                 response.getValue()
         );
+        vectorClock.updateVectorClock(response.getNewTimestampMap());
         return response.getValue();
     }
 
@@ -79,13 +87,13 @@ public class UserService implements AutoCloseable {
                 from,
                 to
         );
-        // noinspection ResultOfMethodCallIgnored
-        serverResolver.resolveStub(qualifier)
+        TransferToResponse response = serverResolver.resolveStub(qualifier)
                 .transferTo(
                         TransferToRequest.newBuilder()
                                 .setAccountFrom(from)
                                 .setAccountTo(to)
                                 .setAmount(amount)
+                                .putAllPrevTimestamp(vectorClock.getTimestamps())
                                 .build()
                 );
         log.debug(
@@ -95,6 +103,7 @@ public class UserService implements AutoCloseable {
                 from,
                 to
         );
+        vectorClock.updateVectorClock(response.getNewTimestampMap());
     }
 
     @Override
