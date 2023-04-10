@@ -13,7 +13,9 @@ message DeactivateRequest {}
 
 message DeactivateResponse {}
 
-message GossipRequest {}
+message GossipRequest {
+  string qualifier = 1;
+}
 
 message GossipResponse {}
 

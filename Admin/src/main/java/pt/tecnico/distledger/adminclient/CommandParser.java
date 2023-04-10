@@ -115,13 +115,14 @@ public class CommandParser {
     private void gossip(String line) throws ServerUnresolvableException {
         String[] split = line.split(SPACE);
 
-        if (split.length != 2) {
+        if (split.length != 3) {
             this.printUsage();
             return;
         }
-        String server = split[1];
+        String serverFrom = split[1];
+        String serverTo = split[2];
 
-        adminService.gossip(server);
+        adminService.gossip(serverFrom, serverTo);
     }
 
     private void printUsage() {
@@ -131,7 +132,7 @@ public class CommandParser {
                         - activate <server>
                         - deactivate <server>
                         - getLedgerState <server>
-                        - gossip <server>
+                        - gossip <serverFrom> <serverTo>
                         - exit
                         """
         );

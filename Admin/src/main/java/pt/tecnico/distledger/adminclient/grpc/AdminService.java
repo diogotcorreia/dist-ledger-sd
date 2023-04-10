@@ -31,11 +31,16 @@ public class AdminService implements AutoCloseable {
         log.debug("[Server '%s'] Receiving response of server deactivation", qualifier);
     }
 
-    public void gossip(String qualifier) throws ServerUnresolvableException {
-        log.debug("[Server '%s'] Sending gossip request", qualifier);
+    public void gossip(String serverFrom, String serverTo) throws ServerUnresolvableException {
+        log.debug("[Server '%s'] Sending gossip request (to server '%s')", serverFrom, serverTo);
         // noinspection ResultOfMethodCallIgnored
-        serverResolver.resolveStub(qualifier).gossip(GossipRequest.newBuilder().build());
-        log.debug("[Server '%s'] Receiving gossip response", qualifier);
+        serverResolver.resolveStub(serverFrom)
+                .gossip(
+                        GossipRequest.newBuilder()
+                                .setQualifier(serverTo)
+                                .build()
+                );
+        log.debug("[Server '%s'] Receiving gossip response (to server '%s')", serverFrom, serverTo);
     }
 
     public GetLedgerStateResponse getLedgerState(String qualifier) throws ServerUnresolvableException {
