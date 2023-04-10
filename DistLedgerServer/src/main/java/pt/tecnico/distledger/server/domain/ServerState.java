@@ -52,7 +52,8 @@ public class ServerState {
     }
 
     public ServerState(
-            boolean isPrimary, Consumer<Operation> writeOperationCallback
+            boolean isPrimary,
+            Consumer<Operation> writeOperationCallback
     ) {
         this.ledger = new CopyOnWriteArrayList<>();
         this.accounts = new ConcurrentHashMap<>();
@@ -76,7 +77,7 @@ public class ServerState {
         );
     }
 
-    public void createAccount(
+    public OperationOutput<Void> createAccount(
             @NotNull String userId,
             VectorClock prevTimestamp
     ) throws AccountAlreadyExistsException, ServerUnavailableException, PropagationException, ReadOnlyException {
@@ -99,6 +100,7 @@ public class ServerState {
             }
 
             log.debug("Replica's current timestamp: {}", null);
+            return new OperationOutput<>(null, null);
         }
     }
 
@@ -297,7 +299,7 @@ public class ServerState {
         try {
             writeOperationCallback.accept(operation); // may fail
         } catch (RuntimeException e) {
-            if (e.getCause() instanceof PropagationException e2) {
+            if (e.getCause()instanceof PropagationException e2) {
                 throw e2;
             }
             throw e;
