@@ -32,7 +32,7 @@ public class AdminService implements AutoCloseable {
     }
 
     public void gossip(String serverFrom, String serverTo) throws ServerUnresolvableException {
-        log.debug("[Server '%s'] Sending gossip request", serverFrom);
+        log.debug("[Server '%s'] Sending gossip request (to server '%s')", serverFrom, serverTo);
         // noinspection ResultOfMethodCallIgnored
         serverResolver.resolveStub(serverFrom)
                 .gossip(
@@ -40,7 +40,7 @@ public class AdminService implements AutoCloseable {
                                 .setQualifier(serverTo)
                                 .build()
                 );
-        log.debug("[Server '%s'] Receiving gossip response", serverTo);
+        log.debug("[Server '%s'] Receiving gossip response (to server '%s')", serverFrom, serverTo);
     }
 
     public GetLedgerStateResponse getLedgerState(String qualifier) throws ServerUnresolvableException {
