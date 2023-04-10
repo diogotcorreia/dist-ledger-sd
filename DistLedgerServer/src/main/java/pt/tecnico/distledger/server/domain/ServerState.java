@@ -60,7 +60,8 @@ public class ServerState {
     }
 
     public OperationOutput<Integer> getBalance(
-            String userId, VectorClock prevTimestamp
+            String userId,
+            VectorClock prevTimestamp
     ) throws AccountNotFoundException, ServerUnavailableException {
         ensureServerIsActive();
 
@@ -73,7 +74,8 @@ public class ServerState {
     }
 
     public OperationOutput<Void> createAccount(
-            @NotNull String userId, VectorClock prevTimestamp
+            @NotNull String userId,
+            VectorClock prevTimestamp
     ) throws AccountAlreadyExistsException, ServerUnavailableException, PropagationException, ReadOnlyException {
         ensureServerIsActive();
         ensureServerIsPrimary();
@@ -296,7 +298,7 @@ public class ServerState {
         try {
             writeOperationCallback.accept(operation); // may fail
         } catch (RuntimeException e) {
-            if (e.getCause() instanceof PropagationException e2) {
+            if (e.getCause()instanceof PropagationException e2) {
                 throw e2;
             }
             throw e;
