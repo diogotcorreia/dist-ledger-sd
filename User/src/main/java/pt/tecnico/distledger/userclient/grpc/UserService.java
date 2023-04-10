@@ -1,7 +1,6 @@
 package pt.tecnico.distledger.userclient.grpc;
 
 import io.grpc.StatusRuntimeException;
-import lombok.AllArgsConstructor;
 import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
 import pt.tecnico.distledger.common.VectorClock;
