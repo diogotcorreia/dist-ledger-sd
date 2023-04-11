@@ -20,7 +20,6 @@ import pt.tecnico.distledger.server.exceptions.PropagationException;
 import pt.tecnico.distledger.server.exceptions.ReadOnlyException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.server.exceptions.TransferBetweenSameAccountException;
-import pt.tecnico.distledger.server.service.OperationOutput;
 import pt.tecnico.distledger.server.visitor.ExecuteOperationVisitor;
 import pt.tecnico.distledger.server.visitor.OperationVisitor;
 
@@ -59,21 +58,18 @@ public class ServerState {
         this.writeOperationCallback = writeOperationCallback;
     }
 
-    public OperationOutput<Integer> getBalance(
+    public int getBalance(
             String userId,
             VectorClock prevTimestamp
     ) throws AccountNotFoundException, ServerUnavailableException {
         ensureServerIsActive();
 
-        return new OperationOutput<>(
-                getAccount(userId)
-                        .orElseThrow(() -> new AccountNotFoundException(userId))
-                        .getBalance(),
-                null
-        );
+        return getAccount(userId)
+                .orElseThrow(() -> new AccountNotFoundException(userId))
+                .getBalance();
     }
 
-    public OperationOutput<Void> createAccount(
+    public void createAccount(
             @NotNull String userId,
             VectorClock prevTimestamp
     ) throws AccountAlreadyExistsException, ServerUnavailableException, PropagationException, ReadOnlyException {
@@ -97,7 +93,6 @@ public class ServerState {
 
             accounts.put(userId, new Account(userId));
             log.debug("Replica's current timestamp: {}", null);
-            return new OperationOutput<>(null, null);
         }
     }
 
@@ -139,7 +134,7 @@ public class ServerState {
         }
     }
 
-    public OperationOutput<Void> transferTo(
+    public void transferTo(
             @NotNull String fromUserId,
             @NotNull String toUserId,
             int amount,
@@ -211,7 +206,6 @@ public class ServerState {
             }
         }
         log.debug("Replica's current timestamp: {}", null);
-        return new OperationOutput<>(null, null);
     }
 
     public void activate() {

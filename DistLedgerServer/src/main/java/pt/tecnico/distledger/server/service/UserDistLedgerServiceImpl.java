@@ -40,14 +40,14 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
     ) {
         log.debug("Balance for account '%s' has been requested", request.getUserId());
         try {
-            final OperationOutput<Integer> output = serverState.getBalance(
+            final int balance = serverState.getBalance(
                     request.getUserId(),
                     new VectorClock(request.getPrevTimestampMap())
             );
-            log.debug("Account '%s' has a balance of %d coin(s)", request.getUserId(), output.value());
+            log.debug("Account '%s' has a balance of %d coin(s)", request.getUserId(), balance);
             final BalanceResponse response = BalanceResponse.newBuilder()
-                    .setValue(output.value())
-                    .putAllNewTimestamp(output.newTimestamp().getTimestamps())
+                    .setValue(balance)
+                    .putAllNewTimestamp(null)
                     .build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
@@ -64,14 +64,11 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
     ) {
         log.debug("Creation of account '%s' has been requested", request.getUserId());
         try {
-            final OperationOutput<Void> output = serverState.createAccount(
-                    request.getUserId(),
-                    new VectorClock(request.getPrevTimestampMap())
-            );
+            serverState.createAccount(request.getUserId(), new VectorClock(request.getPrevTimestampMap()));
             log.debug("Account '%s' has been created", request.getUserId());
             responseObserver.onNext(
                     CreateAccountResponse.newBuilder()
-                            .putAllNewTimestamp(output.newTimestamp().getTimestamps())
+                            .putAllNewTimestamp(null)
                             .build()
             );
             responseObserver.onCompleted();
@@ -112,7 +109,7 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
                 request.getAccountTo()
         );
         try {
-            final OperationOutput<Void> output = serverState.transferTo(
+            serverState.transferTo(
                     request.getAccountFrom(),
                     request.getAccountTo(),
                     request.getAmount(),
@@ -126,7 +123,7 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
             );
             responseObserver.onNext(
                     TransferToResponse.newBuilder()
-                            .putAllNewTimestamp(output.newTimestamp().getTimestamps())
+                            .putAllNewTimestamp(null)
                             .build()
             );
             responseObserver.onCompleted();
