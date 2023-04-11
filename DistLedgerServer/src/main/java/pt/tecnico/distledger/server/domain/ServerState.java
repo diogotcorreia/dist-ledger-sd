@@ -95,8 +95,7 @@ public class ServerState {
             }
 
             replicaTimestamp.incrementClock(qualifier);
-            VectorClock uniqueTimestamp = new VectorClock(prevTimestamp.getTimestamps());
-            // TODO: see if it's a deep copy or not
+            VectorClock uniqueTimestamp = prevTimestamp.clone();
             uniqueTimestamp.setValue(qualifier, replicaTimestamp.getValue(qualifier));
 
             CreateOp pendingOperation = new CreateOp(userId, prevTimestamp, uniqueTimestamp);
@@ -204,8 +203,7 @@ public class ServerState {
             }
 
             replicaTimestamp.incrementClock(qualifier);
-            uniqueTimestamp = new VectorClock(prevTimestamp.getTimestamps());
-            // TODO: see if it's a deep copy or not
+            uniqueTimestamp = prevTimestamp.clone();
             uniqueTimestamp.setValue(qualifier, replicaTimestamp.getValue(qualifier));
 
             TransferOp pendingOperation = new TransferOp(fromUserId, toUserId, amount, prevTimestamp, uniqueTimestamp);
