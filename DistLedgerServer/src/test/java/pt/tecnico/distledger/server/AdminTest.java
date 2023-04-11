@@ -3,6 +3,7 @@ package pt.tecnico.distledger.server;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import pt.tecnico.distledger.common.VectorClock;
 import pt.tecnico.distledger.server.domain.ServerState;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -52,17 +53,17 @@ class AdminTest {
     @SneakyThrows
     void nonEmptyLedgerStream() {
         final String userId = "user1";
-        state.createAccount(userId);
+        state.createAccount(userId, new VectorClock());
         assertEquals(1, state.getLedger().size());
-        state.transferTo(brokerId, userId, 10);
+        state.transferTo(brokerId, userId, 10, new VectorClock());
         assertEquals(2, state.getLedger().size());
-        state.transferTo(userId, brokerId, 10);
+        state.transferTo(userId, brokerId, 10, new VectorClock());
         assertEquals(3, state.getLedger().size());
         state.deactivate();
         assertEquals(3, state.getLedger().size());
         state.activate();
         assertEquals(3, state.getLedger().size());
-        state.getBalance(userId);
+        state.getBalance(userId, new VectorClock());
         assertEquals(3, state.getLedger().size());
         state.deleteAccount(userId);
         assertEquals(4, state.getLedger().size());

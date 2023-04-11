@@ -3,6 +3,7 @@ package pt.tecnico.distledger.server;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import pt.tecnico.distledger.common.VectorClock;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.exceptions.AccountNotEmptyException;
 import pt.tecnico.distledger.server.exceptions.AccountNotFoundException;
@@ -24,7 +25,7 @@ class RemoveAccountTest {
     @SneakyThrows
     void setup() {
         state = new ServerState();
-        state.createAccount(userId);
+        state.createAccount(userId, new VectorClock());
     }
 
     @Test
@@ -40,11 +41,11 @@ class RemoveAccountTest {
     @SneakyThrows
     void deleteAccounts() {
         final String userId2 = "user2";
-        state.createAccount(userId2);
+        state.createAccount(userId2, new VectorClock());
 
         state.deleteAccount(userId2);
         assertEquals(2, state.getAccounts().size());
-        assertEquals(0, state.getBalance(userId));
+        assertEquals(0, state.getBalance(userId, new VectorClock()));
 
         state.deleteAccount(userId);
         assertEquals(1, state.getAccounts().size());
@@ -64,7 +65,7 @@ class RemoveAccountTest {
     @Test
     @SneakyThrows
     void deleteAccountWithMoney() {
-        state.transferTo(brokerId, userId, 50);
+        state.transferTo(brokerId, userId, 50, new VectorClock());
 
         assertThrows(AccountNotEmptyException.class, () -> state.deleteAccount(userId));
         assertEquals(2, state.getAccounts().size());
@@ -74,7 +75,7 @@ class RemoveAccountTest {
     @Test
     @SneakyThrows
     void cannotDeleteBroker() {
-        state.transferTo(brokerId, userId, 1000);
+        state.transferTo(brokerId, userId, 1000, new VectorClock());
 
         assertEquals(0, state.getAccounts().get(brokerId).getBalance());
         assertThrows(AccountProtectedException.class, () -> state.deleteAccount(brokerId));

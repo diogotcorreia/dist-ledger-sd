@@ -3,6 +3,7 @@ package pt.tecnico.distledger.server;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import pt.tecnico.distledger.common.VectorClock;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.exceptions.AccountAlreadyExistsException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
@@ -25,29 +26,29 @@ class CreateAccountTest {
     void createBroker() {
         final String brokerId = "broker";
         assertEquals(1, state.getAccounts().size());
-        assertEquals(1000, state.getBalance(brokerId));
+        assertEquals(1000, state.getBalance(brokerId, new VectorClock()));
     }
 
     @Test
     @SneakyThrows
     void createAccount() {
-        state.createAccount(userId);
+        state.createAccount(userId, new VectorClock());
 
         assertEquals(2, state.getAccounts().size());
-        assertEquals(0, state.getBalance(userId));
+        assertEquals(0, state.getBalance(userId, new VectorClock()));
         assertEquals(1, state.getLedger().size());
     }
 
     @Test
     @SneakyThrows
     void createAccounts() {
-        state.createAccount(userId);
+        state.createAccount(userId, new VectorClock());
         final String userId2 = "user2";
-        state.createAccount(userId2);
+        state.createAccount(userId2, new VectorClock());
 
         assertEquals(3, state.getAccounts().size());
-        assertEquals(0, state.getBalance(userId));
-        assertEquals(0, state.getBalance(userId2));
+        assertEquals(0, state.getBalance(userId, new VectorClock()));
+        assertEquals(0, state.getBalance(userId2, new VectorClock()));
         assertEquals(2, state.getLedger().size());
 
     }
@@ -55,9 +56,9 @@ class CreateAccountTest {
     @Test
     @SneakyThrows
     void createAccountTwice() {
-        state.createAccount(userId);
+        state.createAccount(userId, new VectorClock());
 
-        assertThrows(AccountAlreadyExistsException.class, () -> state.createAccount(userId));
+        assertThrows(AccountAlreadyExistsException.class, () -> state.createAccount(userId, new VectorClock()));
         assertEquals(2, state.getAccounts().size());
         assertEquals(1, state.getLedger().size());
 
@@ -68,7 +69,7 @@ class CreateAccountTest {
     void cannotCreateAccount() {
         state.deactivate();
 
-        assertThrows(ServerUnavailableException.class, () -> state.createAccount(userId));
+        assertThrows(ServerUnavailableException.class, () -> state.createAccount(userId, new VectorClock()));
         assertEquals(1, state.getAccounts().size());
         assertEquals(0, state.getLedger().size());
     }
