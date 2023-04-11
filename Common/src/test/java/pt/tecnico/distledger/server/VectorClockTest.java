@@ -36,10 +36,15 @@ public class VectorClockTest {
 
         vectorClock.incrementClock("A");
         vectorClock.incrementClock("B");
+        map.put("A", 10);
+        map.put("B", 14);
 
-        assertEquals(5, map.get("A"));
-        assertEquals(7, map.get("B"));
+        assertEquals(6, vectorClock.getValue("A"));
+        assertEquals(8, vectorClock.getValue("B"));
+        assertEquals(10, map.get("A"));
+        assertEquals(14, map.get("B"));
     }
+
 
     @Test
     public void incrementEmptyVectorClock() {
