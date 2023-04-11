@@ -20,6 +20,7 @@ import pt.tecnico.distledger.server.exceptions.PropagationException;
 import pt.tecnico.distledger.server.exceptions.ReadOnlyException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.server.exceptions.TransferBetweenSameAccountException;
+import pt.tecnico.distledger.server.observer.OperationManager;
 import pt.tecnico.distledger.server.visitor.ExecuteOperationVisitor;
 import pt.tecnico.distledger.server.visitor.OperationVisitor;
 
@@ -42,6 +43,7 @@ public class ServerState {
     private final AtomicBoolean active;
     private final String qualifier;
     private final Consumer<Operation> writeOperationCallback;
+    private final OperationManager operationManager;
 
     private final VectorClock replicaTimestamp = new VectorClock();
     private final VectorClock valueTimestamp = new VectorClock();
@@ -59,6 +61,7 @@ public class ServerState {
         createBroker();
         this.qualifier = qualifier;
         this.writeOperationCallback = writeOperationCallback;
+        this.operationManager = new OperationManager(accounts, valueTimestamp);
     }
 
     public OperationResult<Integer> getBalance(
@@ -104,7 +107,8 @@ public class ServerState {
                 ledger.add(pendingOperation);
             }
 
-            // TODO: add to queue
+            operationManager.registerObserver(pendingOperation);
+            operationManager.notifyObservers();
 
             log.debug("Replica's current timestamp: {}", replicaTimestamp);
             return new OperationResult<>(null, uniqueTimestamp);
@@ -213,7 +217,8 @@ public class ServerState {
                 ledger.add(pendingOperation);
             }
 
-            // TODO: add to queue
+            operationManager.registerObserver(pendingOperation);
+            operationManager.notifyObservers();
         } finally {
             if (fromAccount != null) {
                 fromAccount.getLock().unlock();
@@ -305,7 +310,7 @@ public class ServerState {
         try {
             writeOperationCallback.accept(operation); // may fail
         } catch (RuntimeException e) {
-            if (e.getCause()instanceof PropagationException e2) {
+            if (e.getCause() instanceof PropagationException e2) {
                 throw e2;
             }
             throw e;

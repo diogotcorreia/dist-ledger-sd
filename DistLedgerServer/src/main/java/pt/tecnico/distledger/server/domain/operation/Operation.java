@@ -3,12 +3,13 @@ package pt.tecnico.distledger.server.domain.operation;
 import lombok.Getter;
 import lombok.ToString;
 import pt.tecnico.distledger.common.VectorClock;
+import pt.tecnico.distledger.server.observer.Observer;
 import pt.tecnico.distledger.server.visitor.OperationVisitor;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.OperationType;
 
 @Getter
 @ToString
-public abstract class Operation {
+public abstract class Operation implements Observer {
     private final String account;
     private final OperationType type;
     private final VectorClock prevTimestamp;
@@ -28,4 +29,11 @@ public abstract class Operation {
 
     public abstract void accept(OperationVisitor visitor);
 
+    public boolean update(OperationVisitor visitor, VectorClock valueTimestamp) {
+        if (valueTimestamp.isNewerThanOrEqualTo(this.getPrevTimestamp())) {
+            accept(visitor);
+            return true;
+        }
+        return false;
+    }
 }
