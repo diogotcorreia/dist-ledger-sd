@@ -5,8 +5,8 @@ import lombok.ToString;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Class abstracting the logic of a vector clock.
@@ -17,7 +17,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class VectorClock {
 
-    private final @NotNull Map<String, Integer> timestamps = new HashMap<>();
+    private final @NotNull Map<String, Integer> timestamps = new ConcurrentHashMap<>();
 
     /**
      * Create a new VectorClock based on a timestamp map. The map can be used afterward without affecting the internal
@@ -90,7 +90,7 @@ public class VectorClock {
      *
      * @param otherVectorClock The vector clock to compare to.
      * @return True if all timestamps of this vector clock are greater or equals to the timestamps of the given vector
-     *         clock.
+     * clock.
      */
     public boolean isNewerThanOrEqualTo(@NotNull VectorClock otherVectorClock) {
         return otherVectorClock.timestamps
