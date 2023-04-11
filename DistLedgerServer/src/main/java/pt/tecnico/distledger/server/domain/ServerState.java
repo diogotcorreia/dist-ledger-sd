@@ -40,59 +40,74 @@ public class ServerState {
     private final List<Operation> ledger;
     private final Map<String, Account> accounts;
     private final AtomicBoolean active;
-    private final boolean isPrimary;
+    private final String qualifier;
     private final Consumer<Operation> writeOperationCallback;
+
+    private final VectorClock replicaTimestamp = new VectorClock();
+    private final VectorClock valueTimestamp = new VectorClock();
 
     @VisibleForTesting
     public ServerState() {
-        this(true, op -> {
+        this("TEST", op -> {
         });
     }
 
-    public ServerState(boolean isPrimary, Consumer<Operation> writeOperationCallback) {
+    public ServerState(String qualifier, Consumer<Operation> writeOperationCallback) {
         this.ledger = new CopyOnWriteArrayList<>();
         this.accounts = new ConcurrentHashMap<>();
         this.active = new AtomicBoolean(true);
         createBroker();
-        this.isPrimary = isPrimary;
+        this.qualifier = qualifier;
         this.writeOperationCallback = writeOperationCallback;
     }
 
-    public int getBalance(
+    public OperationResult<Integer> getBalance(
             String userId,
             VectorClock prevTimestamp
     ) throws AccountNotFoundException, ServerUnavailableException {
         ensureServerIsActive();
 
-        return getAccount(userId)
-                .orElseThrow(() -> new AccountNotFoundException(userId))
-                .getBalance();
+        if (!valueTimestamp.isNewerThanOrEqualTo(prevTimestamp)) {
+            // TODO: remove this exception and implement the correct behavior
+            throw new ServerUnavailableException("TODO");
+        }
+
+        return new OperationResult<>(
+                getAccount(userId)
+                        .orElseThrow(() -> new AccountNotFoundException(userId))
+                        .getBalance(),
+                valueTimestamp
+        );
     }
 
-    public void createAccount(
+    public OperationResult<Void> createAccount(
             @NotNull String userId,
             VectorClock prevTimestamp
     ) throws AccountAlreadyExistsException, ServerUnavailableException, PropagationException, ReadOnlyException {
         ensureServerIsActive();
-        ensureServerIsPrimary();
 
         synchronized (accounts) {
             // After the lock is granted, we need to re-check the server state
             ensureServerIsActive();
-            ensureServerIsPrimary();
 
             if (accounts.containsKey(userId)) {
                 throw new AccountAlreadyExistsException(userId);
             }
 
-            CreateOp pendingOperation = new CreateOp(userId, prevTimestamp, null);
+            replicaTimestamp.incrementClock(qualifier);
+            VectorClock uniqueTimestamp = new VectorClock(prevTimestamp.getTimestamps());
+            // TODO: see if it's a deep copy or not
+            uniqueTimestamp.setValue(qualifier, replicaTimestamp.getValue(qualifier));
+
+            CreateOp pendingOperation = new CreateOp(userId, prevTimestamp, uniqueTimestamp);
             synchronized (ledger) {
-                propagateOperation(pendingOperation);
                 ledger.add(pendingOperation);
             }
 
-            accounts.put(userId, new Account(userId));
-            log.debug("Replica's current timestamp: {}", null);
+            // TODO: add to queue
+
+            log.debug("Replica's current timestamp: {}", replicaTimestamp);
+            return new OperationResult<>(null, uniqueTimestamp);
         }
     }
 
@@ -100,7 +115,6 @@ public class ServerState {
             @NotNull String userId
     ) throws AccountNotEmptyException, AccountNotFoundException, AccountProtectedException, ServerUnavailableException, PropagationException, ReadOnlyException {
         ensureServerIsActive();
-        ensureServerIsPrimary();
 
         Account account = null;
         try {
@@ -109,7 +123,6 @@ public class ServerState {
 
             // After the lock is granted, we need to re-check the server state
             ensureServerIsActive();
-            ensureServerIsPrimary();
 
             if (userId.equals(BROKER_ID)) {
                 throw new AccountProtectedException(userId);
@@ -134,14 +147,13 @@ public class ServerState {
         }
     }
 
-    public void transferTo(
+    public OperationResult<Void> transferTo(
             @NotNull String fromUserId,
             @NotNull String toUserId,
             int amount,
             VectorClock prevTimestamp
     ) throws AccountNotFoundException, InsufficientFundsException, ServerUnavailableException, InvalidAmountException, TransferBetweenSameAccountException, PropagationException, ReadOnlyException {
         ensureServerIsActive();
-        ensureServerIsPrimary();
 
         if (fromUserId.equals(toUserId)) {
             throw new TransferBetweenSameAccountException(fromUserId, toUserId);
@@ -163,6 +175,7 @@ public class ServerState {
         Account fromAccount = null;
         Account toAccount = null;
 
+        VectorClock uniqueTimestamp;
         try {
             final String firstUser = users.get(0);
             final String secondUser = users.get(1);
@@ -189,14 +202,18 @@ public class ServerState {
             if (fromAccount.getBalance() < amount) {
                 throw new InsufficientFundsException(fromUserId, amount, fromAccount.getBalance());
             }
-            TransferOp pendingOperation = new TransferOp(fromUserId, toUserId, amount, prevTimestamp, null);
+
+            replicaTimestamp.incrementClock(qualifier);
+            uniqueTimestamp = new VectorClock(prevTimestamp.getTimestamps());
+            // TODO: see if it's a deep copy or not
+            uniqueTimestamp.setValue(qualifier, replicaTimestamp.getValue(qualifier));
+
+            TransferOp pendingOperation = new TransferOp(fromUserId, toUserId, amount, prevTimestamp, uniqueTimestamp);
             synchronized (ledger) {
-                propagateOperation(pendingOperation);
                 ledger.add(pendingOperation);
             }
 
-            fromAccount.decreaseBalance(amount);
-            toAccount.increaseBalance(amount);
+            // TODO: add to queue
         } finally {
             if (fromAccount != null) {
                 fromAccount.getLock().unlock();
@@ -205,7 +222,8 @@ public class ServerState {
                 toAccount.getLock().unlock();
             }
         }
-        log.debug("Replica's current timestamp: {}", null);
+        log.debug("Replica's current timestamp: {}", replicaTimestamp);
+        return new OperationResult<>(null, uniqueTimestamp);
     }
 
     public void activate() {
@@ -282,11 +300,6 @@ public class ServerState {
         }
     }
 
-    public void ensureServerIsPrimary() throws ReadOnlyException {
-        if (!isPrimary) {
-            throw new ReadOnlyException();
-        }
-    }
 
     public void propagateOperation(Operation operation) throws PropagationException {
         try {
