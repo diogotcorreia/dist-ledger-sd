@@ -1,11 +1,10 @@
 package pt.tecnico.distledger.common;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,13 +13,30 @@ import java.util.Map;
  * <p>
  * The internal implementation uses a Map to avoid having a canonic order of the servers.
  */
-@Getter
 @ToString
-@AllArgsConstructor
 @RequiredArgsConstructor
 public class VectorClock {
 
-    private @NotNull Map<String, Integer> timestamps = new HashMap<>();
+    private final @NotNull Map<String, Integer> timestamps = new HashMap<>();
+
+    /**
+     * Create a new VectorClock based on a timestamp map. The map can be used afterward without affecting the internal
+     * state of this vector clock.
+     *
+     * @param timestamps The timestamp map to clone from.
+     */
+    public VectorClock(Map<String, Integer> timestamps) {
+        this.timestamps.putAll(timestamps);
+    }
+
+    /**
+     * Get the timestamps of this vector clock. The returned map is immutable.
+     *
+     * @return An unmodifiable map containing the timestamps.
+     */
+    public @NotNull Map<String, Integer> getTimestamps() {
+        return Collections.unmodifiableMap(this.timestamps);
+    }
 
     /**
      * Get the value of the clock for a certain server. If the server does not exist in the vector clock, zero is
@@ -61,6 +77,12 @@ public class VectorClock {
      */
     public void updateVectorClock(@NotNull VectorClock newVectorClock) {
         newVectorClock.timestamps.forEach((key, value) -> timestamps.merge(key, value, Integer::max));
+    }
+
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
+    @Override
+    public @NotNull VectorClock clone() {
+        return new VectorClock(this.timestamps);
     }
 
     /**
