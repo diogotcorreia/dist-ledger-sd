@@ -3,6 +3,7 @@ package pt.tecnico.distledger.server;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import pt.tecnico.distledger.common.VectorClock;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.exceptions.AccountNotFoundException;
 import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
@@ -25,13 +26,13 @@ class TransferToTest {
     @SneakyThrows
     void setup() {
         state = new ServerState();
-        state.createAccount(userId);
+        state.createAccount(userId, new VectorClock());
     }
 
     @Test
     @SneakyThrows
     void transferToUser() {
-        state.transferTo(brokerId, userId, 10);
+        state.transferTo(brokerId, userId, 10, new VectorClock());
 
         assertEquals(10, state.getAccounts().get(userId).getBalance());
         assertEquals(990, state.getAccounts().get(brokerId).getBalance());
@@ -41,8 +42,8 @@ class TransferToTest {
     @Test
     @SneakyThrows
     void transferFromUser() {
-        state.transferTo(brokerId, userId, 10);
-        state.transferTo(userId, brokerId, 5);
+        state.transferTo(brokerId, userId, 10, new VectorClock());
+        state.transferTo(userId, brokerId, 5, new VectorClock());
 
         assertEquals(5, state.getAccounts().get(userId).getBalance());
         assertEquals(995, state.getAccounts().get(brokerId).getBalance());
@@ -54,7 +55,10 @@ class TransferToTest {
     void fromUserDoesNotExist() {
         final String userNotRegistered = "user37";
 
-        assertThrows(AccountNotFoundException.class, () -> state.transferTo(userNotRegistered, brokerId, 10));
+        assertThrows(
+                AccountNotFoundException.class,
+                () -> state.transferTo(userNotRegistered, brokerId, 10, new VectorClock())
+        );
         assertEquals(1, state.getLedger().size());
     }
 
@@ -63,7 +67,10 @@ class TransferToTest {
     void toUserDoesNotExist() {
         final String userNotRegistered = "user37";
 
-        assertThrows(AccountNotFoundException.class, () -> state.transferTo(brokerId, userNotRegistered, 10));
+        assertThrows(
+                AccountNotFoundException.class,
+                () -> state.transferTo(brokerId, userNotRegistered, 10, new VectorClock())
+        );
         assertEquals(1, state.getLedger().size());
 
     }
@@ -71,21 +78,27 @@ class TransferToTest {
     @Test
     @SneakyThrows
     void invalidAmount() {
-        assertThrows(InvalidAmountException.class, () -> state.transferTo(brokerId, userId, -42));
+        assertThrows(InvalidAmountException.class, () -> state.transferTo(brokerId, userId, -42, new VectorClock()));
         assertEquals(1, state.getLedger().size());
     }
 
     @Test
     @SneakyThrows
     void insufficientAmount() {
-        assertThrows(InsufficientFundsException.class, () -> state.transferTo(brokerId, userId, 10000));
+        assertThrows(
+                InsufficientFundsException.class,
+                () -> state.transferTo(brokerId, userId, 10000, new VectorClock())
+        );
         assertEquals(1, state.getLedger().size());
     }
 
     @Test
     @SneakyThrows
     void sameUser() {
-        assertThrows(TransferBetweenSameAccountException.class, () -> state.transferTo(brokerId, brokerId, 10));
+        assertThrows(
+                TransferBetweenSameAccountException.class,
+                () -> state.transferTo(brokerId, brokerId, 10, new VectorClock())
+        );
         assertEquals(1, state.getLedger().size());
     }
 
@@ -94,7 +107,7 @@ class TransferToTest {
     void deactivateServer() {
         state.deactivate();
 
-        assertThrows(ServerUnavailableException.class, () -> state.transferTo(brokerId, userId, 10));
+        assertThrows(ServerUnavailableException.class, () -> state.transferTo(brokerId, userId, 10, new VectorClock()));
         assertEquals(0, state.getAccounts().get(userId).getBalance());
         assertEquals(1000, state.getAccounts().get(brokerId).getBalance());
         assertEquals(1, state.getLedger().size());
