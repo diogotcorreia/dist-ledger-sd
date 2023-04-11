@@ -45,7 +45,6 @@ public class VectorClockTest {
         assertEquals(14, map.get("B"));
     }
 
-
     @Test
     public void incrementEmptyVectorClock() {
         val vectorClock = new VectorClock();
