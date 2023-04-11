@@ -1,9 +1,11 @@
 package pt.tecnico.distledger.server.domain;
 
+import lombok.CustomLog;
 import lombok.Getter;
 import lombok.val;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
+import pt.tecnico.distledger.common.VectorClock;
 import pt.tecnico.distledger.server.domain.operation.CreateOp;
 import pt.tecnico.distledger.server.domain.operation.DeleteOp;
 import pt.tecnico.distledger.server.domain.operation.Operation;
@@ -31,6 +33,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 @Getter
+@CustomLog(topic = "Server State")
 public class ServerState {
 
     private static final String BROKER_ID = "broker";
@@ -55,7 +58,10 @@ public class ServerState {
         this.writeOperationCallback = writeOperationCallback;
     }
 
-    public int getBalance(String userId) throws AccountNotFoundException, ServerUnavailableException {
+    public int getBalance(
+            String userId,
+            VectorClock prevTimestamp
+    ) throws AccountNotFoundException, ServerUnavailableException {
         ensureServerIsActive();
 
         return getAccount(userId)
@@ -64,7 +70,8 @@ public class ServerState {
     }
 
     public void createAccount(
-            @NotNull String userId
+            @NotNull String userId,
+            VectorClock prevTimestamp
     ) throws AccountAlreadyExistsException, ServerUnavailableException, PropagationException, ReadOnlyException {
         ensureServerIsActive();
         ensureServerIsPrimary();
@@ -78,13 +85,14 @@ public class ServerState {
                 throw new AccountAlreadyExistsException(userId);
             }
 
-            CreateOp pendingOperation = new CreateOp(userId);
+            CreateOp pendingOperation = new CreateOp(userId, prevTimestamp, null);
             synchronized (ledger) {
                 propagateOperation(pendingOperation);
                 ledger.add(pendingOperation);
             }
 
             accounts.put(userId, new Account(userId));
+            log.debug("Replica's current timestamp: {}", null);
         }
     }
 
@@ -129,7 +137,8 @@ public class ServerState {
     public void transferTo(
             @NotNull String fromUserId,
             @NotNull String toUserId,
-            int amount
+            int amount,
+            VectorClock prevTimestamp
     ) throws AccountNotFoundException, InsufficientFundsException, ServerUnavailableException, InvalidAmountException, TransferBetweenSameAccountException, PropagationException, ReadOnlyException {
         ensureServerIsActive();
         ensureServerIsPrimary();
@@ -172,7 +181,6 @@ public class ServerState {
 
             // After the locks are granted, we need to re-check the server state
             ensureServerIsActive();
-            ensureServerIsPrimary();
 
             if (amount <= 0) {
                 throw new InvalidAmountException(amount);
@@ -181,7 +189,7 @@ public class ServerState {
             if (fromAccount.getBalance() < amount) {
                 throw new InsufficientFundsException(fromUserId, amount, fromAccount.getBalance());
             }
-            TransferOp pendingOperation = new TransferOp(fromUserId, toUserId, amount);
+            TransferOp pendingOperation = new TransferOp(fromUserId, toUserId, amount, prevTimestamp, null);
             synchronized (ledger) {
                 propagateOperation(pendingOperation);
                 ledger.add(pendingOperation);
@@ -197,6 +205,7 @@ public class ServerState {
                 toAccount.getLock().unlock();
             }
         }
+        log.debug("Replica's current timestamp: {}", null);
     }
 
     public void activate() {

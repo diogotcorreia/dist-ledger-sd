@@ -2,6 +2,7 @@ package pt.tecnico.distledger.server.service;
 
 import io.grpc.stub.StreamObserver;
 import lombok.CustomLog;
+import pt.tecnico.distledger.common.VectorClock;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.exceptions.AccountAlreadyExistsException;
 import pt.tecnico.distledger.server.exceptions.AccountNotEmptyException;
@@ -13,7 +14,14 @@ import pt.tecnico.distledger.server.exceptions.PropagationException;
 import pt.tecnico.distledger.server.exceptions.ReadOnlyException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.server.exceptions.TransferBetweenSameAccountException;
-import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.*;
+import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.BalanceRequest;
+import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.BalanceResponse;
+import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.CreateAccountRequest;
+import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.CreateAccountResponse;
+import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.DeleteAccountRequest;
+import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.DeleteAccountResponse;
+import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.TransferToRequest;
+import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.TransferToResponse;
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc;
 
 @CustomLog(topic = "User Service")
@@ -32,10 +40,14 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
     ) {
         log.debug("Balance for account '%s' has been requested", request.getUserId());
         try {
-            final int balance = serverState.getBalance(request.getUserId());
+            final int balance = serverState.getBalance(
+                    request.getUserId(),
+                    new VectorClock(request.getPrevTimestampMap())
+            );
             log.debug("Account '%s' has a balance of %d coin(s)", request.getUserId(), balance);
             final BalanceResponse response = BalanceResponse.newBuilder()
                     .setValue(balance)
+                    .putAllNewTimestamp(null)
                     .build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
@@ -52,9 +64,13 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
     ) {
         log.debug("Creation of account '%s' has been requested", request.getUserId());
         try {
-            serverState.createAccount(request.getUserId());
+            serverState.createAccount(request.getUserId(), new VectorClock(request.getPrevTimestampMap()));
             log.debug("Account '%s' has been created", request.getUserId());
-            responseObserver.onNext(CreateAccountResponse.getDefaultInstance());
+            responseObserver.onNext(
+                    CreateAccountResponse.newBuilder()
+                            .putAllNewTimestamp(null)
+                            .build()
+            );
             responseObserver.onCompleted();
         } catch (AccountAlreadyExistsException | ServerUnavailableException | PropagationException |
                  ReadOnlyException e) {
@@ -93,14 +109,23 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
                 request.getAccountTo()
         );
         try {
-            serverState.transferTo(request.getAccountFrom(), request.getAccountTo(), request.getAmount());
+            serverState.transferTo(
+                    request.getAccountFrom(),
+                    request.getAccountTo(),
+                    request.getAmount(),
+                    new VectorClock(request.getPrevTimestampMap())
+            );
             log.debug(
                     "Created transfer of %d coin(s) from account '%s' to account '%s'",
                     request.getAmount(),
                     request.getAccountFrom(),
                     request.getAccountTo()
             );
-            responseObserver.onNext(TransferToResponse.getDefaultInstance());
+            responseObserver.onNext(
+                    TransferToResponse.newBuilder()
+                            .putAllNewTimestamp(null)
+                            .build()
+            );
             responseObserver.onCompleted();
         } catch (AccountNotFoundException | InsufficientFundsException | InvalidAmountException |
                  ServerUnavailableException | TransferBetweenSameAccountException | PropagationException |

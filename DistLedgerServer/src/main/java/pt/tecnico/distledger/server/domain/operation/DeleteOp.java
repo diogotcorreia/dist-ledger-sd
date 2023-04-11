@@ -6,7 +6,7 @@ import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.Operat
 public class DeleteOp extends Operation {
 
     public DeleteOp(String account) {
-        super(account, OperationType.OP_DELETE_ACCOUNT);
+        super(account, OperationType.OP_DELETE_ACCOUNT, null, null);
     }
 
     @Override
