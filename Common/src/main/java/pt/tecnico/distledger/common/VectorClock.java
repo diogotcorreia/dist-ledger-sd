@@ -90,7 +90,7 @@ public class VectorClock {
      *
      * @param otherVectorClock The vector clock to compare to.
      * @return True if all timestamps of this vector clock are greater or equals to the timestamps of the given vector
-     * clock.
+     *         clock.
      */
     public boolean isNewerThanOrEqualTo(@NotNull VectorClock otherVectorClock) {
         return otherVectorClock.timestamps
