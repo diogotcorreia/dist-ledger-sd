@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Class abtracting the logic of a vector clock.
+ * Class abstracting the logic of a vector clock.
  * <p>
  * The internal implementation uses a Map to avoid having a canonic order of the servers.
  */
@@ -31,6 +31,16 @@ public class VectorClock {
      */
     public int getValue(@NotNull String serverId) {
         return timestamps.getOrDefault(serverId, 0);
+    }
+
+    /**
+     * Set the value of the clock for a certain server. If the server does not exist in the vector clock, it is added.
+     *
+     * @param serverId The server to set the timestamp for.
+     * @param value    The new value of the timestamp.
+     */
+    public void setValue(@NotNull String serverId, int value) {
+        timestamps.put(serverId, value);
     }
 
     /**
@@ -64,7 +74,7 @@ public class VectorClock {
         return otherVectorClock.timestamps
                 .entrySet()
                 .stream()
-                .allMatch((entry) -> this.timestamps.getOrDefault(entry.getKey(), 0) >= entry.getValue());
+                .allMatch(entry -> this.timestamps.getOrDefault(entry.getKey(), 0) >= entry.getValue());
     }
 
 }

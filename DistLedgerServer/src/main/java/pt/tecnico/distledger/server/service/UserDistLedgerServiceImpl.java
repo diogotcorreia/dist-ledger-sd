@@ -3,6 +3,7 @@ package pt.tecnico.distledger.server.service;
 import io.grpc.stub.StreamObserver;
 import lombok.CustomLog;
 import pt.tecnico.distledger.common.VectorClock;
+import pt.tecnico.distledger.server.domain.OperationResult;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.exceptions.AccountAlreadyExistsException;
 import pt.tecnico.distledger.server.exceptions.AccountNotEmptyException;
@@ -40,14 +41,17 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
     ) {
         log.debug("Balance for account '%s' has been requested", request.getUserId());
         try {
-            final int balance = serverState.getBalance(
+            final OperationResult<Integer> result = serverState.getBalance(
                     request.getUserId(),
                     new VectorClock(request.getPrevTimestampMap())
             );
+            final int balance = result.value();
+            final VectorClock newTimestamp = result.vectorClock();
+
             log.debug("Account '%s' has a balance of %d coin(s)", request.getUserId(), balance);
             final BalanceResponse response = BalanceResponse.newBuilder()
                     .setValue(balance)
-                    .putAllNewTimestamp(null)
+                    .putAllNewTimestamp(newTimestamp.getTimestamps())
                     .build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
@@ -64,11 +68,12 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
     ) {
         log.debug("Creation of account '%s' has been requested", request.getUserId());
         try {
-            serverState.createAccount(request.getUserId(), new VectorClock(request.getPrevTimestampMap()));
+            final OperationResult<Void> result =
+                    serverState.createAccount(request.getUserId(), new VectorClock(request.getPrevTimestampMap()));
             log.debug("Account '%s' has been created", request.getUserId());
             responseObserver.onNext(
                     CreateAccountResponse.newBuilder()
-                            .putAllNewTimestamp(null)
+                            .putAllNewTimestamp(result.vectorClock().getTimestamps())
                             .build()
             );
             responseObserver.onCompleted();
@@ -109,7 +114,7 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
                 request.getAccountTo()
         );
         try {
-            serverState.transferTo(
+            OperationResult<Void> result = serverState.transferTo(
                     request.getAccountFrom(),
                     request.getAccountTo(),
                     request.getAmount(),
@@ -123,7 +128,7 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
             );
             responseObserver.onNext(
                     TransferToResponse.newBuilder()
-                            .putAllNewTimestamp(null)
+                            .putAllNewTimestamp(result.vectorClock().getTimestamps())
                             .build()
             );
             responseObserver.onCompleted();
