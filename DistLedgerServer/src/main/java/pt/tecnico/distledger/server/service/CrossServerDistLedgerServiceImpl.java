@@ -30,7 +30,7 @@ public class CrossServerDistLedgerServiceImpl extends DistLedgerCrossServerServi
     ) {
         log.debug("Propagate state has been received");
         try {
-            serverState.setLedger(
+            serverState.addToLedger(
                     request.getState()
                             .getLedgerList()
                             .stream()

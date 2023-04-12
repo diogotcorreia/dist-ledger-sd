@@ -21,7 +21,6 @@ import pt.tecnico.distledger.server.exceptions.ReadOnlyException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.server.exceptions.TransferBetweenSameAccountException;
 import pt.tecnico.distledger.server.observer.OperationManager;
-import pt.tecnico.distledger.server.visitor.ExecuteOperationVisitor;
 import pt.tecnico.distledger.server.visitor.OperationVisitor;
 
 import java.util.List;
@@ -245,15 +244,18 @@ public class ServerState {
         ledger.forEach(operation -> operation.accept(visitor));
     }
 
-    public synchronized void setLedger(List<Operation> newOperations) throws ServerUnavailableException {
+    public synchronized void addToLedger(List<Operation> newOperations) throws ServerUnavailableException {
         ensureServerIsActive();
-        this.ledger.addAll(newOperations);
-        updateAccountsFromLedger(newOperations);
-    }
-
-    public synchronized void updateAccountsFromLedger(List<Operation> newOperations) {
-        val visitor = new ExecuteOperationVisitor(this.accounts);
-        newOperations.forEach(operation -> operation.accept(visitor));
+        for (Operation operation : newOperations) {
+            // TODO: verify that this condition is correct
+            if (!replicaTimestamp.isNewerThanOrEqualTo(operation.getUniqueTimestamp())) {
+                operationManager.registerObserver(operation);
+                synchronized (ledger) {
+                    ledger.add(operation);
+                }
+            }
+        }
+        operationManager.notifyObservers();
     }
 
     /**
@@ -308,7 +310,7 @@ public class ServerState {
         try {
             writeOperationCallback.accept(operation); // may fail
         } catch (RuntimeException e) {
-            if (e.getCause()instanceof PropagationException e2) {
+            if (e.getCause() instanceof PropagationException e2) {
                 throw e2;
             }
             throw e;
