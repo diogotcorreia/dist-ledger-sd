@@ -308,7 +308,7 @@ public class ServerState {
         try {
             writeOperationCallback.accept(operation); // may fail
         } catch (RuntimeException e) {
-            if (e.getCause()instanceof PropagationException e2) {
+            if (e.getCause() instanceof PropagationException e2) {
                 throw e2;
             }
             throw e;
