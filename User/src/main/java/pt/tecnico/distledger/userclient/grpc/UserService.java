@@ -119,6 +119,6 @@ public class UserService implements AutoCloseable {
     }
 
     public void logTimestamps() {
-    	log.debug("Vector clock is currently: %s", vectorClock.getTimestamps());
+        log.debug("Vector clock is currently: %s", vectorClock.getTimestamps());
     }
 }
