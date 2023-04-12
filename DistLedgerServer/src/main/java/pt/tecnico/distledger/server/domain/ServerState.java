@@ -29,7 +29,6 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 @Getter
@@ -41,7 +40,6 @@ public class ServerState {
     private final Map<String, Account> accounts;
     private final AtomicBoolean active;
     private final String qualifier;
-    private final Consumer<List<Operation>> writeOperationCallback;
     private final OperationManager operationManager;
 
     private final VectorClock replicaTimestamp = new VectorClock();
@@ -49,17 +47,15 @@ public class ServerState {
 
     @VisibleForTesting
     public ServerState() {
-        this("TEST", op -> {
-        });
+        this("TEST");
     }
 
-    public ServerState(String qualifier, Consumer<List<Operation>> writeOperationCallback) {
+    public ServerState(String qualifier) {
         this.ledger = new CopyOnWriteArrayList<>();
         this.accounts = new ConcurrentHashMap<>();
         this.active = new AtomicBoolean(true);
         createBroker();
         this.qualifier = qualifier;
-        this.writeOperationCallback = writeOperationCallback;
         this.operationManager = new OperationManager(accounts, valueTimestamp);
     }
 
@@ -235,7 +231,7 @@ public class ServerState {
         this.active.set(false);
     }
 
-    public List<Operation> gossip(String qualifier) {
+    public List<Operation> getOperations(String qualifier) {
         // TODO
         return ledger;
     }

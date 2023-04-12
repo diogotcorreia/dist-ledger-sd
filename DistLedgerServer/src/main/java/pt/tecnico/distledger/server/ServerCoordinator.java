@@ -35,12 +35,10 @@ public class ServerCoordinator {
 
     private final NamingServerService namingServerService = new NamingServerService();
 
-    private String serverTo;
-
     public ServerCoordinator(int port, String qualifier) {
         this.port = port;
         this.qualifier = qualifier;
-        this.serverState = new ServerState(qualifier, this::propagateLedgerStateToServer);
+        this.serverState = new ServerState(qualifier);
     }
 
     public void registerOnNamingServer() {
@@ -56,12 +54,11 @@ public class ServerCoordinator {
     }
 
     public void gossip(String serverTo) {
-        this.serverTo = serverTo;
-        propagateLedgerStateToServer(serverState.gossip(serverTo));
+        propagateLedgerStateToServer(serverState.getOperations(serverTo), serverTo);
     }
 
 
-    public void propagateLedgerStateToServer(List<Operation> pendingOperation) {
+    public void propagateLedgerStateToServer(List<Operation> pendingOperation, String serverTo) {
         ConvertOperationsToGrpcVisitor visitor = new ConvertOperationsToGrpcVisitor();
         for (Operation operation : pendingOperation) {
             operation.accept(visitor);
@@ -73,7 +70,7 @@ public class ServerCoordinator {
             if (peersCache.size() == 0) {
                 populatePeersCache();
             }
-            boolean successful = sendLedgerToServers(visitor);
+            boolean successful = sendLedgerToServers(visitor, serverTo);
             if (successful) {
                 return;
             }
@@ -92,15 +89,16 @@ public class ServerCoordinator {
      * Sends the ledger to the server in the cache
      *
      * @param visitor
+     * @param serverTo
      * @return true if the ledger was sent successfully, false otherwise
      */
 
-    private boolean sendLedgerToServers(ConvertOperationsToGrpcVisitor visitor) {
+    private boolean sendLedgerToServers(ConvertOperationsToGrpcVisitor visitor, String serverTo) {
         try {
             List<CrossServerService> crossServerService = peersCache.asMap()
                     .entrySet()
                     .stream()
-                    .filter(entry -> !entry.getKey().getQualifier().equals(this.serverTo))
+                    .filter(entry -> !entry.getKey().getQualifier().equals(serverTo))
                     .map(Map.Entry::getValue)
                     .toList();
 
@@ -112,8 +110,8 @@ public class ServerCoordinator {
             return true;
         } catch (Exception e) {
             e.printStackTrace();
-            log.error("Failed to send ledger to server: %s", this.serverTo);
-            peersCache.invalidate(this.serverTo);
+            log.error("Failed to send ledger to server: %s", serverTo);
+            peersCache.invalidate(serverTo);
         }
         return false;
     }
