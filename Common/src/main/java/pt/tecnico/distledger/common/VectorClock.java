@@ -6,7 +6,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 /**
  * Class abstracting the logic of a vector clock.
@@ -99,4 +101,23 @@ public class VectorClock {
                 .allMatch(entry -> this.timestamps.getOrDefault(entry.getKey(), 0) >= entry.getValue());
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        VectorClock that = (VectorClock) o;
+
+        return Stream.concat(this.timestamps.keySet().stream(), that.timestamps.keySet().stream())
+                .distinct()
+                .allMatch(key -> Objects.equals(
+                        this.timestamps.getOrDefault(key, 0),
+                        that.timestamps.getOrDefault(key, 0)
+                ));
+    }
+
+    @Override
+    public int hashCode() {
+        return timestamps.hashCode();
+    }
 }
