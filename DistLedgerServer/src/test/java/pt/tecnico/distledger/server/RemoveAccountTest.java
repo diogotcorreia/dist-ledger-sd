@@ -1,6 +1,7 @@
 package pt.tecnico.distledger.server;
 
 import lombok.SneakyThrows;
+import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import pt.tecnico.distledger.common.VectorClock;
@@ -45,7 +46,9 @@ class RemoveAccountTest {
 
         state.deleteAccount(userId2);
         assertEquals(2, state.getAccounts().size());
-        assertEquals(0, state.getBalance(userId, new VectorClock()));
+        val result = state.getBalance(userId, new VectorClock());
+        assertEquals(0, result.value());
+        // TODO test vector clock
 
         state.deleteAccount(userId);
         assertEquals(1, state.getAccounts().size());
