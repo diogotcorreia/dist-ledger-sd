@@ -1,41 +1,46 @@
 package pt.tecnico.distledger.server.observer;
 
+import org.jetbrains.annotations.NotNull;
 import pt.tecnico.distledger.common.VectorClock;
 import pt.tecnico.distledger.server.domain.Account;
 import pt.tecnico.distledger.server.visitor.ExecuteOperationVisitor;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class OperationManager implements ObserverManager {
-    private final List<Observer> observers = new ArrayList<>();
-    private final VectorClock valueTimestamp;
-    private final ExecuteOperationVisitor executeOperationVisitor;
+    private final @NotNull List<Observer> observers = new CopyOnWriteArrayList<>();
+    private final @NotNull VectorClock valueTimestamp;
+    private final @NotNull ExecuteOperationVisitor executeOperationVisitor;
 
-    public OperationManager(Map<String, Account> accounts, VectorClock valueTimestamp) {
+    public OperationManager(@NotNull Map<String, Account> accounts, @NotNull VectorClock valueTimestamp) {
         this.executeOperationVisitor = new ExecuteOperationVisitor(accounts);
         this.valueTimestamp = valueTimestamp;
     }
 
     @Override
-    public void registerObserver(Observer observer) {
+    public void registerObserver(@NotNull Observer observer) {
         observers.add(observer);
     }
 
     @Override
-    public void removeObserver(Observer observer) {
+    public void removeObserver(@NotNull Observer observer) {
         observers.remove(observer);
     }
 
     @Override
     public void notifyObservers() {
-        for (Observer observer : observers) {
-            if (observer.update(executeOperationVisitor, valueTimestamp)) {
-                removeObserver(observer);
-                notifyObservers(); // allows for a previous operation to be executed if a following operation which it depends on is resolved
-                break;
+        boolean changed;
+        do {
+            changed = false;
+            for (Observer observer : observers) {
+                if (observer.update(executeOperationVisitor, valueTimestamp)) {
+                    changed = true;
+                    removeObserver(observer);
+                    break;
+                }
             }
-        }
+        } while (changed);
     }
 }
