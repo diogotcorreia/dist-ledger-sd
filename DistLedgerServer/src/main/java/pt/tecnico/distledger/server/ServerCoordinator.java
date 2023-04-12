@@ -55,6 +55,7 @@ public class ServerCoordinator {
 
     public void gossip(String serverTo) {
         propagateLedgerStateToServer(serverState.getOperations(serverTo), serverTo);
+        serverState.updateGossipTimestamp(serverTo);
     }
 
 

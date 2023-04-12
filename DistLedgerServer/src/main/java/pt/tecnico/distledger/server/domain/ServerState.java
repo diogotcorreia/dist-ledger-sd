@@ -44,6 +44,7 @@ public class ServerState {
 
     private final VectorClock replicaTimestamp = new VectorClock();
     private final VectorClock valueTimestamp = new VectorClock();
+    private final VectorClock gossipTimestamp = new VectorClock();
 
     @VisibleForTesting
     public ServerState() {
@@ -232,8 +233,16 @@ public class ServerState {
     }
 
     public List<Operation> getOperations(String qualifier) {
-        // TODO
-        return ledger;
+        final int lastTimestamp = gossipTimestamp.getValue(qualifier);
+
+        // TODO: check condition
+        return ledger.stream()
+                .filter(operation -> operation.getUniqueTimestamp().getValue(qualifier) > lastTimestamp)
+                .toList();
+    }
+
+    public void updateGossipTimestamp(String qualifier) {
+        gossipTimestamp.setValue(qualifier, replicaTimestamp.getValue(qualifier));
     }
 
     public void operateOverLedger(OperationVisitor visitor) {
