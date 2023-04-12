@@ -99,7 +99,7 @@ public class ServerCoordinator {
             List<CrossServerService> crossServerService = peersCache.asMap()
                     .entrySet()
                     .stream()
-                    .filter(entry -> !entry.getKey().getQualifier().equals(serverTo))
+                    .filter(entry -> entry.getKey().getQualifier().equals(serverTo))
                     .map(Map.Entry::getValue)
                     .toList();
 
@@ -107,7 +107,12 @@ public class ServerCoordinator {
                 return false;
             }
 
-            crossServerService.forEach(crossServer -> crossServer.sendLedger(visitor.getLedger()));
+            crossServerService.forEach(
+                    crossServer -> crossServer.sendLedger(
+                            visitor.getLedger(),
+                            serverState.getReplicaTimestamp()
+                    )
+            );
             return true;
         } catch (Exception e) {
             e.printStackTrace();

@@ -14,17 +14,20 @@ public abstract class Operation implements Observer {
     private final OperationType type;
     private final VectorClock prevTimestamp;
     private final VectorClock uniqueTimestamp;
+    private boolean stable = false;
 
     protected Operation(
             String fromAccount,
             OperationType type,
             VectorClock prevTimestamp,
-            VectorClock uniqueTimestamp
+            VectorClock uniqueTimestamp,
+            boolean stable
     ) {
         this.account = fromAccount;
         this.type = type;
         this.prevTimestamp = prevTimestamp;
         this.uniqueTimestamp = uniqueTimestamp;
+        this.stable = stable;
     }
 
     public abstract void accept(OperationVisitor visitor);
@@ -32,6 +35,7 @@ public abstract class Operation implements Observer {
     public boolean update(OperationVisitor visitor, VectorClock valueTimestamp) {
         if (valueTimestamp.isNewerThanOrEqualTo(this.getPrevTimestamp())) {
             accept(visitor);
+            stable = true;
             return true;
         }
         return false;

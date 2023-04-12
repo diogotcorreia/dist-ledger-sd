@@ -3,6 +3,7 @@ package pt.tecnico.distledger.server.grpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import lombok.CustomLog;
+import pt.tecnico.distledger.common.VectorClock;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.LedgerState;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.Operation;
 import pt.ulisboa.tecnico.distledger.contract.distledgerserver.CrossServerDistLedger.PropagateStateRequest;
@@ -28,7 +29,7 @@ public class CrossServerService implements AutoCloseable {
         stub = newBlockingStub(channel);
     }
 
-    public void sendLedger(List<Operation> ledger) {
+    public void sendLedger(List<Operation> ledger, VectorClock replicaTimestamp) {
         log.debug("Sending request to send ledger");
 
         // noinspection ResultOfMethodCallIgnored
@@ -40,6 +41,9 @@ public class CrossServerService implements AutoCloseable {
                                         .newBuilder()
                                         .addAllLedger(ledger)
                                         .build()
+                        )
+                        .putAllReplicaTimestamp(
+                                replicaTimestamp.getTimestamps()
                         )
                         .build()
         );

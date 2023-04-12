@@ -18,6 +18,7 @@ message Operation {
   // Used map to avoid a canonic ordering with vectors
   map<string, int32> prevTimestamp = 5;
   map<string, int32> uniqueTimestamp = 6;
+  bool stable = 7;
 }
 
 message LedgerState {

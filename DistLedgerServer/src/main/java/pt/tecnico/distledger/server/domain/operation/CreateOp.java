@@ -6,8 +6,8 @@ import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.Operat
 
 public class CreateOp extends Operation {
 
-    public CreateOp(String account, VectorClock prevTimestamp, VectorClock uniqueTimestamp) {
-        super(account, OperationType.OP_CREATE_ACCOUNT, prevTimestamp, uniqueTimestamp);
+    public CreateOp(String account, VectorClock prevTimestamp, VectorClock uniqueTimestamp, boolean stable) {
+        super(account, OperationType.OP_CREATE_ACCOUNT, prevTimestamp, uniqueTimestamp, stable);
     }
 
     @Override

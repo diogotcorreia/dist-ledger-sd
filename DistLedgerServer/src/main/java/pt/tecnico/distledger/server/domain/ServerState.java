@@ -97,7 +97,7 @@ public class ServerState {
             VectorClock uniqueTimestamp = prevTimestamp.clone();
             uniqueTimestamp.setValue(qualifier, replicaTimestamp.getValue(qualifier));
 
-            CreateOp pendingOperation = new CreateOp(userId, prevTimestamp, uniqueTimestamp);
+            CreateOp pendingOperation = new CreateOp(userId, prevTimestamp, uniqueTimestamp, false);
             synchronized (ledger) {
                 ledger.add(pendingOperation);
             }
@@ -205,7 +205,8 @@ public class ServerState {
             uniqueTimestamp = prevTimestamp.clone();
             uniqueTimestamp.setValue(qualifier, replicaTimestamp.getValue(qualifier));
 
-            TransferOp pendingOperation = new TransferOp(fromUserId, toUserId, amount, prevTimestamp, uniqueTimestamp);
+            TransferOp pendingOperation =
+                    new TransferOp(fromUserId, toUserId, amount, prevTimestamp, uniqueTimestamp, false);
             synchronized (ledger) {
                 ledger.add(pendingOperation);
             }
