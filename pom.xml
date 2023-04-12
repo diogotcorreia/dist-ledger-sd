@@ -23,7 +23,7 @@
 
     <!-- Properties are variables used to customize the behavior of Maven and its plug-ins. -->
     <properties>
-        <version.spotless-maven-plugin>2.33.0</version.spotless-maven-plugin>
+        <version.spotless-maven-plugin>2.36.0</version.spotless-maven-plugin>
 
         <spotless.java.eclipse.file>${project.basedir}${file.separator}formatter-config.xml</spotless.java.eclipse.file>
         <version.org.projectlombok.lombok>1.18.24</version.org.projectlombok.lombok>

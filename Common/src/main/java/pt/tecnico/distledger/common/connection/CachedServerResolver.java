@@ -113,6 +113,6 @@ public class CachedServerResolver<T extends AbstractBlockingStub<T>> implements 
         this.channelStubPairMap.clear();
     }
 
-    public record ChannelStubPair<T> (ManagedChannel channel, T stub) {
+    public record ChannelStubPair<T>(ManagedChannel channel, T stub) {
     }
 }
