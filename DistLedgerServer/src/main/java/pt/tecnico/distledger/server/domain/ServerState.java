@@ -41,7 +41,7 @@ public class ServerState {
     private final Map<String, Account> accounts;
     private final AtomicBoolean active;
     private final String qualifier;
-    private final Consumer<Operation> writeOperationCallback;
+    private final Consumer<List<Operation>> writeOperationCallback;
     private final OperationManager operationManager;
 
     private final VectorClock replicaTimestamp = new VectorClock();
@@ -53,7 +53,7 @@ public class ServerState {
         });
     }
 
-    public ServerState(String qualifier, Consumer<Operation> writeOperationCallback) {
+    public ServerState(String qualifier, Consumer<List<Operation>> writeOperationCallback) {
         this.ledger = new CopyOnWriteArrayList<>();
         this.accounts = new ConcurrentHashMap<>();
         this.active = new AtomicBoolean(true);
@@ -137,7 +137,6 @@ public class ServerState {
 
             DeleteOp pendingOperation = new DeleteOp(userId);
             synchronized (ledger) {
-                propagateOperation(pendingOperation);
                 ledger.add(pendingOperation);
             }
 
@@ -236,8 +235,9 @@ public class ServerState {
         this.active.set(false);
     }
 
-    public void gossip() {
+    public List<Operation> gossip(String qualifier) {
         // TODO
+        return ledger;
     }
 
     public void operateOverLedger(OperationVisitor visitor) {
@@ -303,18 +303,5 @@ public class ServerState {
         if (!active.get()) {
             throw new ServerUnavailableException("Server is not active");
         }
-    }
-
-
-    public void propagateOperation(Operation operation) throws PropagationException {
-        try {
-            writeOperationCallback.accept(operation); // may fail
-        } catch (RuntimeException e) {
-            if (e.getCause() instanceof PropagationException e2) {
-                throw e2;
-            }
-            throw e;
-        }
-
     }
 }
