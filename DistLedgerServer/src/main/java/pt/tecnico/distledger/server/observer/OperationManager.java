@@ -12,11 +12,17 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class OperationManager implements ObserverManager {
     private final @NotNull List<Observer> observers = new CopyOnWriteArrayList<>();
     private final @NotNull VectorClock valueTimestamp;
+    private final @NotNull VectorClock replicaTimestamp;
     private final @NotNull ExecuteOperationVisitor executeOperationVisitor;
 
-    public OperationManager(@NotNull Map<String, Account> accounts, @NotNull VectorClock valueTimestamp) {
+    public OperationManager(
+            @NotNull Map<String, Account> accounts,
+            @NotNull VectorClock valueTimestamp,
+            @NotNull VectorClock replicaTimestamp
+    ) {
         this.executeOperationVisitor = new ExecuteOperationVisitor(accounts);
         this.valueTimestamp = valueTimestamp;
+        this.replicaTimestamp = replicaTimestamp;
     }
 
     @Override
@@ -36,6 +42,7 @@ public class OperationManager implements ObserverManager {
             changed = false;
             for (Observer observer : observers) {
                 if (observer.update(executeOperationVisitor, valueTimestamp)) {
+                    valueTimestamp.updateVectorClock(replicaTimestamp);
                     changed = true;
                     removeObserver(observer);
                     break;

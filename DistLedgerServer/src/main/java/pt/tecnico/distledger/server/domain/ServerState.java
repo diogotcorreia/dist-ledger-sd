@@ -57,7 +57,7 @@ public class ServerState {
         this.active = new AtomicBoolean(true);
         createBroker();
         this.qualifier = qualifier;
-        this.operationManager = new OperationManager(accounts, valueTimestamp);
+        this.operationManager = new OperationManager(accounts, valueTimestamp, replicaTimestamp);
     }
 
     public OperationResult<Integer> getBalance(
@@ -238,7 +238,7 @@ public class ServerState {
 
         // TODO: check condition
         return ledger.stream()
-                .filter(operation -> operation.getUniqueTimestamp().getValue(qualifier) > lastTimestamp)
+                .filter(operation -> operation.getUniqueTimestamp().getValue(qualifier) >= lastTimestamp)
                 .toList();
     }
 
@@ -250,11 +250,15 @@ public class ServerState {
         ledger.forEach(operation -> operation.accept(visitor));
     }
 
-    public synchronized void addToLedger(List<Operation> newOperations) throws ServerUnavailableException {
+    public synchronized void addToLedger(
+            List<Operation> newOperations,
+            VectorClock sentTimestamp
+    ) throws ServerUnavailableException {
         ensureServerIsActive();
         for (Operation operation : newOperations) {
             // TODO: verify that this condition is correct
             if (!replicaTimestamp.isNewerThanOrEqualTo(operation.getUniqueTimestamp())) {
+                replicaTimestamp.updateVectorClock(operation.getUniqueTimestamp());
                 operationManager.registerObserver(operation);
                 synchronized (ledger) {
                     ledger.add(operation);

@@ -35,7 +35,8 @@ public class CrossServerDistLedgerServiceImpl extends DistLedgerCrossServerServi
                             .getLedgerList()
                             .stream()
                             .map(this::toOperation)
-                            .toList()
+                            .toList(),
+                    new VectorClock(request.getReplicaTimestampMap())
             );
 
             log.debug("Propagate state response has been sent");
@@ -52,14 +53,16 @@ public class CrossServerDistLedgerServiceImpl extends DistLedgerCrossServerServi
             case OP_CREATE_ACCOUNT -> new CreateOp(
                     operation.getUserId(),
                     new VectorClock(operation.getPrevTimestampMap()),
-                    new VectorClock(operation.getUniqueTimestampMap())
+                    new VectorClock(operation.getUniqueTimestampMap()),
+                    operation.getStable()
             );
             case OP_TRANSFER_TO -> new TransferOp(
                     operation.getUserId(),
                     operation.getDestUserId(),
                     operation.getAmount(),
                     new VectorClock(operation.getPrevTimestampMap()),
-                    new VectorClock(operation.getUniqueTimestampMap())
+                    new VectorClock(operation.getUniqueTimestampMap()),
+                    operation.getStable()
             );
             case OP_DELETE_ACCOUNT -> new DeleteOp(operation.getUserId());
             default -> throw new IllegalArgumentException("Invalid operation");
