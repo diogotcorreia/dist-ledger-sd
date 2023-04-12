@@ -14,6 +14,9 @@ import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.DeleteAccountR
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.TransferToRequest;
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc.UserServiceBlockingStub;
 
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+
 import static pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.*;
 
 @CustomLog(topic = "Service")
@@ -57,21 +60,57 @@ public class UserService implements AutoCloseable {
 
     public int balance(String qualifier, String username) throws StatusRuntimeException, ServerUnresolvableException {
         log.debug("Sending request to get balance for '%s'", username);
-        final BalanceResponse response = serverResolver.resolveStub(qualifier)
-                .balance(
-                        BalanceRequest.newBuilder()
-                                .setUserId(username)
-                                .putAllPrevTimestamp(vectorClock.getTimestamps())
-                                .build()
-                );
-        log.debug(
-                "[Server '%s'] Received response to get balance for '%s' (value: %d)",
-                qualifier,
-                username,
-                response.getValue()
+
+        // since this operation may take a while, if the gossip process is slow, we allow the user to cancel it (as it's blocking)
+        log.info("This operation is cancellable. Press ENTER to cancel this request.");
+
+        AtomicReference<BalanceResponse> response = new AtomicReference<>();
+        List<Thread> threads = List.of(new Thread(() -> {
+            try {
+                System.in.read();
+            } catch (Exception e) {
+                log.error("Error while waiting for user input", e);
+            }
+        }),
+                new Thread(() -> {
+                    try {
+                        response.set(serverResolver.resolveStub(qualifier)
+                                .balance(
+                                        BalanceRequest.newBuilder()
+                                                .setUserId(username)
+                                                .putAllPrevTimestamp(vectorClock.getTimestamps())
+                                                .build()
+                                ));
+                        log.debug(
+                                "[Server '%s'] Received response to get balance for '%s' (value: %d)",
+                                qualifier,
+                                username,
+                                response.get().getValue()
+                        );
+                        vectorClock.updateVectorClock(new VectorClock(response.get().getNewTimestampMap()));
+                    } catch (Exception e) {
+                        log.error("Error while performing request", e);
+                    }
+                })
         );
-        vectorClock.updateVectorClock(new VectorClock(response.getNewTimestampMap()));
-        return response.getValue();
+        threads.forEach(Thread::start);
+
+        // we wait for either the user to press ENTER or for the request to finish
+        Thread thread1 = threads.get(0);
+        Thread thread2 = threads.get(1);
+        try {
+            thread1.join();
+        } catch (InterruptedException e) {
+            log.error("Error while waiting for user input", e);
+        }
+
+        // if the user pressed ENTER, we cancel the request
+        if (thread1.isInterrupted()) {
+            thread2.interrupt();
+            log.info("Request cancelled");
+            return 0;
+        }
+        return response.get().getValue();
     }
 
 

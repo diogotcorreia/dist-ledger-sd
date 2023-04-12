@@ -69,10 +69,25 @@ public class ServerState {
     ) throws AccountNotFoundException, ServerUnavailableException {
         ensureServerIsActive();
 
-        if (!valueTimestamp.isNewerThanOrEqualTo(prevTimestamp)) {
-            // TODO: remove this exception and implement the correct behavior
-            throw new ServerUnavailableException("TODO");
-        }
+        // We check if the client's previous timestamp is consistent with the server's -- that is, if this replica still
+        // needs to wait for operations to be propagated in order to return a consistent result.
+        // The condition verified is: !valueTimestamp.isNewerThanOrEqualTo(prevTimestamp) -- if this is true, we need to keep waiting
+
+        do {
+            // We need to re-check the server state after the lock is granted
+            ensureServerIsActive();
+
+            // We check if the client's previous timestamp is consistent with the server's -- that is, if this replica still
+            // needs to wait for operations to be propagated in order to return a consistent result.
+            // The condition verified is: !valueTimestamp.isNewerThanOrEqualTo(prevTimestamp) -- if this is true, we need to keep waiting
+            if (!valueTimestamp.isNewerThanOrEqualTo(prevTimestamp)) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    log.error("Interrupted while waiting for operations to be propagated", e);
+                }
+            }
+        } while (!valueTimestamp.isNewerThanOrEqualTo(prevTimestamp));
 
         return new OperationResult<>(
                 getAccount(userId)
@@ -310,7 +325,7 @@ public class ServerState {
         try {
             writeOperationCallback.accept(operation); // may fail
         } catch (RuntimeException e) {
-            if (e.getCause() instanceof PropagationException e2) {
+            if (e.getCause()instanceof PropagationException e2) {
                 throw e2;
             }
             throw e;
