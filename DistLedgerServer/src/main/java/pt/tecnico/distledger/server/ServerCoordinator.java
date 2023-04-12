@@ -4,6 +4,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import lombok.CustomLog;
 import lombok.Getter;
+import lombok.Setter;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.domain.operation.Operation;
 import pt.tecnico.distledger.server.exceptions.PropagationException;
@@ -12,6 +13,7 @@ import pt.tecnico.distledger.server.grpc.NamingServerService;
 import pt.tecnico.distledger.server.visitor.ConvertOperationsToGrpcVisitor;
 import pt.ulisboa.tecnico.distledger.contract.namingserver.NamingServerDistLedger.ServerInfo;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @CustomLog(topic = "Server Coordinator")
@@ -51,9 +53,16 @@ public class ServerCoordinator {
         namingServerService.close();
     }
 
-    public void propagateLedgerStateToAllServers(Operation pendingOperation) {
+    public void gossip(String serverTo) {
+        propagateLedgerStateToAllServers(serverState.gossip(serverTo), serverTo);
+    }
+
+
+    public void propagateLedgerStateToAllServers(List<Operation> pendingOperation, String serverTo) {
         ConvertOperationsToGrpcVisitor visitor = new ConvertOperationsToGrpcVisitor();
-        pendingOperation.accept(visitor);
+        for (Operation operation : pendingOperation) {
+            operation.accept(visitor);
+        }
 
         long attempts = 0;
 
@@ -61,7 +70,7 @@ public class ServerCoordinator {
             if (peersCache.size() == 0) {
                 populatePeersCache();
             }
-            long successfulCount = sendLedgerToServers(visitor);
+            long successfulCount = sendLedgerToServers(visitor, serverTo);
             if (successfulCount == peersCache.size() && peersCache.size() > 0) {
                 return;
             }
@@ -74,7 +83,6 @@ public class ServerCoordinator {
     private void populatePeersCache() {
         namingServerService.getServerList()
                 .stream()
-                .filter(serverInfo -> !serverInfo.getQualifier().equals(qualifier))
                 .forEach(serverInfo -> peersCache.put(serverInfo, new CrossServerService(serverInfo)));
     }
 
@@ -82,7 +90,12 @@ public class ServerCoordinator {
      * @param visitor visitor with ledger to send to servers
      * @return number of successful attempts
      */
-    private long sendLedgerToServers(ConvertOperationsToGrpcVisitor visitor) {
+    private long sendLedgerToServers(ConvertOperationsToGrpcVisitor visitor, String serverTo) {
+        CrossServerService serverService =
+                peersCache.asMap().keySet().stream().filter(serverInfo -> serverInfo.getQualifier().equals(serverTo))
+                        .;
+
+
         return peersCache.asMap()
                 .entrySet()
                 .parallelStream()

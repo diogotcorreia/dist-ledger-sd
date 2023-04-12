@@ -42,7 +42,7 @@ public class ServerMain {
 
         val serverState = serverCoordinator.getServerState();
         final BindableService userImpl = new UserDistLedgerServiceImpl(serverState);
-        final BindableService adminImpl = new AdminDistLedgerServiceImpl(serverState);
+        final BindableService adminImpl = new AdminDistLedgerServiceImpl(serverState, serverCoordinator);
         final BindableService crossServerImpl = new CrossServerDistLedgerServiceImpl(serverState);
 
         Server server = ServerBuilder.forPort(port)
