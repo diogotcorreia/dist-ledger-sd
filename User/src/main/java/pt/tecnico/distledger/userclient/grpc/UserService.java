@@ -74,13 +74,15 @@ public class UserService implements AutoCloseable {
         }),
                 new Thread(() -> {
                     try {
-                        response.set(serverResolver.resolveStub(qualifier)
-                                .balance(
-                                        BalanceRequest.newBuilder()
-                                                .setUserId(username)
-                                                .putAllPrevTimestamp(vectorClock.getTimestamps())
-                                                .build()
-                                ));
+                        response.set(
+                                serverResolver.resolveStub(qualifier)
+                                        .balance(
+                                                BalanceRequest.newBuilder()
+                                                        .setUserId(username)
+                                                        .putAllPrevTimestamp(vectorClock.getTimestamps())
+                                                        .build()
+                                        )
+                        );
                         log.debug(
                                 "[Server '%s'] Received response to get balance for '%s' (value: %d)",
                                 qualifier,
