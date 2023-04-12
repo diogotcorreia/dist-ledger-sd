@@ -105,7 +105,7 @@ public class ServerState {
             operationManager.registerObserver(pendingOperation);
             operationManager.notifyObservers();
 
-            log.debug("Replica's current timestamp: {}", replicaTimestamp);
+            log.debug("Replica's current timestamp: %s", replicaTimestamp);
             return new OperationResult<>(null, uniqueTimestamp);
         }
     }
@@ -221,7 +221,7 @@ public class ServerState {
                 toAccount.getLock().unlock();
             }
         }
-        log.debug("Replica's current timestamp: {}", replicaTimestamp);
+        log.debug("Replica's current timestamp: %s", replicaTimestamp);
         return new OperationResult<>(null, uniqueTimestamp);
     }
 
