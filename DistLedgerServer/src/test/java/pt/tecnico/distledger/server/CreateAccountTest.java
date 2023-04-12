@@ -1,6 +1,7 @@
 package pt.tecnico.distledger.server;
 
 import lombok.SneakyThrows;
+import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import pt.tecnico.distledger.common.VectorClock;
@@ -26,7 +27,9 @@ class CreateAccountTest {
     void createBroker() {
         final String brokerId = "broker";
         assertEquals(1, state.getAccounts().size());
-        assertEquals(1000, state.getBalance(brokerId, new VectorClock()));
+        val result = state.getBalance(brokerId, new VectorClock());
+        assertEquals(1000, result.value());
+        // TODO test vector clock
     }
 
     @Test
@@ -35,7 +38,9 @@ class CreateAccountTest {
         state.createAccount(userId, new VectorClock());
 
         assertEquals(2, state.getAccounts().size());
-        assertEquals(0, state.getBalance(userId, new VectorClock()));
+        val result = state.getBalance(userId, new VectorClock());
+        assertEquals(0, result.value());
+        // TODO test vector clock
         assertEquals(1, state.getLedger().size());
     }
 
@@ -47,8 +52,12 @@ class CreateAccountTest {
         state.createAccount(userId2, new VectorClock());
 
         assertEquals(3, state.getAccounts().size());
-        assertEquals(0, state.getBalance(userId, new VectorClock()));
-        assertEquals(0, state.getBalance(userId2, new VectorClock()));
+        val result1 = state.getBalance(userId, new VectorClock());
+        assertEquals(0, result1.value());
+        // TODO test vector clock
+        val result2 = state.getBalance(userId2, new VectorClock());
+        assertEquals(0, result2.value());
+        // TODO test vector clock
         assertEquals(2, state.getLedger().size());
 
     }
