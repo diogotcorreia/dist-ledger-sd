@@ -93,7 +93,6 @@ public class ServerCoordinator {
      * @param serverTo
      * @return true if the ledger was sent successfully, false otherwise
      */
-
     private boolean sendLedgerToServers(ConvertOperationsToGrpcVisitor visitor, String serverTo) {
         try {
             List<CrossServerService> crossServerService = peersCache.asMap()
