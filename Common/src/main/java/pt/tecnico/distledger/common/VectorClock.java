@@ -1,14 +1,13 @@
 package pt.tecnico.distledger.common;
 
+import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Stream;
 
 /**
  * Class abstracting the logic of a vector clock.
@@ -16,6 +15,7 @@ import java.util.stream.Stream;
  * The internal implementation uses a Map to avoid having a canonical order of the servers.
  */
 @ToString
+@EqualsAndHashCode
 @RequiredArgsConstructor
 public class VectorClock {
 
@@ -28,7 +28,11 @@ public class VectorClock {
      * @param timestamps The timestamp map to clone from.
      */
     public VectorClock(Map<String, Integer> timestamps) {
-        this.timestamps.putAll(timestamps);
+        timestamps.forEach((qualifier, value) -> {
+            if (value != 0) {
+                this.timestamps.put(qualifier, value);
+            }
+        });
     }
 
     /**
@@ -58,7 +62,11 @@ public class VectorClock {
      * @param value    The new value of the timestamp.
      */
     public void setValue(@NotNull String serverId, int value) {
-        timestamps.put(serverId, value);
+        if (value == 0) {
+            timestamps.remove(serverId);
+        } else {
+            timestamps.put(serverId, value);
+        }
     }
 
     /**
@@ -99,29 +107,5 @@ public class VectorClock {
                 .entrySet()
                 .stream()
                 .allMatch(entry -> this.timestamps.getOrDefault(entry.getKey(), 0) >= entry.getValue());
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        VectorClock that = (VectorClock) o;
-
-        return Stream.concat(this.timestamps.keySet().stream(), that.timestamps.keySet().stream())
-                .distinct()
-                .allMatch(
-                        key -> Objects.equals(
-                                this.timestamps.getOrDefault(key, 0),
-                                that.timestamps.getOrDefault(key, 0)
-                        )
-                );
-    }
-
-    @Override
-    public int hashCode() {
-        // FIXME hashCode might not be the same for {A=1,B=0} and {A=1}
-        // Idea: avoid having 0 values here at all
-        return timestamps.hashCode();
     }
 }
