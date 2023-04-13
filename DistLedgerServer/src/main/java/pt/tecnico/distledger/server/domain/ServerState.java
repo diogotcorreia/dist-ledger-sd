@@ -233,13 +233,19 @@ public class ServerState {
         this.active.set(false);
     }
 
-    public List<Operation> getOperations(String qualifier) {
+    /**
+     * Get operations to be sent to another replica with the given qualifier.
+     *
+     * @param visitor   The visitor to be called with every operation to be sent to the replica.
+     * @param qualifier The qualifier of the replica to send operations to.
+     */
+    public void operateOverLedgerToPropagateToReplica(OperationVisitor visitor, String qualifier) {
         final int lastTimestamp = gossipTimestamp.getValue(qualifier);
 
         // TODO: check condition
-        return ledger.stream()
+        ledger.stream()
                 .filter(operation -> operation.getUniqueTimestamp().getValue(qualifier) >= lastTimestamp)
-                .toList();
+                .forEach(operation -> operation.accept(visitor));
     }
 
     public void updateGossipTimestamp(String qualifier) {

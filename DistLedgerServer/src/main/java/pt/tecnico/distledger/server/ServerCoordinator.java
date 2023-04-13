@@ -5,13 +5,11 @@ import com.google.common.cache.CacheBuilder;
 import lombok.CustomLog;
 import lombok.Getter;
 import pt.tecnico.distledger.server.domain.ServerState;
-import pt.tecnico.distledger.server.domain.operation.Operation;
 import pt.tecnico.distledger.server.exceptions.PropagationException;
 import pt.tecnico.distledger.server.grpc.CrossServerService;
 import pt.tecnico.distledger.server.grpc.NamingServerService;
 import pt.tecnico.distledger.server.visitor.ConvertOperationsToGrpcVisitor;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -30,6 +28,8 @@ public class ServerCoordinator {
 
     private final Cache<String, CrossServerService> peersCache = CacheBuilder.newBuilder()
             .expireAfterWrite(TIMEOUT, TimeUnit.MINUTES)
+            // TODO fix typing to avoid casting?
+            .removalListener(notification -> ((CrossServerService) notification.getValue()).close())
             .build();
 
     private final NamingServerService namingServerService = new NamingServerService();
@@ -52,43 +52,37 @@ public class ServerCoordinator {
         namingServerService.close();
     }
 
-    public void gossip(String serverTo) {
-        propagateLedgerStateToServer(serverState.getOperations(serverTo), serverTo);
+    public void propagateUsingGossip(String serverTo) {
+        ConvertOperationsToGrpcVisitor visitor = new ConvertOperationsToGrpcVisitor();
+        serverState.operateOverLedgerToPropagateToReplica(visitor, serverTo);
+        propagateLedgerStateToServer(visitor, serverTo);
         serverState.updateGossipTimestamp(serverTo);
     }
 
-
-    public void propagateLedgerStateToServer(List<Operation> pendingOperations, String serverTo) {
-        ConvertOperationsToGrpcVisitor visitor = new ConvertOperationsToGrpcVisitor();
-        pendingOperations.forEach(operation -> operation.accept(visitor));
-
+    private void propagateLedgerStateToServer(ConvertOperationsToGrpcVisitor visitor, String serverTo) {
         long attempts = 0;
         do {
             if (peersCache.size() == 0) {
                 populatePeersCache();
             }
-            if (sendLedgerToServers(visitor, serverTo)) {
+            if (sendLedgerToServer(visitor, serverTo)) {
                 return;
             }
-            peersCache.invalidateAll();
+            // TODO improve when this is fetched again
+            populatePeersCache();
         } while (++attempts < MAX_RETRIES);
 
         throw new RuntimeException(new PropagationException());
     }
 
-    private void populatePeersCache() {
-        namingServerService.getServerList()
-                .forEach(serverInfo -> peersCache.put(serverInfo.getQualifier(), new CrossServerService(serverInfo)));
-    }
-
     /**
-     * Sends the ledger to the server in the cache
+     * Sends the ledger to the server in the cache, invalidating the cache if it fails.
      *
-     * @param visitor
-     * @param serverTo
-     * @return true if the ledger was sent successfully, false otherwise
+     * @param visitor  The visitor containing the operations.
+     * @param serverTo The qualifier of the replica to send to.
+     * @return true if the ledger was sent successfully, false otherwise.
      */
-    private boolean sendLedgerToServers(ConvertOperationsToGrpcVisitor visitor, String serverTo) {
+    private boolean sendLedgerToServer(ConvertOperationsToGrpcVisitor visitor, String serverTo) {
         try {
             Optional.ofNullable(peersCache.getIfPresent(serverTo))
                     .orElseThrow(() -> new RuntimeException("Server not found"))
@@ -103,6 +97,12 @@ public class ServerCoordinator {
             peersCache.invalidate(serverTo);
         }
         return false;
+    }
+
+    private void populatePeersCache() {
+        // TODO this can be improved to only fetch one server at a time on-demand
+        namingServerService.getServerList()
+                .forEach(serverInfo -> peersCache.put(serverInfo.getQualifier(), new CrossServerService(serverInfo)));
     }
 
 }

@@ -55,7 +55,7 @@ public class AdminDistLedgerServiceImpl extends AdminServiceGrpc.AdminServiceImp
             StreamObserver<GossipResponse> responseObserver
     ) {
         String serverTo = request.getQualifier();
-        serverCoordinator.gossip(serverTo);
+        serverCoordinator.propagateUsingGossip(serverTo);
         responseObserver.onNext(GossipResponse.getDefaultInstance());
         responseObserver.onCompleted();
     }
