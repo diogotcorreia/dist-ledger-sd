@@ -22,12 +22,6 @@ message CreateAccountResponse {
   map<string, int32> newTimestamp = 1;
 }
 
-message DeleteAccountRequest {
-  string userId = 1;
-}
-
-message DeleteAccountResponse {}
-
 message TransferToRequest {
   string accountFrom = 1;
   string accountTo = 2;
@@ -42,6 +36,5 @@ message TransferToResponse {
 service UserService {
   rpc balance(BalanceRequest) returns (BalanceResponse);
   rpc createAccount(CreateAccountRequest) returns (CreateAccountResponse);
-  rpc deleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
   rpc transferTo(TransferToRequest) returns (TransferToResponse);
 }
