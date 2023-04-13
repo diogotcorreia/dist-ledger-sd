@@ -3,6 +3,7 @@ package pt.tecnico.distledger.server.service;
 import io.grpc.stub.StreamObserver;
 import lombok.CustomLog;
 import pt.tecnico.distledger.common.VectorClock;
+import pt.tecnico.distledger.server.ServerCoordinator;
 import pt.tecnico.distledger.server.domain.OperationResult;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.exceptions.AccountAlreadyExistsException;
@@ -30,8 +31,8 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
 
     private final ServerState serverState;
 
-    public UserDistLedgerServiceImpl(ServerState serverState) {
-        this.serverState = serverState;
+    public UserDistLedgerServiceImpl(ServerCoordinator serverCoordinator) {
+        this.serverState = serverCoordinator.getServerState();
     }
 
     @Override

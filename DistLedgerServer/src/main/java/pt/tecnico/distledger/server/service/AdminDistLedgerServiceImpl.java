@@ -2,6 +2,7 @@ package pt.tecnico.distledger.server.service;
 
 import io.grpc.stub.StreamObserver;
 import lombok.CustomLog;
+import pt.tecnico.distledger.server.ServerCoordinator;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.visitor.ConvertOperationsToGrpcVisitor;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.LedgerState;
@@ -19,9 +20,11 @@ import pt.ulisboa.tecnico.distledger.contract.admin.AdminServiceGrpc;
 public class AdminDistLedgerServiceImpl extends AdminServiceGrpc.AdminServiceImplBase {
 
     private final ServerState serverState;
+    private final ServerCoordinator serverCoordinator;
 
-    public AdminDistLedgerServiceImpl(ServerState serverState) {
-        this.serverState = serverState;
+    public AdminDistLedgerServiceImpl(ServerCoordinator serverCoordinator) {
+        this.serverCoordinator = serverCoordinator;
+        this.serverState = serverCoordinator.getServerState();
     }
 
     @Override
@@ -51,7 +54,8 @@ public class AdminDistLedgerServiceImpl extends AdminServiceGrpc.AdminServiceImp
             GossipRequest request,
             StreamObserver<GossipResponse> responseObserver
     ) {
-        serverState.gossip();
+        String serverTo = request.getQualifier();
+        serverCoordinator.propagateUsingGossip(serverTo);
         responseObserver.onNext(GossipResponse.getDefaultInstance());
         responseObserver.onCompleted();
     }

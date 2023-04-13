@@ -15,9 +15,10 @@ message Operation {
   string userId = 2;
   string destUserId = 3;  //only for transferTo operations
   int32 amount = 4;  //only for transferTo operations
-  // Used map to avoid a canonic ordering with vectors
+  // Used map to avoid a canonical ordering with vectors
   map<string, int32> prevTimestamp = 5;
   map<string, int32> uniqueTimestamp = 6;
+  bool stable = 7;
 }
 
 message LedgerState {

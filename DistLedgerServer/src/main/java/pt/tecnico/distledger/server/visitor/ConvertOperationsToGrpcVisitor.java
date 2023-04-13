@@ -22,6 +22,7 @@ public class ConvertOperationsToGrpcVisitor extends OperationVisitor {
                         .setType(operation.getType())
                         .putAllPrevTimestamp(operation.getPrevTimestamp().getTimestamps())
                         .putAllUniqueTimestamp(operation.getUniqueTimestamp().getTimestamps())
+                        .setStable(operation.isStable())
                         .build()
         );
     }
@@ -46,6 +47,7 @@ public class ConvertOperationsToGrpcVisitor extends OperationVisitor {
                         .setAmount(operation.getAmount())
                         .putAllPrevTimestamp(operation.getPrevTimestamp().getTimestamps())
                         .putAllUniqueTimestamp(operation.getUniqueTimestamp().getTimestamps())
+                        .setStable(operation.isStable())
                         .build()
         );
     }

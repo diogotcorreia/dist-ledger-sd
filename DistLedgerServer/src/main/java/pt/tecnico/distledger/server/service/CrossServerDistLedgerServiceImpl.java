@@ -3,6 +3,7 @@ package pt.tecnico.distledger.server.service;
 import io.grpc.stub.StreamObserver;
 import lombok.CustomLog;
 import pt.tecnico.distledger.common.VectorClock;
+import pt.tecnico.distledger.server.ServerCoordinator;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.domain.operation.CreateOp;
 import pt.tecnico.distledger.server.domain.operation.DeleteOp;
@@ -19,8 +20,8 @@ public class CrossServerDistLedgerServiceImpl extends DistLedgerCrossServerServi
 
     private final ServerState serverState;
 
-    public CrossServerDistLedgerServiceImpl(ServerState serverState) {
-        this.serverState = serverState;
+    public CrossServerDistLedgerServiceImpl(ServerCoordinator serverCoordinator) {
+        this.serverState = serverCoordinator.getServerState();
     }
 
     @Override
@@ -30,7 +31,7 @@ public class CrossServerDistLedgerServiceImpl extends DistLedgerCrossServerServi
     ) {
         log.debug("Propagate state has been received");
         try {
-            serverState.setLedger(
+            serverState.addToLedger(
                     request.getState()
                             .getLedgerList()
                             .stream()
@@ -47,19 +48,22 @@ public class CrossServerDistLedgerServiceImpl extends DistLedgerCrossServerServi
         }
     }
 
+    // We ignore the stable field coming from the gRPC request, since the operation hasn't been executed (in this replica) yet
     private Operation toOperation(DistLedgerCommonDefinitions.Operation operation) {
         return switch (operation.getType()) {
             case OP_CREATE_ACCOUNT -> new CreateOp(
                     operation.getUserId(),
                     new VectorClock(operation.getPrevTimestampMap()),
-                    new VectorClock(operation.getUniqueTimestampMap())
+                    new VectorClock(operation.getUniqueTimestampMap()),
+                    false
             );
             case OP_TRANSFER_TO -> new TransferOp(
                     operation.getUserId(),
                     operation.getDestUserId(),
                     operation.getAmount(),
                     new VectorClock(operation.getPrevTimestampMap()),
-                    new VectorClock(operation.getUniqueTimestampMap())
+                    new VectorClock(operation.getUniqueTimestampMap()),
+                    false
             );
             case OP_DELETE_ACCOUNT -> new DeleteOp(operation.getUserId());
             default -> throw new IllegalArgumentException("Invalid operation");

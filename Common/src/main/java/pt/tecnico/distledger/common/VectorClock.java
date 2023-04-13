@@ -1,5 +1,6 @@
 package pt.tecnico.distledger.common;
 
+import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import org.jetbrains.annotations.NotNull;
@@ -11,9 +12,10 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Class abstracting the logic of a vector clock.
  * <p>
- * The internal implementation uses a Map to avoid having a canonic order of the servers.
+ * The internal implementation uses a Map to avoid having a canonical order of the servers.
  */
 @ToString
+@EqualsAndHashCode
 @RequiredArgsConstructor
 public class VectorClock {
 
@@ -26,7 +28,11 @@ public class VectorClock {
      * @param timestamps The timestamp map to clone from.
      */
     public VectorClock(Map<String, Integer> timestamps) {
-        this.timestamps.putAll(timestamps);
+        timestamps.forEach((qualifier, value) -> {
+            if (value != 0) {
+                this.timestamps.put(qualifier, value);
+            }
+        });
     }
 
     /**
@@ -56,7 +62,11 @@ public class VectorClock {
      * @param value    The new value of the timestamp.
      */
     public void setValue(@NotNull String serverId, int value) {
-        timestamps.put(serverId, value);
+        if (value == 0) {
+            timestamps.remove(serverId);
+        } else {
+            timestamps.put(serverId, value);
+        }
     }
 
     /**
@@ -98,5 +108,4 @@ public class VectorClock {
                 .stream()
                 .allMatch(entry -> this.timestamps.getOrDefault(entry.getKey(), 0) >= entry.getValue());
     }
-
 }
