@@ -48,13 +48,14 @@ public class CrossServerDistLedgerServiceImpl extends DistLedgerCrossServerServi
         }
     }
 
+    // We ignore the stable field coming from the gRPC request, since the operation hasn't been executed (in this replica) yet
     private Operation toOperation(DistLedgerCommonDefinitions.Operation operation) {
         return switch (operation.getType()) {
             case OP_CREATE_ACCOUNT -> new CreateOp(
                     operation.getUserId(),
                     new VectorClock(operation.getPrevTimestampMap()),
                     new VectorClock(operation.getUniqueTimestampMap()),
-                    operation.getStable()
+                    false
             );
             case OP_TRANSFER_TO -> new TransferOp(
                     operation.getUserId(),
@@ -62,7 +63,7 @@ public class CrossServerDistLedgerServiceImpl extends DistLedgerCrossServerServi
                     operation.getAmount(),
                     new VectorClock(operation.getPrevTimestampMap()),
                     new VectorClock(operation.getUniqueTimestampMap()),
-                    operation.getStable()
+                    false
             );
             case OP_DELETE_ACCOUNT -> new DeleteOp(operation.getUserId());
             default -> throw new IllegalArgumentException("Invalid operation");
