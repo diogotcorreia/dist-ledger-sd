@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.val;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.exceptions.PropagationException;
+import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.server.grpc.CrossServerService;
 import pt.tecnico.distledger.server.grpc.NamingServerService;
 import pt.tecnico.distledger.server.visitor.ConvertOperationsToGrpcVisitor;
@@ -55,7 +56,7 @@ public class ServerCoordinator {
         namingServerService.close();
     }
 
-    public void propagateUsingGossip(String serverTo) {
+    public void propagateUsingGossip(String serverTo) throws ServerUnavailableException {
         ConvertOperationsToGrpcVisitor visitor = new ConvertOperationsToGrpcVisitor();
         val timestamp = serverState.getReplicaTimestamp().clone();
         serverState.operateOverLedgerToPropagateToReplica(visitor, serverTo);
@@ -63,7 +64,7 @@ public class ServerCoordinator {
         serverState.updateGossipTimestamp(serverTo, timestamp);
     }
 
-    private void propagateLedgerStateToServer(ConvertOperationsToGrpcVisitor visitor, String serverTo) {
+    private void propagateLedgerStateToServer(ConvertOperationsToGrpcVisitor visitor, String serverTo) throws ServerUnavailableException {
         long attempts = 0;
         do {
             if (peersCache.size() == 0) {
@@ -86,12 +87,15 @@ public class ServerCoordinator {
      * @param serverTo The qualifier of the replica to send to.
      * @return true if the ledger was sent successfully, false otherwise.
      */
-    private boolean sendLedgerToServer(ConvertOperationsToGrpcVisitor visitor, String serverTo) {
+    private boolean sendLedgerToServer(ConvertOperationsToGrpcVisitor visitor, String serverTo) throws ServerUnavailableException {
         try {
             Optional.ofNullable(peersCache.getIfPresent(serverTo))
-                    .orElseThrow(() -> new RuntimeException("Server not found"))
+                    .orElseThrow(() -> new ServerUnavailableException("Server not found"))
                     .sendLedger(visitor.getLedger());
             return true;
+        } catch (ServerUnavailableException e) {
+            peersCache.invalidate(serverTo);
+            throw new ServerUnavailableException("Server not found");
         } catch (Exception e) {
             e.printStackTrace();
             log.error("Failed to send ledger to server: %s", serverTo);
