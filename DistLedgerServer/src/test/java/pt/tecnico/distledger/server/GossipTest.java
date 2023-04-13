@@ -273,7 +273,7 @@ public class GossipTest {
     /**
      * Get operations that would be sent between two replicas if a gossip were to happen.
      *
-     * @param replica The replica to get the operations from.
+     * @param replica              The replica to get the operations from.
      * @param destinationQualifier The qualifier of the destination replica.
      * @return The operations that would be sent between the two replicas.
      */

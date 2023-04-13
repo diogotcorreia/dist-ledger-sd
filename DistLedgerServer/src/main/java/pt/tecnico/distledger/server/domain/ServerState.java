@@ -236,6 +236,7 @@ public class ServerState {
 
     /**
      * Save the timestamp of the last operation propagated to this replica.
+     *
      * @param qualifier The qualifier of the replica to save this timestamp of.
      * @param timestamp The timestamp to save.
      */
