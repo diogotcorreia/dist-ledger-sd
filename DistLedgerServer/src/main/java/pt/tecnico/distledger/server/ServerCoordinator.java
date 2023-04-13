@@ -66,7 +66,6 @@ public class ServerCoordinator {
         serverState.operateOverLedgerToPropagateToReplica(visitor, serverTo);
         propagateLedgerStateToServer(visitor, serverTo);
         serverState.updateGossipTimestamp(serverTo, timestamp);
-
     }
 
     private void propagateLedgerStateToServer(
