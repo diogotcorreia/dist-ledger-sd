@@ -22,9 +22,9 @@ public class AdminDistLedgerServiceImpl extends AdminServiceGrpc.AdminServiceImp
     private final ServerState serverState;
     private final ServerCoordinator serverCoordinator;
 
-    public AdminDistLedgerServiceImpl(ServerState serverState, ServerCoordinator serverCoordinator) {
-        this.serverState = serverState;
+    public AdminDistLedgerServiceImpl(ServerCoordinator serverCoordinator) {
         this.serverCoordinator = serverCoordinator;
+        this.serverState = serverCoordinator.getServerState();
     }
 
     @Override

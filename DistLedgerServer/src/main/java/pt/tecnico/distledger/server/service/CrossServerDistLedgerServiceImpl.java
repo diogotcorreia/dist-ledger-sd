@@ -3,6 +3,7 @@ package pt.tecnico.distledger.server.service;
 import io.grpc.stub.StreamObserver;
 import lombok.CustomLog;
 import pt.tecnico.distledger.common.VectorClock;
+import pt.tecnico.distledger.server.ServerCoordinator;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.domain.operation.CreateOp;
 import pt.tecnico.distledger.server.domain.operation.DeleteOp;
@@ -19,8 +20,8 @@ public class CrossServerDistLedgerServiceImpl extends DistLedgerCrossServerServi
 
     private final ServerState serverState;
 
-    public CrossServerDistLedgerServiceImpl(ServerState serverState) {
-        this.serverState = serverState;
+    public CrossServerDistLedgerServiceImpl(ServerCoordinator serverCoordinator) {
+        this.serverState = serverCoordinator.getServerState();
     }
 
     @Override

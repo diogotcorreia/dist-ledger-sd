@@ -4,7 +4,6 @@ import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import lombok.CustomLog;
-import lombok.val;
 import pt.tecnico.distledger.common.Logger;
 import pt.tecnico.distledger.server.service.AdminDistLedgerServiceImpl;
 import pt.tecnico.distledger.server.service.CrossServerDistLedgerServiceImpl;
@@ -40,10 +39,9 @@ public class ServerMain {
 
         final ServerCoordinator serverCoordinator = new ServerCoordinator(port, qualifier);
 
-        val serverState = serverCoordinator.getServerState();
-        final BindableService userImpl = new UserDistLedgerServiceImpl(serverState);
-        final BindableService adminImpl = new AdminDistLedgerServiceImpl(serverState, serverCoordinator);
-        final BindableService crossServerImpl = new CrossServerDistLedgerServiceImpl(serverState);
+        final BindableService userImpl = new UserDistLedgerServiceImpl(serverCoordinator);
+        final BindableService adminImpl = new AdminDistLedgerServiceImpl(serverCoordinator);
+        final BindableService crossServerImpl = new CrossServerDistLedgerServiceImpl(serverCoordinator);
 
         Server server = ServerBuilder.forPort(port)
                 .addService(userImpl)
