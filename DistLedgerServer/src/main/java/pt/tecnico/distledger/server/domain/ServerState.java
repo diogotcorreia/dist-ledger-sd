@@ -225,6 +225,7 @@ public class ServerState {
     private void executeOperation(Operation operation) {
         operation.accept(new ExecuteOperationVisitor(this.accounts));
         this.valueTimestamp.updateVectorClock(operation.getUniqueTimestamp());
+        log.debug("Value's timestamp: %s", valueTimestamp);
     }
 
     /**

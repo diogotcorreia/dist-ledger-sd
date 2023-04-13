@@ -1,5 +1,6 @@
 package pt.tecnico.distledger.server.domain;
 
+import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.VisibleForTesting;
 import pt.tecnico.distledger.common.VectorClock;
@@ -16,6 +17,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 @RequiredArgsConstructor
+@CustomLog(topic = "Ledger")
 public class Ledger {
 
     private final Predicate<Operation> stable;
@@ -101,6 +103,11 @@ public class Ledger {
                     this.stableOperationCount++;
                     operation.setStable(true);
                     this.executorCallback.accept(operation);
+                    log.debug(
+                            "The %s operation with timestamp %s has now been stabilized",
+                            operation.getType(),
+                            operation.getUniqueTimestamp()
+                    );
                 }
             }
         }
