@@ -12,16 +12,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 @RequiredArgsConstructor
 public class Ledger {
 
     private final Predicate<Operation> stable;
-    /**
-     * Visitor called when operation changes from unstable to stable.
-     */
-    private final OperationVisitor executorCallback;
+    private final Consumer<Operation> executorCallback;
 
     private final List<Operation> ledger = new CopyOnWriteArrayList<>();
     private final Set<VectorClock> operationIdList = ConcurrentHashMap.newKeySet();
@@ -102,7 +100,7 @@ public class Ledger {
                     i = this.stableOperationCount;
                     this.stableOperationCount++;
                     operation.setStable(true);
-                    operation.accept(this.executorCallback);
+                    this.executorCallback.accept(operation);
                 }
             }
         }

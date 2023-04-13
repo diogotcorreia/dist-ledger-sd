@@ -52,7 +52,7 @@ public class ServerState {
 
     public ServerState(String qualifier) {
         this.accounts = new ConcurrentHashMap<>();
-        this.ledger = new Ledger(this::canOperationBeStable, new ExecuteOperationVisitor(this.accounts));
+        this.ledger = new Ledger(this::canOperationBeStable, this::executeOperation);
         this.active = new AtomicBoolean(true);
         createBroker();
         this.qualifier = qualifier;
@@ -256,6 +256,11 @@ public class ServerState {
 
     private boolean canOperationBeStable(Operation operation) {
         return this.valueTimestamp.isNewerThanOrEqualTo(operation.getPrevTimestamp());
+    }
+
+    private void executeOperation(Operation operation) {
+        operation.accept(new ExecuteOperationVisitor(this.accounts));
+        this.valueTimestamp.updateVectorClock(operation.getUniqueTimestamp());
     }
 
     /**
