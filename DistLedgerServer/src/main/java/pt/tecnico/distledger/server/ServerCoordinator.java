@@ -2,6 +2,7 @@ package pt.tecnico.distledger.server;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.RemovalNotification;
 import lombok.CustomLog;
 import lombok.Getter;
 import lombok.val;
@@ -29,8 +30,9 @@ public class ServerCoordinator {
 
     private final Cache<String, CrossServerService> peersCache = CacheBuilder.newBuilder()
             .expireAfterWrite(TIMEOUT, TimeUnit.MINUTES)
-            // TODO fix typing to avoid casting?
-            .removalListener(notification -> ((CrossServerService) notification.getValue()).close())
+            .removalListener(
+                    (RemovalNotification<String, CrossServerService> notification) -> notification.getValue().close()
+            )
             .build();
 
     private final NamingServerService namingServerService = new NamingServerService();
