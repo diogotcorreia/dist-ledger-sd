@@ -49,7 +49,7 @@ public class GossipTest {
 
         // TODO investigate what vector clock needs to be sent here
         // FIXME operations should be cloned because 'stable' attribute is mutable; not a problem right now since we're not using it
-        state2.addToLedger(state1.getLedger(), new VectorClock());
+        state2.addToLedger(state1.getLedger());
 
         val ledger = state2.getLedger();
         assertEquals(2, ledger.size());
@@ -87,7 +87,7 @@ public class GossipTest {
 
         // TODO investigate what vector clock needs to be sent here
         // FIXME operations should be cloned because 'stable' attribute is mutable; not a problem right now since we're not using it
-        state2.addToLedger(state1.getLedger(), new VectorClock());
+        state2.addToLedger(state1.getLedger());
 
         val ledgerB = state2.getLedger();
         assertEquals(3, ledgerB.size());
@@ -105,7 +105,7 @@ public class GossipTest {
 
         // TODO investigate what vector clock needs to be sent here
         // FIXME operations should be cloned because 'stable' attribute is mutable; not a problem right now since we're not using it
-        state1.addToLedger(state2.getLedger(), new VectorClock());
+        state1.addToLedger(state2.getLedger());
 
         val ledgerA = state2.getLedger();
         assertEquals(3, ledgerA.size());
