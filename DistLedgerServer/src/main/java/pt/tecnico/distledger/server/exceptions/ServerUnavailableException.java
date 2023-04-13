@@ -8,11 +8,11 @@ import lombok.Getter;
 @Getter
 public class ServerUnavailableException extends Exception implements GrpcSerializableException {
 
-    private final String accountId;
+    private final String serverQualifier;
 
-    public ServerUnavailableException(String accountId) {
-        super("The server is unavailable. Please try again later.");
-        this.accountId = accountId;
+    public ServerUnavailableException(String serverQualifier) {
+        super(String.format("The server %s is unavailable. Please try again later.", serverQualifier));
+        this.serverQualifier = serverQualifier;
     }
 
     @Override

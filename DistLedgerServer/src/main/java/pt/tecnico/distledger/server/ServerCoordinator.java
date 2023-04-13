@@ -95,13 +95,16 @@ public class ServerCoordinator {
             String serverTo
     ) throws ServerUnavailableException {
         try {
+            if (!serverState.getActive().get()) {
+                throw new ServerUnavailableException(qualifier);
+            }
             Optional.ofNullable(peersCache.getIfPresent(serverTo))
-                    .orElseThrow(() -> new ServerUnavailableException("Server not found"))
+                    .orElseThrow(() -> new ServerUnavailableException(serverTo))
                     .sendLedger(visitor.getLedger());
             return true;
         } catch (ServerUnavailableException e) {
             peersCache.invalidate(serverTo);
-            throw new ServerUnavailableException("Server not found");
+            throw e;
         } catch (Exception e) {
             e.printStackTrace();
             log.error("Failed to send ledger to server: %s", serverTo);
