@@ -95,10 +95,7 @@ public class ServerState {
             uniqueTimestamp.setValue(qualifier, replicaTimestamp.getValue(qualifier));
 
             CreateOp pendingOperation = new CreateOp(userId, prevTimestamp, uniqueTimestamp, false);
-            synchronized (ledger) {
-                ledger.addUnstable(pendingOperation);
-            }
-            // TODO I don't think the synchronized are needed anymore
+            ledger.addUnstable(pendingOperation);
 
             log.debug("Replica's current timestamp: %s", replicaTimestamp);
             return new OperationResult<>(null, uniqueTimestamp);
@@ -128,10 +125,7 @@ public class ServerState {
             }
 
             DeleteOp pendingOperation = new DeleteOp(userId);
-            synchronized (ledger) {
-                ledger.addUnstable(pendingOperation);
-            }
-            // TODO I don't think the synchronized are needed anymore
+            ledger.addUnstable(pendingOperation);
 
             accounts.remove(userId);
         } finally {
@@ -203,10 +197,7 @@ public class ServerState {
 
             TransferOp pendingOperation =
                     new TransferOp(fromUserId, toUserId, amount, prevTimestamp, uniqueTimestamp, false);
-            synchronized (ledger) {
-                // TODO I don't think the synchronized are needed anymore
-                ledger.addUnstable(pendingOperation);
-            }
+            ledger.addUnstable(pendingOperation);
         } finally {
             if (fromAccount != null) {
                 fromAccount.getLock().unlock();
