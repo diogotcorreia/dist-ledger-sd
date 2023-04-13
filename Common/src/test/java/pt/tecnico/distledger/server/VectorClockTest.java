@@ -183,6 +183,7 @@ public class VectorClockTest {
         vectorClock2.setValue("D", 0);
 
         assertEquals(vectorClock1, vectorClock2);
+        assertEquals(vectorClock1.hashCode(), vectorClock2.hashCode());
     }
 
     @Test
@@ -192,10 +193,11 @@ public class VectorClockTest {
         vectorClock1.setValue("B", 6);
         vectorClock1.setValue("C", 1);
         vectorClock1.setValue("C", 0);
+        val vectorClock2 = new VectorClock();
+        vectorClock2.setValue("A", 9);
+        vectorClock2.setValue("B", 6);
 
-        // TODO: change assert in C
-        assertEquals(9, vectorClock1.getValue("A"));
-        assertEquals(6, vectorClock1.getValue("B"));
-        assertEquals(0, vectorClock1.getValue("C"));
+        assertEquals(vectorClock1, vectorClock2);
+        assertEquals(vectorClock1.hashCode(), vectorClock2.hashCode());
     }
 }
