@@ -93,9 +93,6 @@ public class GossipTest {
         assertEquals(clock(1, 2, 0), user2Clock);
 
         // Gossip from replica A to B
-
-        // TODO investigate what vector clock needs to be sent here
-        // FIXME operations should be cloned because 'stable' attribute is mutable; not a problem right now since we're not using it
         propagateGossip(state1, state2);
 
         val ledgerB = getLedgerOfReplica(state2);
