@@ -32,8 +32,7 @@ public class CrossServerService implements AutoCloseable {
     }
 
     public void sendLedger(List<Operation> ledger) {
-        log.debug("Sending request to send ledger to server: %s", serverInfo);
-        log.debug("Operations: %s", ledger);
+        log.debug("Sending request to send ledger to server %s with %d operations", serverInfo, ledger.size());
 
         // noinspection ResultOfMethodCallIgnored
         stub.propagateState(
