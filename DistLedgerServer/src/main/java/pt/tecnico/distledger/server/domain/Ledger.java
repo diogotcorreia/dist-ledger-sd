@@ -103,7 +103,11 @@ public class Ledger {
                     this.stableOperationCount++;
                     operation.setStable(true);
                     this.executorCallback.accept(operation);
-                    log.debug("The %s operation with timestamp %s has now been stabilized", operation.getType(), operation.getUniqueTimestamp());
+                    log.debug(
+                            "The %s operation with timestamp %s has now been stabilized",
+                            operation.getType(),
+                            operation.getUniqueTimestamp()
+                    );
                 }
             }
         }
