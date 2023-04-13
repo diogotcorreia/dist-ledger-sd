@@ -61,8 +61,8 @@ public class AdminDistLedgerServiceImpl extends AdminServiceGrpc.AdminServiceImp
             responseObserver.onNext(GossipResponse.getDefaultInstance());
             responseObserver.onCompleted();
         } catch (ServerUnavailableException e) {
-            log.error("Server %s is currently unavailable", e);
-            responseObserver.onError(e);
+            log.error(e.getMessage());
+            responseObserver.onError(e.toGrpcRuntimeException());
         }
     }
 

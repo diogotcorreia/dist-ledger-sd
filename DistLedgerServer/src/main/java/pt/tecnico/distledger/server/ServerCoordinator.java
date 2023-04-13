@@ -3,6 +3,7 @@ package pt.tecnico.distledger.server;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
+import io.grpc.StatusRuntimeException;
 import lombok.CustomLog;
 import lombok.Getter;
 import lombok.val;
@@ -99,16 +100,19 @@ public class ServerCoordinator {
                 throw new ServerUnavailableException(qualifier);
             }
             Optional.ofNullable(peersCache.getIfPresent(serverTo))
-                    .orElseThrow(() -> new ServerUnavailableException(serverTo))
+                    .orElseThrow(() -> new RuntimeException("Server not found"))
                     .sendLedger(visitor.getLedger());
             return true;
         } catch (ServerUnavailableException e) {
-            peersCache.invalidate(serverTo);
+            peersCache.invalidate(qualifier);
             throw e;
+        } catch (StatusRuntimeException e) {
+            throw new ServerUnavailableException(serverTo);
         } catch (Exception e) {
             e.printStackTrace();
-            log.error("Failed to send ledger to server: %s", serverTo);
             peersCache.invalidate(serverTo);
+        } finally {
+            log.error("Failed to send ledger to server: %s", serverTo);
         }
         return false;
     }

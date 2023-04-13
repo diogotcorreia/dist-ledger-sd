@@ -2,6 +2,7 @@ package pt.tecnico.distledger.server.grpc;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
 import lombok.CustomLog;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.LedgerState;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.Operation;
@@ -31,7 +32,7 @@ public class CrossServerService implements AutoCloseable {
         stub = newBlockingStub(channel);
     }
 
-    public void sendLedger(List<Operation> ledger) {
+    public void sendLedger(List<Operation> ledger) throws StatusRuntimeException {
         log.debug("Sending request to send ledger to server %s with %d operations", serverInfo, ledger.size());
 
         // noinspection ResultOfMethodCallIgnored
