@@ -86,10 +86,7 @@ public class ServerCoordinator {
         try {
             Optional.ofNullable(peersCache.getIfPresent(serverTo))
                     .orElseThrow(() -> new RuntimeException("Server not found"))
-                    .sendLedger(
-                            visitor.getLedger(),
-                            serverState.getReplicaTimestamp()
-                    );
+                    .sendLedger(visitor.getLedger());
             return true;
         } catch (Exception e) {
             e.printStackTrace();
