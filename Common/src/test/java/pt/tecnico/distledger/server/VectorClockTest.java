@@ -169,6 +169,7 @@ public class VectorClockTest {
         assertFalse(vectorClock1.isNewerThanOrEqualTo(vectorClock2));
     }
 
+    @Test
     public void areVectorClocksEqualWithAndWithoutZeroTimestamp() {
         val vectorClock1 = new VectorClock();
         vectorClock1.setValue("A", 9);
@@ -184,6 +185,7 @@ public class VectorClockTest {
         assertEquals(vectorClock1, vectorClock2);
     }
 
+    @Test
     public void updateVectorClockWithZeroTimestamp() {
         val vectorClock1 = new VectorClock();
         vectorClock1.setValue("A", 9);
@@ -191,6 +193,7 @@ public class VectorClockTest {
         vectorClock1.setValue("C", 1);
         vectorClock1.setValue("C", 0);
 
+        // TODO: change assert in C
         assertEquals(9, vectorClock1.getValue("A"));
         assertEquals(6, vectorClock1.getValue("B"));
         assertEquals(0, vectorClock1.getValue("C"));
