@@ -46,12 +46,12 @@ public class GossipTest {
         // ACCOUNT_1 happens before ACCOUNT_2
 
         val userClock = new VectorClock();
-        val response1 = state1.createAccount(ACCOUNT_1, userClock);
+        val response1 = state1.createAccount(ACCOUNT_1, userClock.clone());
         userClock.updateVectorClock(response1.vectorClock());
 
         assertEquals(clock(1, 0, 0), userClock);
 
-        val response2 = state2.createAccount(ACCOUNT_2, userClock);
+        val response2 = state2.createAccount(ACCOUNT_2, userClock.clone());
         userClock.updateVectorClock(response2.vectorClock());
 
         assertEquals(clock(1, 1, 0), userClock);
@@ -76,18 +76,18 @@ public class GossipTest {
         // ACCOUNT_1 happens before ACCOUNT_3
 
         val user1Clock = new VectorClock();
-        val response = state2.createAccount(ACCOUNT_1, user1Clock);
+        val response = state2.createAccount(ACCOUNT_1, user1Clock.clone());
         user1Clock.updateVectorClock(response.vectorClock());
 
         assertEquals(clock(0, 1, 0), user1Clock);
 
         val user2Clock = new VectorClock();
-        val response2 = state1.createAccount(ACCOUNT_2, user2Clock);
+        val response2 = state1.createAccount(ACCOUNT_2, user2Clock.clone());
         user2Clock.updateVectorClock(response2.vectorClock());
 
         assertEquals(clock(1, 0, 0), user2Clock);
 
-        val response3 = state2.createAccount(ACCOUNT_3, user2Clock);
+        val response3 = state2.createAccount(ACCOUNT_3, user2Clock.clone());
         user2Clock.updateVectorClock(response3.vectorClock());
 
         assertEquals(clock(1, 2, 0), user2Clock);
