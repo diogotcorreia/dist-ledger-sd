@@ -120,6 +120,8 @@ public class VectorClock {
 
     @Override
     public int hashCode() {
+        // FIXME hashCode might not be the same for {A=1,B=0} and {A=1}
+        // Idea: avoid having 0 values here at all
         return timestamps.hashCode();
     }
 }

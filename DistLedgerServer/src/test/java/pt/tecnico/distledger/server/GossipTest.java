@@ -1,5 +1,7 @@
 package pt.tecnico.distledger.server;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
@@ -7,6 +9,13 @@ import org.junit.jupiter.api.Test;
 import pt.tecnico.distledger.common.VectorClock;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.domain.operation.CreateOp;
+import pt.tecnico.distledger.server.domain.operation.DeleteOp;
+import pt.tecnico.distledger.server.domain.operation.Operation;
+import pt.tecnico.distledger.server.domain.operation.TransferOp;
+import pt.tecnico.distledger.server.visitor.OperationVisitor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -47,11 +56,11 @@ public class GossipTest {
 
         assertEquals(clock(1, 1, 0), userClock);
 
-        // TODO investigate what vector clock needs to be sent here
-        // FIXME operations should be cloned because 'stable' attribute is mutable; not a problem right now since we're not using it
-        state2.addToLedger(state1.getLedger());
+        // Gossip from replica A to B
 
-        val ledger = state2.getLedger();
+        propagateGossip(state1, state2);
+
+        val ledger = getLedgerOfReplica(state2);
         assertEquals(2, ledger.size());
 
         assertTrue(ledger.get(0) instanceof CreateOp);
@@ -87,9 +96,9 @@ public class GossipTest {
 
         // TODO investigate what vector clock needs to be sent here
         // FIXME operations should be cloned because 'stable' attribute is mutable; not a problem right now since we're not using it
-        state2.addToLedger(state1.getLedger());
+        propagateGossip(state1, state2);
 
-        val ledgerB = state2.getLedger();
+        val ledgerB = getLedgerOfReplica(state2);
         assertEquals(3, ledgerB.size());
 
         assertTrue(ledgerB.get(0) instanceof CreateOp);
@@ -103,11 +112,9 @@ public class GossipTest {
 
         // Gossip from replica B to A
 
-        // TODO investigate what vector clock needs to be sent here
-        // FIXME operations should be cloned because 'stable' attribute is mutable; not a problem right now since we're not using it
-        state1.addToLedger(state2.getLedger());
+        propagateGossip(state2, state1);
 
-        val ledgerA = state2.getLedger();
+        val ledgerA = getLedgerOfReplica(state1);
         assertEquals(3, ledgerA.size());
 
         assertTrue(ledgerA.get(0) instanceof CreateOp);
@@ -134,6 +141,76 @@ public class GossipTest {
         clock.setValue("B", clockB);
         clock.setValue("C", clockC);
         return clock;
+    }
+
+    /**
+     * Simulate gossip propagation between two replicas.
+     * Skips gRPC for simplicity.
+     *
+     * @param replicaFrom The replica sending the gossip message.
+     * @param replicaTo   The replica receiving the operations.
+     */
+    @SneakyThrows
+    private void propagateGossip(ServerState replicaFrom, ServerState replicaTo) {
+        val visitor = new ClonedOperationVisitor(false);
+        replicaFrom.getLedger().operateOverLedger(visitor);
+        replicaTo.addToLedger(visitor.getOperations());
+    }
+
+    /**
+     * Get operations of the given replica's ledger.
+     * Preserves "stable" attribute of operations.
+     *
+     * @param replica The replica to get the ledger of.
+     * @return The operations in the ledger of the replica.
+     */
+    private List<Operation> getLedgerOfReplica(ServerState replica) {
+        val visitor = new ClonedOperationVisitor(false);
+        replica.getLedger().operateOverLedger(visitor);
+        return visitor.getOperations();
+    }
+
+    @RequiredArgsConstructor
+    static class ClonedOperationVisitor extends OperationVisitor {
+        private final boolean keepStable;
+
+        @Getter
+        private final List<Operation> operations = new ArrayList<>();
+
+        @Override
+        public void visit(CreateOp operation) {
+            operations.add(
+                    new CreateOp(
+                            operation.getAccount(),
+                            operation.getPrevTimestamp(),
+                            operation.getUniqueTimestamp(),
+                            keepStable && operation.isStable()
+                    )
+            );
+        }
+
+        @Override
+        public void visit(DeleteOp operation) {
+            operations.add(
+                    new DeleteOp(
+                            operation.getAccount()
+                    )
+            );
+        }
+
+        @Override
+        public void visit(TransferOp operation) {
+            operations.add(
+                    new TransferOp(
+                            operation.getAccount(),
+                            operation.getDestAccount(),
+                            operation.getAmount(),
+                            operation.getPrevTimestamp(),
+                            operation.getUniqueTimestamp(),
+                            keepStable && operation.isStable()
+                    )
+            );
+        }
     }
 
 }

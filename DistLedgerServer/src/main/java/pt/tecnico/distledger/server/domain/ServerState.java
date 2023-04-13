@@ -20,14 +20,12 @@ import pt.tecnico.distledger.server.exceptions.PropagationException;
 import pt.tecnico.distledger.server.exceptions.ReadOnlyException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.server.exceptions.TransferBetweenSameAccountException;
-import pt.tecnico.distledger.server.observer.OperationManager;
 import pt.tecnico.distledger.server.visitor.OperationVisitor;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
@@ -36,11 +34,10 @@ import java.util.stream.Stream;
 public class ServerState {
 
     private static final String BROKER_ID = "broker";
-    private final List<Operation> ledger;
+    private final Ledger ledger;
     private final Map<String, Account> accounts;
     private final AtomicBoolean active;
     private final String qualifier;
-    private final OperationManager operationManager;
 
     private final VectorClock replicaTimestamp = new VectorClock();
     private final VectorClock valueTimestamp = new VectorClock();
@@ -52,12 +49,11 @@ public class ServerState {
     }
 
     public ServerState(String qualifier) {
-        this.ledger = new CopyOnWriteArrayList<>();
+        this.ledger = new Ledger(this::canOperationBeStable);
         this.accounts = new ConcurrentHashMap<>();
         this.active = new AtomicBoolean(true);
         createBroker();
         this.qualifier = qualifier;
-        this.operationManager = new OperationManager(accounts, valueTimestamp, replicaTimestamp);
     }
 
     public OperationResult<Integer> getBalance(
@@ -99,11 +95,9 @@ public class ServerState {
 
             CreateOp pendingOperation = new CreateOp(userId, prevTimestamp, uniqueTimestamp, false);
             synchronized (ledger) {
-                ledger.add(pendingOperation);
+                ledger.addUnstable(pendingOperation);
             }
-
-            operationManager.registerObserver(pendingOperation);
-            operationManager.notifyObservers();
+            // TODO I don't think the synchronized are needed anymore
 
             log.debug("Replica's current timestamp: %s", replicaTimestamp);
             return new OperationResult<>(null, uniqueTimestamp);
@@ -134,8 +128,9 @@ public class ServerState {
 
             DeleteOp pendingOperation = new DeleteOp(userId);
             synchronized (ledger) {
-                ledger.add(pendingOperation);
+                ledger.addUnstable(pendingOperation);
             }
+            // TODO I don't think the synchronized are needed anymore
 
             accounts.remove(userId);
         } finally {
@@ -208,11 +203,9 @@ public class ServerState {
             TransferOp pendingOperation =
                     new TransferOp(fromUserId, toUserId, amount, prevTimestamp, uniqueTimestamp, false);
             synchronized (ledger) {
-                ledger.add(pendingOperation);
+                // TODO I don't think the synchronized are needed anymore
+                ledger.addUnstable(pendingOperation);
             }
-
-            operationManager.registerObserver(pendingOperation);
-            operationManager.notifyObservers();
         } finally {
             if (fromAccount != null) {
                 fromAccount.getLock().unlock();
@@ -242,10 +235,11 @@ public class ServerState {
     public void operateOverLedgerToPropagateToReplica(OperationVisitor visitor, String qualifier) {
         final int lastTimestamp = gossipTimestamp.getValue(qualifier);
 
-        // TODO: check condition
-        ledger.stream()
-                .filter(operation -> operation.getUniqueTimestamp().getValue(qualifier) >= lastTimestamp)
-                .forEach(operation -> operation.accept(visitor));
+        ledger.operateOverLedger(
+                visitor,
+                // TODO: check condition
+                operation -> operation.getUniqueTimestamp().getValue(qualifier) >= lastTimestamp
+        );
     }
 
     public void updateGossipTimestamp(String qualifier) {
@@ -253,21 +247,27 @@ public class ServerState {
     }
 
     public void operateOverLedger(OperationVisitor visitor) {
-        ledger.forEach(operation -> operation.accept(visitor));
+        ledger.operateOverLedger(visitor);
     }
 
     public synchronized void addToLedger(List<Operation> newOperations) throws ServerUnavailableException {
         ensureServerIsActive();
-        newOperations.forEach(operation -> {
+        // TODO I have no idea
+        newOperations.forEach(operation -> replicaTimestamp.updateVectorClock(operation.getUniqueTimestamp()));
+        /*newOperations.forEach(operation -> {
             if (!replicaTimestamp.isNewerThanOrEqualTo(operation.getUniqueTimestamp())) {
                 replicaTimestamp.updateVectorClock(operation.getUniqueTimestamp());
                 operationManager.registerObserver(operation);
                 synchronized (ledger) {
-                    ledger.add(operation);
+                    ledger.addUnstable(operation);
                 }
             }
-        });
-        operationManager.notifyObservers();
+        });*/
+        ledger.addAllUnstable(newOperations);
+    }
+
+    private boolean canOperationBeStable(Operation operation) {
+        return this.valueTimestamp.isNewerThanOrEqualTo(operation.getPrevTimestamp());
     }
 
     /**

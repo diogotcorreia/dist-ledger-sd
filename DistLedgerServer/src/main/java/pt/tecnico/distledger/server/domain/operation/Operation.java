@@ -1,6 +1,7 @@
 package pt.tecnico.distledger.server.domain.operation;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 import pt.tecnico.distledger.common.VectorClock;
 import pt.tecnico.distledger.server.observer.Observer;
@@ -14,7 +15,8 @@ public abstract class Operation implements Observer {
     private final OperationType type;
     private final VectorClock prevTimestamp;
     private final VectorClock uniqueTimestamp;
-    private boolean stable = false;
+    @Setter
+    private boolean stable;
 
     protected Operation(
             String fromAccount,

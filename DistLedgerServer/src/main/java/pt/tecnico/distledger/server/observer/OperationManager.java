@@ -45,6 +45,8 @@ public class OperationManager implements ObserverManager {
                     valueTimestamp.updateVectorClock(replicaTimestamp);
                     changed = true;
                     removeObserver(observer);
+
+                    // TODO somehow move operation
                     break;
                 }
             }
