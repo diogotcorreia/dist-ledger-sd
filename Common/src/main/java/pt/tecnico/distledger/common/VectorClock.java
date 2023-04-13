@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 /**
  * Class abstracting the logic of a vector clock.
  * <p>
- * The internal implementation uses a Map to avoid having a canonic order of the servers.
+ * The internal implementation uses a Map to avoid having a canonical order of the servers.
  */
 @ToString
 @RequiredArgsConstructor
