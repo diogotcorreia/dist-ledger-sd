@@ -58,11 +58,15 @@ public class ServerCoordinator {
     }
 
     public void propagateUsingGossip(String serverTo) throws ServerUnavailableException {
+        if (!serverState.getActive().get()) {
+            throw new ServerUnavailableException(qualifier);
+        }
         ConvertOperationsToGrpcVisitor visitor = new ConvertOperationsToGrpcVisitor();
         val timestamp = serverState.getReplicaTimestamp().clone();
         serverState.operateOverLedgerToPropagateToReplica(visitor, serverTo);
         propagateLedgerStateToServer(visitor, serverTo);
         serverState.updateGossipTimestamp(serverTo, timestamp);
+
     }
 
     private void propagateLedgerStateToServer(
