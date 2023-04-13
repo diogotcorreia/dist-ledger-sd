@@ -14,6 +14,7 @@ import pt.ulisboa.tecnico.distledger.contract.namingserver.NamingServerDistLedge
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @CustomLog(topic = "Server Coordinator")
@@ -29,7 +30,7 @@ public class ServerCoordinator {
     @Getter
     private final ServerState serverState;
 
-    private final Cache<ServerInfo, CrossServerService> peersCache = CacheBuilder.newBuilder()
+    private final Cache<String, CrossServerService> peersCache = CacheBuilder.newBuilder()
             .expireAfterWrite(TIMEOUT, TimeUnit.MINUTES)
             .build();
 
@@ -68,8 +69,7 @@ public class ServerCoordinator {
             if (peersCache.size() == 0) {
                 populatePeersCache();
             }
-            boolean successful = sendLedgerToServers(visitor, serverTo);
-            if (successful) {
+            if (sendLedgerToServers(visitor, serverTo)) {
                 return;
             }
             peersCache.invalidateAll();
@@ -80,7 +80,7 @@ public class ServerCoordinator {
 
     private void populatePeersCache() {
         namingServerService.getServerList()
-                .forEach(serverInfo -> peersCache.put(serverInfo, new CrossServerService(serverInfo)));
+                .forEach(serverInfo -> peersCache.put(serverInfo.getQualifier(), new CrossServerService(serverInfo)));
     }
 
     /**
@@ -92,23 +92,12 @@ public class ServerCoordinator {
      */
     private boolean sendLedgerToServers(ConvertOperationsToGrpcVisitor visitor, String serverTo) {
         try {
-            List<CrossServerService> crossServerService = peersCache.asMap()
-                    .entrySet()
-                    .stream()
-                    .filter(entry -> entry.getKey().getQualifier().equals(serverTo))
-                    .map(Map.Entry::getValue)
-                    .toList();
-
-            if (crossServerService.isEmpty()) {
-                return false;
-            }
-
-            crossServerService.forEach(
-                    crossServer -> crossServer.sendLedger(
+            Optional.ofNullable(peersCache.getIfPresent(serverTo))
+                    .orElseThrow(() -> new RuntimeException("Server not found"))
+                    .sendLedger(
                             visitor.getLedger(),
                             serverState.getReplicaTimestamp()
-                    )
-            );
+                    );
             return true;
         } catch (Exception e) {
             e.printStackTrace();
