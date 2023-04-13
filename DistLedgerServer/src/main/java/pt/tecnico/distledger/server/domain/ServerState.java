@@ -20,6 +20,7 @@ import pt.tecnico.distledger.server.exceptions.PropagationException;
 import pt.tecnico.distledger.server.exceptions.ReadOnlyException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.server.exceptions.TransferBetweenSameAccountException;
+import pt.tecnico.distledger.server.visitor.ExecuteOperationVisitor;
 import pt.tecnico.distledger.server.visitor.OperationVisitor;
 
 import java.util.List;
@@ -49,8 +50,8 @@ public class ServerState {
     }
 
     public ServerState(String qualifier) {
-        this.ledger = new Ledger(this::canOperationBeStable);
         this.accounts = new ConcurrentHashMap<>();
+        this.ledger = new Ledger(this::canOperationBeStable, new ExecuteOperationVisitor(this.accounts));
         this.active = new AtomicBoolean(true);
         createBroker();
         this.qualifier = qualifier;

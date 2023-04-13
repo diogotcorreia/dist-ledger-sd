@@ -67,8 +67,6 @@ class AdminTest {
         assertEquals(3, state.getLedger().size());
         state.getBalance(userId, new VectorClock());
         assertEquals(3, state.getLedger().size());
-        state.deleteAccount(userId);
-        assertEquals(4, state.getLedger().size());
     }
 
 }

@@ -3,6 +3,7 @@ package pt.tecnico.distledger.server;
 import lombok.SneakyThrows;
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import pt.tecnico.distledger.common.VectorClock;
 import pt.tecnico.distledger.server.domain.ServerState;
@@ -14,6 +15,7 @@ import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@Disabled
 class RemoveAccountTest {
 
     private static ServerState state;

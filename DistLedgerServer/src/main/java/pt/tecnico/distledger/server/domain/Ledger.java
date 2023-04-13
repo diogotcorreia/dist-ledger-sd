@@ -18,6 +18,10 @@ import java.util.function.Predicate;
 public class Ledger {
 
     private final Predicate<Operation> stable;
+    /**
+     * Visitor called when operation changes from unstable to stable.
+     */
+    private final OperationVisitor executorCallback;
 
     private final List<Operation> ledger = new CopyOnWriteArrayList<>();
     private final Set<VectorClock> operationIdList = ConcurrentHashMap.newKeySet();
@@ -98,6 +102,7 @@ public class Ledger {
                     i = this.stableOperationCount;
                     this.stableOperationCount++;
                     operation.setStable(true);
+                    operation.accept(this.executorCallback);
                 }
             }
         }
