@@ -23,6 +23,7 @@ import pt.tecnico.distledger.server.exceptions.TransferBetweenSameAccountExcepti
 import pt.tecnico.distledger.server.visitor.ExecuteOperationVisitor;
 import pt.tecnico.distledger.server.visitor.OperationVisitor;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -42,7 +43,7 @@ public class ServerState {
 
     private final VectorClock replicaTimestamp = new VectorClock();
     private final VectorClock valueTimestamp = new VectorClock();
-    private final VectorClock gossipTimestamp = new VectorClock();
+    private final Map<String, VectorClock> gossipTimestampMap = new HashMap<>();
 
     @VisibleForTesting
     public ServerState() {
@@ -225,17 +226,21 @@ public class ServerState {
      * @param qualifier The qualifier of the replica to send operations to.
      */
     public void operateOverLedgerToPropagateToReplica(OperationVisitor visitor, String qualifier) {
-        final int lastTimestamp = gossipTimestamp.getValue(qualifier);
+        final VectorClock lastTimestamp = gossipTimestampMap.getOrDefault(qualifier, new VectorClock());
 
         ledger.operateOverLedger(
                 visitor,
-                // TODO: check condition
-                operation -> operation.getUniqueTimestamp().getValue(qualifier) >= lastTimestamp
+                operation -> !lastTimestamp.isNewerThanOrEqualTo(operation.getUniqueTimestamp())
         );
     }
 
-    public void updateGossipTimestamp(String qualifier) {
-        gossipTimestamp.setValue(qualifier, replicaTimestamp.getValue(qualifier));
+    /**
+     * Save the timestamp of the last operation propagated to this replica.
+     * @param qualifier The qualifier of the replica to save this timestamp of.
+     * @param timestamp The timestamp to save.
+     */
+    public void updateGossipTimestamp(String qualifier, VectorClock timestamp) {
+        gossipTimestampMap.put(qualifier, timestamp);
     }
 
     public void operateOverLedger(OperationVisitor visitor) {

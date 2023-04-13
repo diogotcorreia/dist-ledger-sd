@@ -25,6 +25,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class GossipTest {
 
+    private static final String SERVER_A = "A";
+    private static final String SERVER_B = "B";
+    private static final String SERVER_C = "C";
+
     private static final String ACCOUNT_1 = "user1";
     private static final String ACCOUNT_2 = "user2";
     private static final String ACCOUNT_3 = "user3";
@@ -35,9 +39,9 @@ public class GossipTest {
 
     @BeforeEach
     void setup() {
-        state1 = new ServerState("A");
-        state2 = new ServerState("B");
-        state3 = new ServerState("C");
+        state1 = new ServerState(SERVER_A);
+        state2 = new ServerState(SERVER_B);
+        state3 = new ServerState(SERVER_C);
     }
 
     @Test
@@ -100,12 +104,15 @@ public class GossipTest {
 
         assertTrue(ledgerB.get(0) instanceof CreateOp);
         assertEquals(ACCOUNT_1, ledgerB.get(0).getAccount());
+        assertTrue(ledgerB.get(0).isStable());
         // ACCOUNT_2 could be here or on index 0, but our implementation places ACCOUNT_1 first.
         // Replica A will have the inverse order
         assertTrue(ledgerB.get(1) instanceof CreateOp);
         assertEquals(ACCOUNT_2, ledgerB.get(1).getAccount());
+        assertTrue(ledgerB.get(1).isStable());
         assertTrue(ledgerB.get(2) instanceof CreateOp);
         assertEquals(ACCOUNT_3, ledgerB.get(2).getAccount());
+        assertTrue(ledgerB.get(2).isStable());
 
         // Gossip from replica B to A
 
@@ -116,12 +123,108 @@ public class GossipTest {
 
         assertTrue(ledgerA.get(0) instanceof CreateOp);
         assertEquals(ACCOUNT_2, ledgerA.get(0).getAccount());
+        assertTrue(ledgerB.get(0).isStable());
         // ACCOUNT_1 could be here or on index 0, but our implementation places ACCOUNT_2 first.
         // Replica B will have the inverse order
         assertTrue(ledgerA.get(1) instanceof CreateOp);
         assertEquals(ACCOUNT_1, ledgerA.get(1).getAccount());
+        assertTrue(ledgerB.get(1).isStable());
         assertTrue(ledgerA.get(2) instanceof CreateOp);
         assertEquals(ACCOUNT_3, ledgerA.get(2).getAccount());
+        assertTrue(ledgerB.get(2).isStable());
+    }
+
+    @Test
+    @SneakyThrows
+    public void correctGossipMessagesAreSentBetween3Replicas() {
+        // Single user per action (empty vector clock)
+        // ACCOUNT_1 created on A
+        // ACCOUNT_2 created on B
+        // ACCOUNT_3 created on C
+        // Gossip from B to A
+        // Gossip from C to B
+        // Gossip from B to A
+
+        val user1Clock = new VectorClock();
+        val response = state1.createAccount(ACCOUNT_1, user1Clock.clone());
+        user1Clock.updateVectorClock(response.vectorClock());
+
+        assertEquals(clock(1, 0, 0), user1Clock);
+
+        val user2Clock = new VectorClock();
+        val response2 = state2.createAccount(ACCOUNT_2, user2Clock.clone());
+        user2Clock.updateVectorClock(response2.vectorClock());
+
+        assertEquals(clock(0, 1, 0), user2Clock);
+
+        val user3Clock = new VectorClock();
+        val response3 = state3.createAccount(ACCOUNT_3, user3Clock.clone());
+        user3Clock.updateVectorClock(response3.vectorClock());
+
+        assertEquals(clock(0, 0, 1), user3Clock);
+
+        // First gossip from replica B to A
+
+        val toSendBtoA1 = getOperationsToSendThroughGossip(state2, SERVER_A);
+        assertEquals(1, toSendBtoA1.size());
+        assertTrue(toSendBtoA1.get(0) instanceof CreateOp);
+        assertEquals(ACCOUNT_2, toSendBtoA1.get(0).getAccount());
+
+        propagateGossip(state2, state1);
+        state2.updateGossipTimestamp(SERVER_A, state2.getReplicaTimestamp().clone());
+
+        val ledgerA1 = getLedgerOfReplica(state1);
+        assertEquals(2, ledgerA1.size());
+
+        assertTrue(ledgerA1.get(0) instanceof CreateOp);
+        assertEquals(ACCOUNT_1, ledgerA1.get(0).getAccount());
+        assertTrue(ledgerA1.get(0).isStable());
+        assertTrue(ledgerA1.get(1) instanceof CreateOp);
+        assertEquals(ACCOUNT_2, ledgerA1.get(1).getAccount());
+        assertTrue(ledgerA1.get(1).isStable());
+
+        // Gossip from replica C to B
+
+        val toSendCtoB = getOperationsToSendThroughGossip(state3, SERVER_B);
+        assertEquals(1, toSendCtoB.size());
+        assertTrue(toSendCtoB.get(0) instanceof CreateOp);
+        assertEquals(ACCOUNT_3, toSendCtoB.get(0).getAccount());
+
+        propagateGossip(state3, state2);
+        state3.updateGossipTimestamp(SERVER_B, state3.getReplicaTimestamp().clone());
+
+        val ledgerB = getLedgerOfReplica(state2);
+        assertEquals(2, ledgerB.size());
+
+        assertTrue(ledgerB.get(0) instanceof CreateOp);
+        assertEquals(ACCOUNT_2, ledgerB.get(0).getAccount());
+        assertTrue(ledgerB.get(0).isStable());
+        assertTrue(ledgerB.get(1) instanceof CreateOp);
+        assertEquals(ACCOUNT_3, ledgerB.get(1).getAccount());
+        assertTrue(ledgerB.get(1).isStable());
+
+        // Second gossip from replica B to A
+
+        val toSendBtoA2 = getOperationsToSendThroughGossip(state2, SERVER_A);
+        assertEquals(1, toSendBtoA2.size());
+        assertTrue(toSendBtoA2.get(0) instanceof CreateOp);
+        assertEquals(ACCOUNT_3, toSendBtoA2.get(0).getAccount());
+
+        propagateGossip(state2, state1);
+        state2.updateGossipTimestamp(SERVER_A, state2.getReplicaTimestamp().clone());
+
+        val ledgerA2 = getLedgerOfReplica(state1);
+        assertEquals(3, ledgerA2.size());
+
+        assertTrue(ledgerA2.get(0) instanceof CreateOp);
+        assertEquals(ACCOUNT_1, ledgerA2.get(0).getAccount());
+        assertTrue(ledgerA2.get(0).isStable());
+        assertTrue(ledgerA2.get(1) instanceof CreateOp);
+        assertEquals(ACCOUNT_2, ledgerA2.get(1).getAccount());
+        assertTrue(ledgerA2.get(1).isStable());
+        assertTrue(ledgerA2.get(2) instanceof CreateOp);
+        assertEquals(ACCOUNT_3, ledgerA2.get(2).getAccount());
+        assertTrue(ledgerA2.get(2).isStable());
     }
 
     /**
@@ -162,8 +265,21 @@ public class GossipTest {
      * @return The operations in the ledger of the replica.
      */
     private List<Operation> getLedgerOfReplica(ServerState replica) {
-        val visitor = new ClonedOperationVisitor(false);
+        val visitor = new ClonedOperationVisitor(true);
         replica.getLedger().operateOverLedger(visitor);
+        return visitor.getOperations();
+    }
+
+    /**
+     * Get operations that would be sent between two replicas if a gossip were to happen.
+     *
+     * @param replica The replica to get the operations from.
+     * @param destinationQualifier The qualifier of the destination replica.
+     * @return The operations that would be sent between the two replicas.
+     */
+    private List<Operation> getOperationsToSendThroughGossip(ServerState replica, String destinationQualifier) {
+        val visitor = new ClonedOperationVisitor(false);
+        replica.operateOverLedgerToPropagateToReplica(visitor, destinationQualifier);
         return visitor.getOperations();
     }
 

@@ -4,6 +4,8 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import lombok.CustomLog;
 import lombok.Getter;
+import lombok.val;
+import pt.tecnico.distledger.common.VectorClock;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.exceptions.PropagationException;
 import pt.tecnico.distledger.server.grpc.CrossServerService;
@@ -54,9 +56,10 @@ public class ServerCoordinator {
 
     public void propagateUsingGossip(String serverTo) {
         ConvertOperationsToGrpcVisitor visitor = new ConvertOperationsToGrpcVisitor();
+        val timestamp = serverState.getReplicaTimestamp().clone();
         serverState.operateOverLedgerToPropagateToReplica(visitor, serverTo);
         propagateLedgerStateToServer(visitor, serverTo);
-        serverState.updateGossipTimestamp(serverTo);
+        serverState.updateGossipTimestamp(serverTo, timestamp);
     }
 
     private void propagateLedgerStateToServer(ConvertOperationsToGrpcVisitor visitor, String serverTo) {
