@@ -50,7 +50,6 @@ class RemoveAccountTest {
         assertEquals(2, state.getAccounts().size());
         val result = state.getBalance(userId, new VectorClock());
         assertEquals(0, result.value());
-        // TODO test vector clock
 
         state.deleteAccount(userId);
         assertEquals(1, state.getAccounts().size());

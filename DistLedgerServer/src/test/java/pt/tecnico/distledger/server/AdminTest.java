@@ -41,12 +41,6 @@ class AdminTest {
     }
 
     @Test
-    @Disabled
-    void gossip() {
-        //state.gossip(); // does nothing for now
-    }
-
-    @Test
     void emptyLedgerStream() {
         assertEquals(0, state.getLedger().size());
     }
