@@ -64,7 +64,10 @@ public class ServerCoordinator {
         serverState.updateGossipTimestamp(serverTo, timestamp);
     }
 
-    private void propagateLedgerStateToServer(ConvertOperationsToGrpcVisitor visitor, String serverTo) throws ServerUnavailableException {
+    private void propagateLedgerStateToServer(
+            ConvertOperationsToGrpcVisitor visitor,
+            String serverTo
+    ) throws ServerUnavailableException {
         long attempts = 0;
         do {
             if (peersCache.size() == 0) {
@@ -87,7 +90,10 @@ public class ServerCoordinator {
      * @param serverTo The qualifier of the replica to send to.
      * @return true if the ledger was sent successfully, false otherwise.
      */
-    private boolean sendLedgerToServer(ConvertOperationsToGrpcVisitor visitor, String serverTo) throws ServerUnavailableException {
+    private boolean sendLedgerToServer(
+            ConvertOperationsToGrpcVisitor visitor,
+            String serverTo
+    ) throws ServerUnavailableException {
         try {
             Optional.ofNullable(peersCache.getIfPresent(serverTo))
                     .orElseThrow(() -> new ServerUnavailableException("Server not found"))
