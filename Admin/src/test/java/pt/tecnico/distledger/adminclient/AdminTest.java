@@ -174,8 +174,6 @@ class AdminTest {
                 >\s""", outputStream.toString());
     }
 
-    // TODO: add gossip tests whenever method is implemented
-
     @Test
     void invalidCommand() {
         parseInput("test\nexit\n");

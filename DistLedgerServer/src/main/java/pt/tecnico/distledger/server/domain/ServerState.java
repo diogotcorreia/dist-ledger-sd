@@ -253,17 +253,7 @@ public class ServerState {
 
     public synchronized void addToLedger(List<Operation> newOperations) throws ServerUnavailableException {
         ensureServerIsActive();
-        // TODO I have no idea
         newOperations.forEach(operation -> replicaTimestamp.updateVectorClock(operation.getUniqueTimestamp()));
-        /*newOperations.forEach(operation -> {
-            if (!replicaTimestamp.isNewerThanOrEqualTo(operation.getUniqueTimestamp())) {
-                replicaTimestamp.updateVectorClock(operation.getUniqueTimestamp());
-                operationManager.registerObserver(operation);
-                synchronized (ledger) {
-                    ledger.addUnstable(operation);
-                }
-            }
-        });*/
         ledger.addAllUnstable(newOperations);
     }
 
