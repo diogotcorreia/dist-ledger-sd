@@ -6,7 +6,6 @@ import pt.tecnico.distledger.common.VectorClock;
 import pt.tecnico.distledger.server.ServerCoordinator;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.domain.operation.CreateOp;
-import pt.tecnico.distledger.server.domain.operation.DeleteOp;
 import pt.tecnico.distledger.server.domain.operation.Operation;
 import pt.tecnico.distledger.server.domain.operation.TransferOp;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
@@ -65,7 +64,6 @@ public class CrossServerDistLedgerServiceImpl extends DistLedgerCrossServerServi
                     new VectorClock(operation.getUniqueTimestampMap()),
                     false
             );
-            case OP_DELETE_ACCOUNT -> new DeleteOp(operation.getUserId());
             default -> throw new IllegalArgumentException("Invalid operation");
         };
     }
