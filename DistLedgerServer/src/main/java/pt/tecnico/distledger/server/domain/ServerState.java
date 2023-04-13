@@ -20,17 +20,15 @@ import pt.tecnico.distledger.server.exceptions.PropagationException;
 import pt.tecnico.distledger.server.exceptions.ReadOnlyException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.server.exceptions.TransferBetweenSameAccountException;
-import pt.tecnico.distledger.server.observer.OperationManager;
 import pt.tecnico.distledger.server.visitor.ExecuteOperationVisitor;
 import pt.tecnico.distledger.server.visitor.OperationVisitor;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 @Getter
@@ -38,30 +36,26 @@ import java.util.stream.Stream;
 public class ServerState {
 
     private static final String BROKER_ID = "broker";
-    private final List<Operation> ledger;
+    private final Ledger ledger;
     private final Map<String, Account> accounts;
     private final AtomicBoolean active;
     private final String qualifier;
-    private final Consumer<Operation> writeOperationCallback;
-    private final OperationManager operationManager;
 
     private final VectorClock replicaTimestamp = new VectorClock();
     private final VectorClock valueTimestamp = new VectorClock();
+    private final Map<String, VectorClock> gossipTimestampMap = new HashMap<>();
 
     @VisibleForTesting
     public ServerState() {
-        this("TEST", op -> {
-        });
+        this("TEST");
     }
 
-    public ServerState(String qualifier, Consumer<Operation> writeOperationCallback) {
-        this.ledger = new CopyOnWriteArrayList<>();
+    public ServerState(String qualifier) {
         this.accounts = new ConcurrentHashMap<>();
+        this.ledger = new Ledger(this::canOperationBeStable, this::executeOperation);
         this.active = new AtomicBoolean(true);
         createBroker();
         this.qualifier = qualifier;
-        this.writeOperationCallback = writeOperationCallback;
-        this.operationManager = new OperationManager(accounts, valueTimestamp);
     }
 
     public OperationResult<Integer> getBalance(
@@ -116,15 +110,10 @@ public class ServerState {
             VectorClock uniqueTimestamp = prevTimestamp.clone();
             uniqueTimestamp.setValue(qualifier, replicaTimestamp.getValue(qualifier));
 
-            CreateOp pendingOperation = new CreateOp(userId, prevTimestamp, uniqueTimestamp);
-            synchronized (ledger) {
-                ledger.add(pendingOperation);
-            }
+            CreateOp pendingOperation = new CreateOp(userId, prevTimestamp, uniqueTimestamp, false);
+            ledger.addUnstable(pendingOperation);
 
-            operationManager.registerObserver(pendingOperation);
-            operationManager.notifyObservers();
-
-            log.debug("Replica's current timestamp: {}", replicaTimestamp);
+            log.debug("Replica's current timestamp: %s", replicaTimestamp);
             return new OperationResult<>(null, uniqueTimestamp);
         }
     }
@@ -152,10 +141,7 @@ public class ServerState {
             }
 
             DeleteOp pendingOperation = new DeleteOp(userId);
-            synchronized (ledger) {
-                propagateOperation(pendingOperation);
-                ledger.add(pendingOperation);
-            }
+            ledger.addUnstable(pendingOperation);
 
             accounts.remove(userId);
         } finally {
@@ -225,13 +211,9 @@ public class ServerState {
             uniqueTimestamp = prevTimestamp.clone();
             uniqueTimestamp.setValue(qualifier, replicaTimestamp.getValue(qualifier));
 
-            TransferOp pendingOperation = new TransferOp(fromUserId, toUserId, amount, prevTimestamp, uniqueTimestamp);
-            synchronized (ledger) {
-                ledger.add(pendingOperation);
-            }
-
-            operationManager.registerObserver(pendingOperation);
-            operationManager.notifyObservers();
+            TransferOp pendingOperation =
+                    new TransferOp(fromUserId, toUserId, amount, prevTimestamp, uniqueTimestamp, false);
+            ledger.addUnstable(pendingOperation);
         } finally {
             if (fromAccount != null) {
                 fromAccount.getLock().unlock();
@@ -240,7 +222,7 @@ public class ServerState {
                 toAccount.getLock().unlock();
             }
         }
-        log.debug("Replica's current timestamp: {}", replicaTimestamp);
+        log.debug("Replica's current timestamp: %s", replicaTimestamp);
         return new OperationResult<>(null, uniqueTimestamp);
     }
 
@@ -252,23 +234,48 @@ public class ServerState {
         this.active.set(false);
     }
 
-    public void gossip() {
-        // TODO
+    /**
+     * Get operations to be sent to another replica with the given qualifier.
+     *
+     * @param visitor   The visitor to be called with every operation to be sent to the replica.
+     * @param qualifier The qualifier of the replica to send operations to.
+     */
+    public void operateOverLedgerToPropagateToReplica(OperationVisitor visitor, String qualifier) {
+        final VectorClock lastTimestamp = gossipTimestampMap.getOrDefault(qualifier, new VectorClock());
+
+        ledger.operateOverLedger(
+                visitor,
+                operation -> !lastTimestamp.isNewerThanOrEqualTo(operation.getUniqueTimestamp())
+        );
+    }
+
+    /**
+     * Save the timestamp of the last operation propagated to this replica.
+     *
+     * @param qualifier The qualifier of the replica to save this timestamp of.
+     * @param timestamp The timestamp to save.
+     */
+    public void updateGossipTimestamp(String qualifier, VectorClock timestamp) {
+        gossipTimestampMap.put(qualifier, timestamp);
     }
 
     public void operateOverLedger(OperationVisitor visitor) {
-        ledger.forEach(operation -> operation.accept(visitor));
+        ledger.operateOverLedger(visitor);
     }
 
-    public synchronized void setLedger(List<Operation> newOperations) throws ServerUnavailableException {
+    public synchronized void addToLedger(List<Operation> newOperations) throws ServerUnavailableException {
         ensureServerIsActive();
-        this.ledger.addAll(newOperations);
-        updateAccountsFromLedger(newOperations);
+        newOperations.forEach(operation -> replicaTimestamp.updateVectorClock(operation.getUniqueTimestamp()));
+        ledger.addAllUnstable(newOperations);
     }
 
-    public synchronized void updateAccountsFromLedger(List<Operation> newOperations) {
-        val visitor = new ExecuteOperationVisitor(this.accounts);
-        newOperations.forEach(operation -> operation.accept(visitor));
+    private boolean canOperationBeStable(Operation operation) {
+        return this.valueTimestamp.isNewerThanOrEqualTo(operation.getPrevTimestamp());
+    }
+
+    private void executeOperation(Operation operation) {
+        operation.accept(new ExecuteOperationVisitor(this.accounts));
+        this.valueTimestamp.updateVectorClock(operation.getUniqueTimestamp());
     }
 
     /**
@@ -316,18 +323,5 @@ public class ServerState {
         if (!active.get()) {
             throw new ServerUnavailableException("Server is not active");
         }
-    }
-
-
-    public void propagateOperation(Operation operation) throws PropagationException {
-        try {
-            writeOperationCallback.accept(operation); // may fail
-        } catch (RuntimeException e) {
-            if (e.getCause() instanceof PropagationException e2) {
-                throw e2;
-            }
-            throw e;
-        }
-
     }
 }

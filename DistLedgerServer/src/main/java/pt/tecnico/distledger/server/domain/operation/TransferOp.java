@@ -15,9 +15,10 @@ public class TransferOp extends Operation {
             String destAccount,
             int amount,
             VectorClock prevTimestamp,
-            VectorClock uniqueTimestamp
+            VectorClock uniqueTimestamp,
+            boolean stable
     ) {
-        super(fromAccount, OperationType.OP_TRANSFER_TO, prevTimestamp, uniqueTimestamp);
+        super(fromAccount, OperationType.OP_TRANSFER_TO, prevTimestamp, uniqueTimestamp, stable);
         this.destAccount = destAccount;
         this.amount = amount;
     }

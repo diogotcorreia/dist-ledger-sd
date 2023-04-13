@@ -40,11 +40,6 @@ class AdminTest {
     }
 
     @Test
-    void gossip() {
-        state.gossip(); // does nothing for now
-    }
-
-    @Test
     void emptyLedgerStream() {
         assertEquals(0, state.getLedger().size());
     }
@@ -65,8 +60,6 @@ class AdminTest {
         assertEquals(3, state.getLedger().size());
         state.getBalance(userId, new VectorClock());
         assertEquals(3, state.getLedger().size());
-        state.deleteAccount(userId);
-        assertEquals(4, state.getLedger().size());
     }
 
 }

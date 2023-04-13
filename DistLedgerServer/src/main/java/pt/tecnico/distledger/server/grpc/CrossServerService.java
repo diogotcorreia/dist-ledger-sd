@@ -16,11 +16,14 @@ import static pt.ulisboa.tecnico.distledger.contract.distledgerserver.DistLedger
 @CustomLog(topic = "Service")
 public class CrossServerService implements AutoCloseable {
 
+    private final ServerInfo serverInfo;
+
     private final ManagedChannel channel;
 
     private final DistLedgerCrossServerServiceBlockingStub stub;
 
     public CrossServerService(ServerInfo serverInfo) {
+        this.serverInfo = serverInfo;
         channel = ManagedChannelBuilder
                 .forAddress(serverInfo.getAddress().getHost(), serverInfo.getAddress().getPort())
                 .usePlaintext()
@@ -29,7 +32,8 @@ public class CrossServerService implements AutoCloseable {
     }
 
     public void sendLedger(List<Operation> ledger) {
-        log.debug("Sending request to send ledger");
+        log.debug("Sending request to send ledger to server: %s", serverInfo);
+        log.debug("Operations: %s", ledger);
 
         // noinspection ResultOfMethodCallIgnored
         stub.propagateState(

@@ -38,6 +38,7 @@ public class UserService implements AutoCloseable {
             String username
     ) throws StatusRuntimeException, ServerUnresolvableException {
         log.debug("[Server '%s'] Sending request to create account for '%s'", qualifier, username);
+        logTimestamps();
         CreateAccountResponse response = serverResolver.resolveStub(qualifier)
                 .createAccount(
                         CreateAccountRequest.newBuilder()
@@ -47,6 +48,7 @@ public class UserService implements AutoCloseable {
                 );
         log.debug("[Server '%s'] Received response to create account for '%s'", qualifier, username);
         vectorClock.updateVectorClock(new VectorClock(response.getNewTimestampMap()));
+        logTimestamps();
     }
 
     public void deleteAccount(
@@ -137,6 +139,7 @@ public class UserService implements AutoCloseable {
                 from,
                 to
         );
+        logTimestamps();
         TransferToResponse response = serverResolver.resolveStub(qualifier)
                 .transferTo(
                         TransferToRequest.newBuilder()
@@ -154,10 +157,15 @@ public class UserService implements AutoCloseable {
                 to
         );
         vectorClock.updateVectorClock(new VectorClock(response.getNewTimestampMap()));
+        logTimestamps();
     }
 
     @Override
     public void close() {
         serverResolver.close();
+    }
+
+    public void logTimestamps() {
+        log.debug("Vector clock is currently: %s", vectorClock.getTimestamps());
     }
 }

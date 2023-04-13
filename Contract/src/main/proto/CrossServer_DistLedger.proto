@@ -7,7 +7,6 @@ import "DistLedgerCommonDefinitions.proto";
 
 message PropagateStateRequest {
   LedgerState state = 1;
-  map<string, int32> replicaTimestamp = 2;
 }
 
 message PropagateStateResponse {}

@@ -22,9 +22,7 @@ public class ServiceEntry {
             ServerAddress serverAddress,
             String serverQualifier
     ) throws ServerWithInvalidParametersException, ServerEntryAlreadyExistsException {
-        // TODO: remove this for phase 3
-        if (serverQualifier == null || serverQualifier.isEmpty() || (!serverQualifier.equals("A") && !serverQualifier
-                .equals("B"))) {
+        if (serverQualifier == null || serverQualifier.isEmpty()) {
             throw new ServerWithInvalidParametersException(serverQualifier);
         }
         synchronized (servers) {
