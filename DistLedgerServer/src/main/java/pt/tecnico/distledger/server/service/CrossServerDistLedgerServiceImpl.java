@@ -35,8 +35,7 @@ public class CrossServerDistLedgerServiceImpl extends DistLedgerCrossServerServi
                             .getLedgerList()
                             .stream()
                             .map(this::toOperation)
-                            .toList(),
-                    new VectorClock(request.getReplicaTimestampMap())
+                            .toList()
             );
 
             log.debug("Propagate state response has been sent");
