@@ -299,14 +299,6 @@ public class GossipTest {
             );
         }
 
-        @Override
-        public void visit(DeleteOp operation) {
-            operations.add(
-                    new DeleteOp(
-                            operation.getAccount()
-                    )
-            );
-        }
 
         @Override
         public void visit(TransferOp operation) {

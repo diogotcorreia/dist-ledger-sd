@@ -115,10 +115,6 @@ class AdminTest {
                         .setUserId("tomas-esteves")
                         .build(),
                 Operation.newBuilder()
-                        .setType(OperationType.OP_DELETE_ACCOUNT)
-                        .setUserId("tomas-esteves")
-                        .build(),
-                Operation.newBuilder()
                         .setType(OperationType.OP_TRANSFER_TO)
                         .setUserId("broker")
                         .setDestUserId("diogo-gaspar")
@@ -157,10 +153,6 @@ class AdminTest {
                   }
                   ledger {
                     type: OP_CREATE_ACCOUNT
-                    userId: "tomas-esteves"
-                  }
-                  ledger {
-                    type: OP_DELETE_ACCOUNT
                     userId: "tomas-esteves"
                   }
                   ledger {
