@@ -7,13 +7,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 import pt.tecnico.distledger.common.VectorClock;
 import pt.tecnico.distledger.server.domain.operation.CreateOp;
-import pt.tecnico.distledger.server.domain.operation.DeleteOp;
 import pt.tecnico.distledger.server.domain.operation.Operation;
 import pt.tecnico.distledger.server.domain.operation.TransferOp;
 import pt.tecnico.distledger.server.exceptions.AccountAlreadyExistsException;
-import pt.tecnico.distledger.server.exceptions.AccountNotEmptyException;
 import pt.tecnico.distledger.server.exceptions.AccountNotFoundException;
-import pt.tecnico.distledger.server.exceptions.AccountProtectedException;
 import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
 import pt.tecnico.distledger.server.exceptions.InvalidAmountException;
 import pt.tecnico.distledger.server.exceptions.PropagationException;
@@ -115,39 +112,6 @@ public class ServerState {
 
             log.debug("Replica's current timestamp: %s", replicaTimestamp);
             return new OperationResult<>(null, uniqueTimestamp);
-        }
-    }
-
-    public void deleteAccount(
-            @NotNull String userId
-    ) throws AccountNotEmptyException, AccountNotFoundException, AccountProtectedException, ServerUnavailableException, PropagationException, ReadOnlyException {
-        ensureServerIsActive();
-
-        Account account = null;
-        try {
-            account = getThreadSafeAccount(userId)
-                    .orElseThrow(() -> new AccountNotFoundException(userId));
-
-            // After the lock is granted, we need to re-check the server state
-            ensureServerIsActive();
-
-            if (userId.equals(BROKER_ID)) {
-                throw new AccountProtectedException(userId);
-            }
-
-            final int balance = account.getBalance();
-            if (balance != 0) {
-                throw new AccountNotEmptyException(userId, balance);
-            }
-
-            DeleteOp pendingOperation = new DeleteOp(userId);
-            ledger.addUnstable(pendingOperation);
-
-            accounts.remove(userId);
-        } finally {
-            if (account != null) {
-                account.getLock().unlock();
-            }
         }
     }
 

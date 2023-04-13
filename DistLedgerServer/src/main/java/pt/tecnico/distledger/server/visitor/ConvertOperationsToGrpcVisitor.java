@@ -2,7 +2,6 @@ package pt.tecnico.distledger.server.visitor;
 
 import lombok.Getter;
 import pt.tecnico.distledger.server.domain.operation.CreateOp;
-import pt.tecnico.distledger.server.domain.operation.DeleteOp;
 import pt.tecnico.distledger.server.domain.operation.TransferOp;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions;
 
@@ -23,16 +22,6 @@ public class ConvertOperationsToGrpcVisitor extends OperationVisitor {
                         .putAllPrevTimestamp(operation.getPrevTimestamp().getTimestamps())
                         .putAllUniqueTimestamp(operation.getUniqueTimestamp().getTimestamps())
                         .setStable(operation.isStable())
-                        .build()
-        );
-    }
-
-    @Override
-    public void visit(DeleteOp operation) {
-        ledger.add(
-                DistLedgerCommonDefinitions.Operation.newBuilder()
-                        .setUserId(operation.getAccount())
-                        .setType(operation.getType())
                         .build()
         );
     }
