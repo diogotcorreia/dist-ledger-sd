@@ -10,10 +10,8 @@ import pt.tecnico.distledger.server.exceptions.PropagationException;
 import pt.tecnico.distledger.server.grpc.CrossServerService;
 import pt.tecnico.distledger.server.grpc.NamingServerService;
 import pt.tecnico.distledger.server.visitor.ConvertOperationsToGrpcVisitor;
-import pt.ulisboa.tecnico.distledger.contract.namingserver.NamingServerDistLedger.ServerInfo;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
