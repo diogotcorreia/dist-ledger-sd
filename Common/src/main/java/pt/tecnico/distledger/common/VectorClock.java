@@ -110,10 +110,12 @@ public class VectorClock {
 
         return Stream.concat(this.timestamps.keySet().stream(), that.timestamps.keySet().stream())
                 .distinct()
-                .allMatch(key -> Objects.equals(
-                        this.timestamps.getOrDefault(key, 0),
-                        that.timestamps.getOrDefault(key, 0)
-                ));
+                .allMatch(
+                        key -> Objects.equals(
+                                this.timestamps.getOrDefault(key, 0),
+                                that.timestamps.getOrDefault(key, 0)
+                        )
+                );
     }
 
     @Override

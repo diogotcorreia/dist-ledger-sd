@@ -59,14 +59,11 @@ public class ServerCoordinator {
     }
 
 
-    public void propagateLedgerStateToServer(List<Operation> pendingOperation, String serverTo) {
+    public void propagateLedgerStateToServer(List<Operation> pendingOperations, String serverTo) {
         ConvertOperationsToGrpcVisitor visitor = new ConvertOperationsToGrpcVisitor();
-        for (Operation operation : pendingOperation) {
-            operation.accept(visitor);
-        }
+        pendingOperations.forEach(operation -> operation.accept(visitor));
 
         long attempts = 0;
-
         do {
             if (peersCache.size() == 0) {
                 populatePeersCache();

@@ -8,8 +8,6 @@ import pt.tecnico.distledger.common.VectorClock;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.domain.operation.CreateOp;
 
-import java.util.HashMap;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -47,7 +45,7 @@ public class GossipTest {
         val response2 = state2.createAccount(ACCOUNT_2, userClock);
         userClock.updateVectorClock(response2.vectorClock());
 
-        assertEquals(clock(1,1,0), userClock);
+        assertEquals(clock(1, 1, 0), userClock);
 
         // TODO investigate what vector clock needs to be sent here
         // FIXME operations should be cloned because 'stable' attribute is mutable; not a problem right now since we're not using it
@@ -83,7 +81,7 @@ public class GossipTest {
         val response3 = state2.createAccount(ACCOUNT_3, user2Clock);
         user2Clock.updateVectorClock(response3.vectorClock());
 
-        assertEquals(clock(1,2,0), user2Clock);
+        assertEquals(clock(1, 2, 0), user2Clock);
 
         // Gossip from replica A to B
 
@@ -139,4 +137,3 @@ public class GossipTest {
     }
 
 }
-

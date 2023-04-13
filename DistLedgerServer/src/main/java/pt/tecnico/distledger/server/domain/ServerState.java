@@ -250,13 +250,9 @@ public class ServerState {
         ledger.forEach(operation -> operation.accept(visitor));
     }
 
-    public synchronized void addToLedger(
-            List<Operation> newOperations,
-            VectorClock sentTimestamp
-    ) throws ServerUnavailableException {
+    public synchronized void addToLedger(List<Operation> newOperations) throws ServerUnavailableException {
         ensureServerIsActive();
-        for (Operation operation : newOperations) {
-            // TODO: verify that this condition is correct
+        newOperations.forEach(operation -> {
             if (!replicaTimestamp.isNewerThanOrEqualTo(operation.getUniqueTimestamp())) {
                 replicaTimestamp.updateVectorClock(operation.getUniqueTimestamp());
                 operationManager.registerObserver(operation);
@@ -264,7 +260,7 @@ public class ServerState {
                     ledger.add(operation);
                 }
             }
-        }
+        });
         operationManager.notifyObservers();
     }
 
