@@ -59,7 +59,10 @@ public class CommandParser {
                 case CREATE_ACCOUNT, CREATE_ACCOUNT_ALIAS -> runCancellableCommand(() -> this.createAccount(line));
                 case TRANSFER_TO, TRANSFER_TO_ALIAS -> runCancellableCommand(() -> this.transferTo(line));
                 case BALANCE, BALANCE_ALIAS -> runCancellableCommand(() -> this.balance(line));
-                case HELP, HELP_ALIAS -> this.printUsage();
+                case HELP, HELP_ALIAS -> {
+                    this.printUsage();
+                    System.out.print("> ");
+                }
                 case EXIT, EXIT_ALIAS -> exit = true;
                 default -> {
                     if (!line.isBlank()) {
@@ -192,6 +195,5 @@ public class CommandParser {
                         - exit
                         """
         );
-        System.out.print("> ");
     }
 }
