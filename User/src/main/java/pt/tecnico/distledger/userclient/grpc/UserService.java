@@ -58,7 +58,6 @@ public class UserService implements AutoCloseable {
                 response.getValue()
         );
         vectorClock.updateVectorClock(new VectorClock(response.getNewTimestampMap()));
-
         logTimestamps();
         return response.getValue();
     }
