@@ -13,7 +13,8 @@ sending the information to the destination replica (using gossip, of course). Th
 of whether it's the primary or backup server, and holds three timestamp-related utilities:
 
 - `gossipTimestamps`, a table with the timestamps of the last known timestamps of each replica; it's updated by the `ServerCoordinator`
-    after each successful gossip transaction;
+    after each successful gossip transaction. The coordinator, as stated in Coulouris et al.,
+    "uses the entries in its timestamp table to estimate which updates any other replica manager has not yet received";
 - `valueTimestamp`, a vector clock with its current timestamp (i.e the timestamp of the state held by the replica);
 - `replicaTimestamp`, a vector clock updated with each operation that is performed on the ledger.
 
