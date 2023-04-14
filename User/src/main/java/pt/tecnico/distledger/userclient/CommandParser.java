@@ -6,14 +6,8 @@ import lombok.CustomLog;
 import pt.tecnico.distledger.common.exceptions.ServerUnresolvableException;
 import pt.tecnico.distledger.userclient.grpc.UserService;
 
-import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletionService;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @CustomLog
 public class CommandParser {
@@ -32,33 +26,71 @@ public class CommandParser {
 
     private final UserService userService;
 
+    private final Thread mainThread;
+    private Thread runningTask;
+
     public CommandParser(UserService userService) {
         this.userService = userService;
+        this.mainThread = Thread.currentThread();
     }
 
     void parseInput() {
-
-        Scanner scanner = new Scanner(System.in);
         boolean exit = false;
+        Scanner scanner = new Scanner(System.in);
 
+        System.out.print("> ");
         while (!exit) {
-            System.out.print("> ");
+            if (!scanner.hasNextLine()) {
+                break;
+            }
             String line = scanner.nextLine().trim();
+            if (isForegroundTaskRunning()) {
+                // There is a running task in the foreground, kill it
+                runningTask.interrupt();
+                if (line.isBlank()) {
+                    continue;
+                }
+            }
             String cmd = line.split(SPACE)[0];
 
-            try {
-                switch (cmd) {
-                    case CREATE_ACCOUNT, CREATE_ACCOUNT_ALIAS -> this.createAccount(line);
-                    case TRANSFER_TO, TRANSFER_TO_ALIAS -> this.transferTo(line);
-                    case BALANCE, BALANCE_ALIAS -> this.balance(line);
-                    case HELP, HELP_ALIAS -> this.printUsage();
-                    case EXIT, EXIT_ALIAS -> exit = true;
-                    default -> {
-                        log.error("Command '%s' does not exist%n%n", cmd);
-                        this.printUsage();
-                    }
+            switch (cmd) {
+                case CREATE_ACCOUNT, CREATE_ACCOUNT_ALIAS -> runCancellableCommand(() -> this.createAccount(line));
+                case TRANSFER_TO, TRANSFER_TO_ALIAS -> runCancellableCommand(() -> this.transferTo(line));
+                case BALANCE, BALANCE_ALIAS -> runCancellableCommand(() -> this.balance(line));
+                case HELP, HELP_ALIAS -> this.printUsage();
+                case EXIT, EXIT_ALIAS -> exit = true;
+                default -> {
+                    log.error("Command '%s' does not exist%n%n", cmd);
+                    this.printUsage();
                 }
+            }
+
+            if (!exit) {
+                try {
+                    // Wait for a bit before telling the user their action can be cancelled.
+                    // If the action finished before the sleep, this thread will be interrupted and the message
+                    // below will not be sent.
+                    Thread.sleep(1000);
+                    log.info("Command is taking longer than expected... Press ENTER to cancel.");
+                } catch (InterruptedException ignore) {
+                }
+            }
+        }
+    }
+
+    private boolean isForegroundTaskRunning() {
+        return this.runningTask != null && this.runningTask.isAlive();
+    }
+
+    private void runCancellableCommand(Callable<Void> handler) {
+        this.runningTask = new Thread(() -> {
+            try {
+                handler.call();
             } catch (StatusRuntimeException e) {
+                if (e.getStatus().getCode() == Status.Code.CANCELLED) {
+                    log.debug("Cancelled gRPC request");
+                    return;
+                }
                 if (e.getStatus().getDescription() != null) {
                     log.error(e.getStatus().getDescription());
                 } else {
@@ -72,16 +104,21 @@ public class CommandParser {
             } catch (Throwable e) {
                 log.error(e.getMessage());
                 e.printStackTrace();
+            } finally {
+                System.out.print("> ");
+                // Avoid sending the "this is taking too long" message
+                this.mainThread.interrupt();
             }
-        }
+        });
+        this.runningTask.start();
     }
 
-    private void createAccount(String line) throws ServerUnresolvableException {
+    private Void createAccount(String line) throws ServerUnresolvableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 3) {
             this.printUsage();
-            return;
+            return null;
         }
 
         String server = split[1];
@@ -90,71 +127,47 @@ public class CommandParser {
         userService.createAccount(server, username);
         log.debug("Account '%s' has been created%n", username);
         log.info("OK%n");
+
+        return null;
     }
 
-    private void balance(String line) throws Throwable {
+    private Void balance(String line) {
         String[] split = line.split(SPACE);
 
         if (split.length != 3) {
             this.printUsage();
-            return;
+            return null;
         }
         final String server = split[1];
         final String username = split[2];
 
-        List<Callable<Void>> tasks = List.of(
-                () -> {
-                    Thread.sleep(1000);
-
-                    log.info("Query is taking too long... Press ENTER to cancel.");
-
-                    // noinspection ResultOfMethodCallIgnored
-                    System.in.read();
-                    log.info("Operation cancelled.");
-                    return null;
-                },
-                () -> {
-                    try {
-                        final int balance = userService.balance(server, username);
-
-                        log.debug("Balance of user '%s' is %d%n", username, balance);
-                        log.info("OK");
-                        if (balance > 0) {
-                            log.info("%d", balance);
-                        }
-                        log.info("");
-                    } catch (StatusRuntimeException e) {
-                        if (e.getStatus().getCode() != Status.Code.CANCELLED) {
-                            throw e;
-                        }
-                    }
-                    return null;
-                }
-        );
-
-        ExecutorService executorService = Executors.newFixedThreadPool(tasks.size());
-        CompletionService<Void> completionService = new ExecutorCompletionService<>(executorService);
-        tasks.forEach(completionService::submit);
-        executorService.shutdown(); // No other tasks will be submitted; wait for the current ones to finish
-
         try {
-            // Wait for the threads to finish, returning the first one that finishes
-            completionService.take().get();
-        } catch (InterruptedException e) {
-            log.error("Error while waiting for threads to finish %s", e);
-        } catch (ExecutionException e) {
-            throw e.getCause();
-        } finally {
-            executorService.shutdownNow(); // Kill all remaining tasks
+            final int balance = userService.balance(server, username);
+
+            log.debug("Balance of user '%s' is %d%n", username, balance);
+            log.info("OK");
+            if (balance > 0) {
+                log.info("%d", balance);
+            }
+            log.info("");
+        } catch (StatusRuntimeException e) {
+            if (e.getStatus().getCode() != Status.Code.CANCELLED) {
+                throw e;
+            }
+            log.debug("Cancelled gRPC request");
+        } catch (Exception e) {
+            log.error("Exception %s", e);
         }
+
+        return null;
     }
 
-    private void transferTo(String line) throws ServerUnresolvableException {
+    private Void transferTo(String line) throws ServerUnresolvableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 5) {
             this.printUsage();
-            return;
+            return null;
         }
         String server = split[1];
         String from = split[2];
@@ -168,6 +181,8 @@ public class CommandParser {
             log.debug("%d coins have been transferred from account '%s' account '%s'%n", amount, from, dest);
         }
         log.info("OK%n");
+
+        return null;
     }
 
     private void printUsage() {
@@ -180,5 +195,6 @@ public class CommandParser {
                         - exit
                         """
         );
+        System.out.print("> ");
     }
 }
