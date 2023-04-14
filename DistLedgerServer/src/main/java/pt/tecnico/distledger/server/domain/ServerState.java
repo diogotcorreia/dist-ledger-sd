@@ -70,7 +70,6 @@ public class ServerState {
                     valueTimestamp.wait();
                 } catch (InterruptedException e) {
                     log.error("Interrupted while waiting for value timestamp to be updated", e);
-                    // TODO: should we interrupt the thread here? With Thread.currentThread().interrupt()
                 }
             }
         }
