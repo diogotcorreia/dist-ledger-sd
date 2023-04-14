@@ -4,7 +4,7 @@ import io.grpc.StatusRuntimeException;
 import lombok.CustomLog;
 import pt.tecnico.distledger.adminclient.grpc.AdminService;
 import pt.tecnico.distledger.common.exceptions.ServerUnresolvableException;
-import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger.*;
+import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger.GetLedgerStateResponse;
 
 import java.util.Scanner;
 
@@ -49,8 +49,10 @@ public class CommandParser {
                     case HELP, HELP_ALIAS -> this.printUsage();
                     case EXIT, EXIT_ALIAS -> exit = true;
                     default -> {
-                        log.error("Command '%s' does not exist%n", cmd);
-                        this.printUsage();
+                        if (!line.isBlank()) {
+                            log.error("Command '%s' does not exist%n", cmd);
+                            this.printUsage();
+                        }
                     }
                 }
             } catch (StatusRuntimeException e) {
