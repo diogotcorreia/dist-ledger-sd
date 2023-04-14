@@ -13,7 +13,7 @@ import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.CreateAccountR
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.TransferToRequest;
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc.UserServiceBlockingStub;
 
-import static pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.*;
+import static pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.TransferToResponse;
 
 @CustomLog(topic = "Service")
 @RequiredArgsConstructor

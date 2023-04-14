@@ -59,13 +59,22 @@ public class ServerState {
             String userId,
             VectorClock prevTimestamp
     ) throws AccountNotFoundException, ServerUnavailableException {
+        // We check if the client's previous timestamp is consistent with the server's -- that is, if this replica still
+        // needs to wait for operations to be propagated in order to return a consistent result.
+        // The condition verified is: !valueTimestamp.isNewerThanOrEqualTo(prevTimestamp) -- if this is true, we need to keep waiting
+        // For this, we use the wait/notify mechanism
         ensureServerIsActive();
-
-        if (!valueTimestamp.isNewerThanOrEqualTo(prevTimestamp)) {
-            // TODO: remove this exception and implement the correct behavior
-            throw new ServerUnavailableException("TODO");
+        synchronized (valueTimestamp) {
+            while (!valueTimestamp.isNewerThanOrEqualTo(prevTimestamp)) {
+                try {
+                    valueTimestamp.wait();
+                } catch (InterruptedException e) {
+                    log.error("Interrupted while waiting for value timestamp to be updated", e);
+                }
+            }
         }
 
+        ensureServerIsActive();
         return new OperationResult<>(
                 getAccount(userId)
                         .orElseThrow(() -> new AccountNotFoundException(userId))
@@ -224,7 +233,10 @@ public class ServerState {
 
     private void executeOperation(Operation operation) {
         operation.accept(new ExecuteOperationVisitor(this.accounts));
-        this.valueTimestamp.updateVectorClock(operation.getUniqueTimestamp());
+        synchronized (valueTimestamp) {
+            this.valueTimestamp.updateVectorClock(operation.getUniqueTimestamp());
+            valueTimestamp.notifyAll(); // Notifies all threads waiting for an update to the value timestamp
+        }
         log.debug("Value's timestamp: %s", valueTimestamp);
     }
 
