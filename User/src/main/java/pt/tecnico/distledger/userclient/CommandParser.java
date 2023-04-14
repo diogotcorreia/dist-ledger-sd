@@ -42,7 +42,6 @@ public class CommandParser {
 
         System.out.print("> ");
         while (!exit) {
-            running.set(false);
             if (!scanner.hasNextLine()) {
                 break;
             }
@@ -94,7 +93,7 @@ public class CommandParser {
                 handler.call();
             } catch (StatusRuntimeException e) {
                 if (e.getStatus().getCode() == Status.Code.CANCELLED) {
-                    log.debug("Cancelled gRPC request");
+                    log.info("Cancelled gRPC request");
                     return;
                 }
                 if (e.getStatus().getDescription() != null) {
@@ -111,6 +110,7 @@ public class CommandParser {
                 log.error(e.getMessage());
                 e.printStackTrace();
             } finally {
+                running.set(false);
                 System.out.print("> ");
                 // Avoid sending the "this is taking too long" message
                 this.mainThread.interrupt();
