@@ -283,7 +283,7 @@ public class ServerState {
 
     private void ensureServerIsActive() throws ServerUnavailableException {
         if (!active.get()) {
-            throw new ServerUnavailableException("Server is not active");
+            throw new ServerUnavailableException(qualifier);
         }
     }
 }

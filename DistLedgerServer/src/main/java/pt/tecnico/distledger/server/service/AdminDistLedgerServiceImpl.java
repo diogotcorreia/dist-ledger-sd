@@ -4,6 +4,7 @@ import io.grpc.stub.StreamObserver;
 import lombok.CustomLog;
 import pt.tecnico.distledger.server.ServerCoordinator;
 import pt.tecnico.distledger.server.domain.ServerState;
+import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.server.visitor.ConvertOperationsToGrpcVisitor;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.LedgerState;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger.ActivateRequest;
@@ -54,10 +55,15 @@ public class AdminDistLedgerServiceImpl extends AdminServiceGrpc.AdminServiceImp
             GossipRequest request,
             StreamObserver<GossipResponse> responseObserver
     ) {
-        String serverTo = request.getQualifier();
-        serverCoordinator.propagateUsingGossip(serverTo);
-        responseObserver.onNext(GossipResponse.getDefaultInstance());
-        responseObserver.onCompleted();
+        try {
+            String serverTo = request.getQualifier();
+            serverCoordinator.propagateUsingGossip(serverTo);
+            responseObserver.onNext(GossipResponse.getDefaultInstance());
+            responseObserver.onCompleted();
+        } catch (ServerUnavailableException e) {
+            log.error(e.getMessage());
+            responseObserver.onError(e.toGrpcRuntimeException());
+        }
     }
 
     @Override
