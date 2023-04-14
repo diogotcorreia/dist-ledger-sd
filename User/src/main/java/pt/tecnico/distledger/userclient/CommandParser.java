@@ -8,6 +8,7 @@ import pt.tecnico.distledger.userclient.grpc.UserService;
 
 import java.util.Scanner;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @CustomLog
 public class CommandParser {
@@ -28,6 +29,8 @@ public class CommandParser {
 
     private final Thread mainThread;
     private Thread runningTask;
+    private final AtomicBoolean running = new AtomicBoolean(false);
+
 
     public CommandParser(UserService userService) {
         this.userService = userService;
@@ -40,11 +43,12 @@ public class CommandParser {
 
         System.out.print("> ");
         while (!exit) {
+            running.set(false);
             if (!scanner.hasNextLine()) {
                 break;
             }
             String line = scanner.nextLine().trim();
-            if (isForegroundTaskRunning()) {
+            if (running.get()) {
                 // There is a running task in the foreground, kill it
                 runningTask.interrupt();
                 if (line.isBlank()) {
@@ -65,7 +69,7 @@ public class CommandParser {
                 }
             }
 
-            if (!exit && isForegroundTaskRunning()) {
+            if (!exit && running.get()) {
                 try {
                     // Wait for a bit before telling the user their action can be cancelled.
                     // If the action finished before the sleep, this thread will be interrupted and the message
@@ -78,11 +82,9 @@ public class CommandParser {
         }
     }
 
-    private boolean isForegroundTaskRunning() {
-        return this.runningTask != null && this.runningTask.isAlive();
-    }
 
     private void runCancellableCommand(Callable<Void> handler) {
+        running.set(true);
         this.runningTask = new Thread(() -> {
             try {
                 handler.call();
