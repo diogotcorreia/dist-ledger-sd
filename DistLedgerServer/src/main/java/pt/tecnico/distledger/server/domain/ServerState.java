@@ -59,27 +59,20 @@ public class ServerState {
             String userId,
             VectorClock prevTimestamp
     ) throws AccountNotFoundException, ServerUnavailableException {
-        ensureServerIsActive();
-
         // We check if the client's previous timestamp is consistent with the server's -- that is, if this replica still
         // needs to wait for operations to be propagated in order to return a consistent result.
         // The condition verified is: !valueTimestamp.isNewerThanOrEqualTo(prevTimestamp) -- if this is true, we need to keep waiting
-
-        do {
-            // We need to re-check the server state after the lock is granted
-            ensureServerIsActive();
-
-            // We check if the client's previous timestamp is consistent with the server's -- that is, if this replica still
-            // needs to wait for operations to be propagated in order to return a consistent result.
-            // The condition verified is: !valueTimestamp.isNewerThanOrEqualTo(prevTimestamp) -- if this is true, we need to keep waiting
-            if (!valueTimestamp.isNewerThanOrEqualTo(prevTimestamp)) {
+        // For this, we use the wait/notify mechanism
+        synchronized (valueTimestamp) {
+            while (!valueTimestamp.isNewerThanOrEqualTo(prevTimestamp)) {
                 try {
-                    Thread.sleep(100);
+                    valueTimestamp.wait();
                 } catch (InterruptedException e) {
-                    log.error("Interrupted while waiting for operations to be propagated", e);
+                    log.error("Interrupted while waiting for value timestamp to be updated", e);
+                    // TODO: should we interrupt the thread here? With Thread.currentThread().interrupt()
                 }
             }
-        } while (!valueTimestamp.isNewerThanOrEqualTo(prevTimestamp));
+        }
 
         return new OperationResult<>(
                 getAccount(userId)
@@ -239,7 +232,10 @@ public class ServerState {
 
     private void executeOperation(Operation operation) {
         operation.accept(new ExecuteOperationVisitor(this.accounts));
-        this.valueTimestamp.updateVectorClock(operation.getUniqueTimestamp());
+        synchronized (valueTimestamp) {
+            this.valueTimestamp.updateVectorClock(operation.getUniqueTimestamp());
+            valueTimestamp.notifyAll(); // Notifies all threads waiting for an update to the value timestamp
+        }
         log.debug("Value's timestamp: %s", valueTimestamp);
     }
 

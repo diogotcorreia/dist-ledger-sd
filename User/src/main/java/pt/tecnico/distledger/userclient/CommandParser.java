@@ -135,6 +135,7 @@ public class CommandParser {
         ExecutorService executorService = Executors.newFixedThreadPool(tasks.size());
         CompletionService<Void> completionService = new ExecutorCompletionService<>(executorService);
         tasks.forEach(completionService::submit);
+        executorService.shutdown(); // No other tasks will be submitted; wait for the current ones to finish
 
         try {
             // Wait for the threads to finish, returning the first one that finishes
@@ -144,7 +145,7 @@ public class CommandParser {
         } catch (ExecutionException e) {
             throw e.getCause();
         } finally {
-            executorService.shutdownNow();
+            executorService.shutdownNow(); // Kill all remaining tasks
         }
     }
 
