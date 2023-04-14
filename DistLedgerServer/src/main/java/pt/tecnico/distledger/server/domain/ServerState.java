@@ -63,6 +63,7 @@ public class ServerState {
         // needs to wait for operations to be propagated in order to return a consistent result.
         // The condition verified is: !valueTimestamp.isNewerThanOrEqualTo(prevTimestamp) -- if this is true, we need to keep waiting
         // For this, we use the wait/notify mechanism
+        ensureServerIsActive();
         synchronized (valueTimestamp) {
             while (!valueTimestamp.isNewerThanOrEqualTo(prevTimestamp)) {
                 try {
@@ -74,6 +75,7 @@ public class ServerState {
             }
         }
 
+        ensureServerIsActive();
         return new OperationResult<>(
                 getAccount(userId)
                         .orElseThrow(() -> new AccountNotFoundException(userId))
