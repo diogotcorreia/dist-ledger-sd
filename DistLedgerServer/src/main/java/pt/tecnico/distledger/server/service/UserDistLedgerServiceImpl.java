@@ -7,9 +7,7 @@ import pt.tecnico.distledger.server.ServerCoordinator;
 import pt.tecnico.distledger.server.domain.OperationResult;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.exceptions.AccountAlreadyExistsException;
-import pt.tecnico.distledger.server.exceptions.AccountNotEmptyException;
 import pt.tecnico.distledger.server.exceptions.AccountNotFoundException;
-import pt.tecnico.distledger.server.exceptions.AccountProtectedException;
 import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
 import pt.tecnico.distledger.server.exceptions.InvalidAmountException;
 import pt.tecnico.distledger.server.exceptions.PropagationException;
@@ -20,8 +18,6 @@ import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.BalanceRequest
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.BalanceResponse;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.CreateAccountRequest;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.CreateAccountResponse;
-import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.DeleteAccountRequest;
-import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.DeleteAccountResponse;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.TransferToRequest;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.TransferToResponse;
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc;
@@ -81,24 +77,6 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
         } catch (AccountAlreadyExistsException | ServerUnavailableException | PropagationException |
                  ReadOnlyException e) {
             log.debug("Error creating account: %s", e.getMessage());
-            responseObserver.onError(e.toGrpcRuntimeException());
-        }
-    }
-
-    @Override
-    public void deleteAccount(
-            DeleteAccountRequest request,
-            StreamObserver<DeleteAccountResponse> responseObserver
-    ) {
-        log.debug("Deletion of account '%s' has been requested", request.getUserId());
-        try {
-            serverState.deleteAccount(request.getUserId());
-            log.debug("Account '%s' has been deleted", request.getUserId());
-            responseObserver.onNext(DeleteAccountResponse.getDefaultInstance());
-            responseObserver.onCompleted();
-        } catch (AccountNotEmptyException | AccountNotFoundException | AccountProtectedException |
-                 ServerUnavailableException | PropagationException | ReadOnlyException e) {
-            log.debug("Error deleting account: %s", e.getMessage());
             responseObserver.onError(e.toGrpcRuntimeException());
         }
     }

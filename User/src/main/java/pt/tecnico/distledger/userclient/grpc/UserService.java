@@ -10,11 +10,10 @@ import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.BalanceRequest
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.BalanceResponse;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.CreateAccountRequest;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.CreateAccountResponse;
-import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.DeleteAccountRequest;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.TransferToRequest;
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc.UserServiceBlockingStub;
 
-import static pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.*;
+import static pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.TransferToResponse;
 
 @CustomLog(topic = "Service")
 @RequiredArgsConstructor
@@ -40,21 +39,6 @@ public class UserService implements AutoCloseable {
         log.debug("[Server '%s'] Received response to create account for '%s'", qualifier, username);
         vectorClock.updateVectorClock(new VectorClock(response.getNewTimestampMap()));
         logTimestamps();
-    }
-
-    public void deleteAccount(
-            String qualifier,
-            String username
-    ) throws StatusRuntimeException, ServerUnresolvableException {
-        log.debug("[Server '%s'] Sending request to delete account for '%s'", qualifier, username);
-        // noinspection ResultOfMethodCallIgnored
-        serverResolver.resolveStub(qualifier)
-                .deleteAccount(
-                        DeleteAccountRequest.newBuilder()
-                                .setUserId(username)
-                                .build()
-                );
-        log.debug("[Server '%s'] Received response to delete account for '%s'", qualifier, username);
     }
 
     public int balance(String qualifier, String username) throws StatusRuntimeException, ServerUnresolvableException {

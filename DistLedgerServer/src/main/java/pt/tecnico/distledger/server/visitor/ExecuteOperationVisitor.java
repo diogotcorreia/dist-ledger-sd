@@ -2,7 +2,6 @@ package pt.tecnico.distledger.server.visitor;
 
 import pt.tecnico.distledger.server.domain.Account;
 import pt.tecnico.distledger.server.domain.operation.CreateOp;
-import pt.tecnico.distledger.server.domain.operation.DeleteOp;
 import pt.tecnico.distledger.server.domain.operation.TransferOp;
 
 import java.util.Map;
@@ -21,11 +20,6 @@ public class ExecuteOperationVisitor extends OperationVisitor {
                 operation.getAccount(),
                 new Account(operation.getAccount())
         );
-    }
-
-    @Override
-    public void visit(DeleteOp operation) {
-        accounts.remove(operation.getAccount());
     }
 
     @Override

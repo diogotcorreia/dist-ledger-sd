@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import pt.tecnico.distledger.common.VectorClock;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.domain.operation.CreateOp;
-import pt.tecnico.distledger.server.domain.operation.DeleteOp;
 import pt.tecnico.distledger.server.domain.operation.Operation;
 import pt.tecnico.distledger.server.domain.operation.TransferOp;
 import pt.tecnico.distledger.server.visitor.OperationVisitor;
@@ -244,8 +243,7 @@ public class GossipTest {
     }
 
     /**
-     * Simulate gossip propagation between two replicas.
-     * Skips gRPC for simplicity.
+     * Simulate gossip propagation between two replicas. Skips gRPC for simplicity.
      *
      * @param replicaFrom The replica sending the gossip message.
      * @param replicaTo   The replica receiving the operations.
@@ -258,8 +256,7 @@ public class GossipTest {
     }
 
     /**
-     * Get operations of the given replica's ledger.
-     * Preserves "stable" attribute of operations.
+     * Get operations of the given replica's ledger. Preserves "stable" attribute of operations.
      *
      * @param replica The replica to get the ledger of.
      * @return The operations in the ledger of the replica.
@@ -302,14 +299,6 @@ public class GossipTest {
             );
         }
 
-        @Override
-        public void visit(DeleteOp operation) {
-            operations.add(
-                    new DeleteOp(
-                            operation.getAccount()
-                    )
-            );
-        }
 
         @Override
         public void visit(TransferOp operation) {

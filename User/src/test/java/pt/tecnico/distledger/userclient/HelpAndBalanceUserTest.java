@@ -62,7 +62,6 @@ class HelpAndBalanceUserTest {
         assertEquals("""
                 > Usage:
                 - createAccount <server> <username>
-                - deleteAccount <server> <username>
                 - balance <server> <username>
                 - transferTo <server> <username_from> <username_to> <amount>
                 - exit
@@ -119,7 +118,6 @@ class HelpAndBalanceUserTest {
         assertEquals("""
                 > Usage:
                 - createAccount <server> <username>
-                - deleteAccount <server> <username>
                 - balance <server> <username>
                 - transferTo <server> <username_from> <username_to> <amount>
                 - exit
