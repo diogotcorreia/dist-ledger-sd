@@ -1,11 +1,19 @@
 package pt.tecnico.distledger.userclient;
 
+import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import lombok.CustomLog;
 import pt.tecnico.distledger.common.exceptions.ServerUnresolvableException;
 import pt.tecnico.distledger.userclient.grpc.UserService;
 
+import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @CustomLog
 public class CommandParser {
@@ -61,7 +69,7 @@ public class CommandParser {
                 }
             } catch (ServerUnresolvableException e) {
                 log.error(e.getMessage());
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 log.error(e.getMessage());
                 e.printStackTrace();
             }
@@ -84,29 +92,60 @@ public class CommandParser {
         log.info("OK%n");
     }
 
-    private void balance(String line) throws ServerUnresolvableException {
+    private void balance(String line) throws Throwable {
         String[] split = line.split(SPACE);
 
         if (split.length != 3) {
             this.printUsage();
             return;
         }
-        String server = split[1];
-        String username = split[2];
+        final String server = split[1];
+        final String username = split[2];
 
-        final int balance = userService.balance(server, username);
+        List<Callable<Void>> tasks = List.of(
+                () -> {
+                    Thread.sleep(1000);
 
-        if (balance == -1) {
-            log.debug("Operation cancelled."); // TODO: this should be log.info
-            return;
+                    log.info("Query is taking too long... Press ENTER to cancel.");
+
+                    // noinspection ResultOfMethodCallIgnored
+                    System.in.read();
+                    log.info("Operation cancelled.");
+                    return null;
+                },
+                () -> {
+                    try {
+                        final int balance = userService.balance(server, username);
+
+                        log.debug("Balance of user '%s' is %d%n", username, balance);
+                        log.info("OK");
+                        if (balance > 0) {
+                            log.info("%d", balance);
+                        }
+                        log.info("");
+                    } catch (StatusRuntimeException e) {
+                        if (e.getStatus().getCode() != Status.Code.CANCELLED) {
+                            throw e;
+                        }
+                    }
+                    return null;
+                }
+        );
+
+        ExecutorService executorService = Executors.newFixedThreadPool(tasks.size());
+        CompletionService<Void> completionService = new ExecutorCompletionService<>(executorService);
+        tasks.forEach(completionService::submit);
+
+        try {
+            // Wait for the threads to finish, returning the first one that finishes
+            completionService.take().get();
+        } catch (InterruptedException e) {
+            log.error("Error while waiting for threads to finish %s", e);
+        } catch (ExecutionException e) {
+            throw e.getCause();
+        } finally {
+            executorService.shutdownNow();
         }
-
-        log.debug("Balance of user '%s' is %d%n", username, balance);
-        log.info("OK");
-        if (balance > 0) {
-            log.info("%d", balance);
-        }
-        log.info("");
     }
 
     private void transferTo(String line) throws ServerUnresolvableException {

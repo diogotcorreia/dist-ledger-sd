@@ -1,6 +1,5 @@
 package pt.tecnico.distledger.userclient.grpc;
 
-import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
@@ -13,14 +12,6 @@ import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.CreateAccountR
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.CreateAccountResponse;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.TransferToRequest;
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc.UserServiceBlockingStub;
-
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletionService;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.TransferToResponse;
 
@@ -53,66 +44,23 @@ public class UserService implements AutoCloseable {
     public int balance(String qualifier, String username) throws StatusRuntimeException, ServerUnresolvableException {
         log.debug("Sending request to get balance for '%s'", username);
         logTimestamps();
-        AtomicReference<BalanceResponse> response = new AtomicReference<>();
-        List<Callable<Void>> tasks = List.of(
-                () -> {
-                    Thread.sleep(1000);
-
-                    log.info("Query is taking too long... Press ENTER to cancel.");
-
-                    // noinspection ResultOfMethodCallIgnored
-                    System.in.read();
-                    return null;
-                },
-                () -> {
-                    try {
-                        response.set(
-                                serverResolver.resolveStub(qualifier)
-                                        .balance(
-                                                BalanceRequest.newBuilder()
-                                                        .setUserId(username)
-                                                        .putAllPrevTimestamp(vectorClock.getTimestamps())
-                                                        .build()
-                                        )
-                        );
-                        log.debug(
-                                "[Server '%s'] Received response to get balance for '%s' (value: %d)",
-                                qualifier,
-                                username,
-                                response.get().getValue()
-                        );
-                        vectorClock.updateVectorClock(new VectorClock(response.get().getNewTimestampMap()));
-                    } catch (StatusRuntimeException e) {
-                        if (e.getStatus().getCode() != Status.Code.CANCELLED) {
-                            log.error("Error while performing request: %s", e);
-                        }
-                    } catch (Exception e) {
-                        log.error("Error while performing request: %s", e);
-                    }
-                    return null;
-                }
+        final BalanceResponse response = serverResolver.resolveStub(qualifier)
+                .balance(
+                        BalanceRequest.newBuilder()
+                                .setUserId(username)
+                                .putAllPrevTimestamp(vectorClock.getTimestamps())
+                                .build()
+                );
+        log.debug(
+                "[Server '%s'] Received response to get balance for '%s' (value: %d)",
+                qualifier,
+                username,
+                response.getValue()
         );
-
-        ExecutorService executorService = Executors.newFixedThreadPool(tasks.size());
-        CompletionService<Void> completionService = new ExecutorCompletionService<>(executorService);
-        tasks.forEach(completionService::submit);
-
-        try {
-            // Wait for the threads to finish, returning the first one that finishes
-            completionService.take().get();
-        } catch (Exception e) {
-            log.error("Error while waiting for threads to finish", e);
-        } finally {
-            executorService.shutdownNow();
-        }
-
-        if (response.get() == null) {
-            log.debug("Request successfully cancelled");
-            return -1;
-        }
+        vectorClock.updateVectorClock(new VectorClock(response.getNewTimestampMap()));
 
         logTimestamps();
-        return response.get().getValue();
+        return response.getValue();
     }
 
 
