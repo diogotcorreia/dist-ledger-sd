@@ -61,6 +61,10 @@ public class ServerCoordinator {
             throw new ServerUnavailableException(qualifier);
         }
         ConvertOperationsToGrpcVisitor visitor = new ConvertOperationsToGrpcVisitor();
+        // This "data race" isn't an issue because even if the timestamp isn't up-to-date
+        // after iterating over the ledger, it won't affect the gossip propagation.
+        // Worst case scenario, we will send a duplicate operation in further gossip propagations,
+        // which would be ignored by the receiving replica.
         val timestamp = serverState.getReplicaTimestamp().clone();
         serverState.operateOverLedgerToPropagateToReplica(visitor, serverTo);
         propagateLedgerStateToServer(visitor, serverTo);
@@ -79,7 +83,6 @@ public class ServerCoordinator {
             if (sendLedgerToServer(visitor, serverTo)) {
                 return;
             }
-            // TODO improve when this is fetched again
             populatePeersCache();
         } while (++attempts < MAX_RETRIES);
 
@@ -118,7 +121,6 @@ public class ServerCoordinator {
     }
 
     private void populatePeersCache() {
-        // TODO this can be improved to only fetch one server at a time on-demand
         namingServerService.getServerList()
                 .forEach(serverInfo -> peersCache.put(serverInfo.getQualifier(), new CrossServerService(serverInfo)));
     }
