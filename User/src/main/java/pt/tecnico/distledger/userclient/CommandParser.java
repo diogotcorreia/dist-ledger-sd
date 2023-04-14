@@ -64,8 +64,13 @@ public class CommandParser {
                 case HELP, HELP_ALIAS -> this.printUsage();
                 case EXIT, EXIT_ALIAS -> exit = true;
                 default -> {
-                    log.error("Command '%s' does not exist%n%n", cmd);
-                    this.printUsage();
+                    if (!line.isBlank()) {
+                        log.error("Command '%s' does not exist%n%n", cmd);
+                        this.printUsage();
+                    } else {
+                        System.out.print("> ");
+                    }
+
                 }
             }
 
