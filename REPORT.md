@@ -15,12 +15,13 @@ of whether it's the primary or backup server, and holds three timestamp-related 
 - `gossipTimestamps`, a table with the timestamps of the last known timestamps of each replica; it's updated by the `ServerCoordinator`
     after each successful gossip transaction. The coordinator, as stated in Coulouris et al.,
     "uses the entries in its timestamp table to estimate which updates any other replica manager has not yet received";
-- `valueTimestamp`, a vector clock with its current timestamp (i.e the timestamp of the state held by the replica);
+- `valueTimestamp`, a vector clock with its current timestamp (i.e the timestamp of the state held by the replica, tracking account changes);
 - `replicaTimestamp`, a vector clock updated with each operation that is performed on the ledger.
 
-Each operation now holds a `stable` field, stating whether an operation is deemed stable or not, and a `uniqueTimestamp` field,
-a timestamp incrementing the client's previous timestamp, the `vectorClock` field in `UserService`, with the newly calculated
-`replicaTimestamp` (as per the course's slides). The gossip's logic itself is also implemented as per the course's slides.
+Each operation now holds a `stable` field, stating whether an operation is deemed stable or not (with all operations being
+deemed unstable by default on addition to the ledger), and a `uniqueTimestamp` field, a timestamp incrementing the client's
+previous timestamp, the `vectorClock` field in `UserService`, with the newly calculated `replicaTimestamp` (as per the course's
+slides). The gossip's logic itself is also implemented as per the course's slides.
 
 Note that our implementation leads to an account only being able to be managed by a single client at a time, as discussed
 at Moodle.
