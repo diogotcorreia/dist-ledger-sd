@@ -68,10 +68,8 @@ public class CommandParser {
                     if (!line.isBlank()) {
                         log.error("Command '%s' does not exist%n%n", cmd);
                         this.printUsage();
-                    } else {
-                        System.out.print("> ");
                     }
-
+                    System.out.print("> ");
                 }
             }
 
