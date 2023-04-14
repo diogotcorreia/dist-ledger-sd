@@ -26,8 +26,8 @@ public abstract class Operation {
     ) {
         this.account = fromAccount;
         this.type = type;
-        this.prevTimestamp = prevTimestamp;
-        this.uniqueTimestamp = uniqueTimestamp;
+        this.prevTimestamp = prevTimestamp.freeze();
+        this.uniqueTimestamp = uniqueTimestamp.freeze();
         this.stable = stable;
     }
 

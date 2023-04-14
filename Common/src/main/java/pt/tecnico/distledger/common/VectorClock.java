@@ -3,6 +3,7 @@ package pt.tecnico.distledger.common;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -19,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class VectorClock {
 
-    private final @NotNull Map<String, Integer> timestamps = new ConcurrentHashMap<>();
+    private @NotNull Map<String, Integer> timestamps = new ConcurrentHashMap<>();
 
     /**
      * Create a new VectorClock based on a timestamp map. The map can be used afterward without affecting the internal
@@ -93,6 +94,18 @@ public class VectorClock {
     @Override
     public @NotNull VectorClock clone() {
         return new VectorClock(this.timestamps);
+    }
+
+    /**
+     * Freeze this VectorClock, preventing further motifications. All write operations to this VectorClock will result
+     * in a {@link UnsupportedOperationException}.
+     *
+     * @return this VectorClock instance.
+     */
+    @Contract("-> this")
+    public VectorClock freeze() {
+        this.timestamps = Collections.unmodifiableMap(this.timestamps);
+        return this;
     }
 
     /**
