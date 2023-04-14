@@ -5,11 +5,13 @@ import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import pt.tecnico.distledger.common.VectorClock;
+import pt.tecnico.distledger.server.domain.Account;
 import pt.tecnico.distledger.server.domain.ServerState;
-import pt.tecnico.distledger.server.exceptions.AccountAlreadyExistsException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CreateAccountTest {
@@ -67,10 +69,14 @@ class CreateAccountTest {
     void createAccountTwice() {
         state.createAccount(userId, new VectorClock());
 
-        assertThrows(AccountAlreadyExistsException.class, () -> state.createAccount(userId, new VectorClock()));
         assertEquals(2, state.getAccounts().size());
-        assertEquals(1, state.getLedger().size());
+        Account account = state.getAccounts().get(userId);
+        assertNotNull(account);
 
+        state.createAccount(userId, new VectorClock());
+        assertEquals(2, state.getAccounts().size());
+        assertEquals(2, state.getLedger().size());
+        assertSame(account, state.getAccounts().get(userId));
     }
 
     @Test
