@@ -98,11 +98,6 @@ public class CommandParser {
                     log.debug("Cancelled gRPC request");
                     return;
                 }
-                if (e.getStatus().getCode() == Status.Code.UNAVAILABLE) {
-                    log.error("Server is unavailable");
-                    userService.close();
-                    return;
-                }
                 if (e.getStatus().getDescription() != null) {
                     log.error(e.getStatus().getDescription());
                 } else {
