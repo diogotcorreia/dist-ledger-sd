@@ -4,15 +4,11 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Getter
 @RequiredArgsConstructor
 @ToString
 public class Account {
-
-    private final Lock lock = new ReentrantLock();
 
     private final String userId;
 

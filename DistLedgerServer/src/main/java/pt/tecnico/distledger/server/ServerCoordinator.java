@@ -8,7 +8,6 @@ import lombok.CustomLog;
 import lombok.Getter;
 import lombok.val;
 import pt.tecnico.distledger.server.domain.ServerState;
-import pt.tecnico.distledger.server.exceptions.PropagationException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.server.grpc.CrossServerService;
 import pt.tecnico.distledger.server.grpc.NamingServerService;
@@ -84,7 +83,7 @@ public class ServerCoordinator {
             populatePeersCache();
         } while (++attempts < MAX_RETRIES);
 
-        throw new RuntimeException(new PropagationException());
+        throw new ServerUnavailableException(serverTo);
     }
 
     /**

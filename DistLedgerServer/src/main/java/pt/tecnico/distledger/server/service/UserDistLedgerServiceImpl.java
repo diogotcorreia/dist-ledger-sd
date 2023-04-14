@@ -6,12 +6,8 @@ import pt.tecnico.distledger.common.VectorClock;
 import pt.tecnico.distledger.server.ServerCoordinator;
 import pt.tecnico.distledger.server.domain.OperationResult;
 import pt.tecnico.distledger.server.domain.ServerState;
-import pt.tecnico.distledger.server.exceptions.AccountAlreadyExistsException;
 import pt.tecnico.distledger.server.exceptions.AccountNotFoundException;
-import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
 import pt.tecnico.distledger.server.exceptions.InvalidAmountException;
-import pt.tecnico.distledger.server.exceptions.PropagationException;
-import pt.tecnico.distledger.server.exceptions.ReadOnlyException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.server.exceptions.TransferBetweenSameAccountException;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.BalanceRequest;
@@ -74,8 +70,7 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
                             .build()
             );
             responseObserver.onCompleted();
-        } catch (AccountAlreadyExistsException | ServerUnavailableException | PropagationException |
-                 ReadOnlyException e) {
+        } catch (ServerUnavailableException e) {
             log.debug("Error creating account: %s", e.getMessage());
             responseObserver.onError(e.toGrpcRuntimeException());
         }
@@ -111,9 +106,7 @@ public class UserDistLedgerServiceImpl extends UserServiceGrpc.UserServiceImplBa
                             .build()
             );
             responseObserver.onCompleted();
-        } catch (AccountNotFoundException | InsufficientFundsException | InvalidAmountException |
-                 ServerUnavailableException | TransferBetweenSameAccountException | PropagationException |
-                 ReadOnlyException e) {
+        } catch (InvalidAmountException | ServerUnavailableException | TransferBetweenSameAccountException e) {
             log.debug("Error creating transfer: %s", e.getMessage());
             responseObserver.onError(e.toGrpcRuntimeException());
         }

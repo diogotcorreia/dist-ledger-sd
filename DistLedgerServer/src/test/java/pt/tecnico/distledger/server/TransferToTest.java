@@ -5,8 +5,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import pt.tecnico.distledger.common.VectorClock;
 import pt.tecnico.distledger.server.domain.ServerState;
-import pt.tecnico.distledger.server.exceptions.AccountNotFoundException;
-import pt.tecnico.distledger.server.exceptions.InsufficientFundsException;
 import pt.tecnico.distledger.server.exceptions.InvalidAmountException;
 import pt.tecnico.distledger.server.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.server.exceptions.TransferBetweenSameAccountException;
@@ -18,7 +16,7 @@ class TransferToTest {
 
     private static ServerState state;
 
-    private static final String brokerId = "broker";
+    private static final String brokerId = ServerState.BROKER_ID;
 
     private static final String userId = "user1";
 
@@ -55,11 +53,10 @@ class TransferToTest {
     void fromUserDoesNotExist() {
         final String userNotRegistered = "user37";
 
-        assertThrows(
-                AccountNotFoundException.class,
-                () -> state.transferTo(userNotRegistered, brokerId, 10, new VectorClock())
-        );
-        assertEquals(1, state.getLedger().size());
+        state.transferTo(userNotRegistered, brokerId, 10, new VectorClock());
+        assertEquals(2, state.getLedger().size());
+        assertEquals(2, state.getAccounts().size());
+        assertEquals(ServerState.BROKER_INITIAL_AMOUNT, state.getAccounts().get(brokerId).getBalance());
     }
 
     @Test
@@ -67,12 +64,10 @@ class TransferToTest {
     void toUserDoesNotExist() {
         final String userNotRegistered = "user37";
 
-        assertThrows(
-                AccountNotFoundException.class,
-                () -> state.transferTo(brokerId, userNotRegistered, 10, new VectorClock())
-        );
-        assertEquals(1, state.getLedger().size());
-
+        state.transferTo(brokerId, userNotRegistered, 10, new VectorClock());
+        assertEquals(2, state.getLedger().size());
+        assertEquals(2, state.getAccounts().size());
+        assertEquals(ServerState.BROKER_INITIAL_AMOUNT, state.getAccounts().get(brokerId).getBalance());
     }
 
     @Test
@@ -85,11 +80,11 @@ class TransferToTest {
     @Test
     @SneakyThrows
     void insufficientAmount() {
-        assertThrows(
-                InsufficientFundsException.class,
-                () -> state.transferTo(brokerId, userId, 10000, new VectorClock())
-        );
-        assertEquals(1, state.getLedger().size());
+        state.transferTo(brokerId, userId, 10000, new VectorClock());
+        assertEquals(2, state.getLedger().size());
+        assertEquals(2, state.getAccounts().size());
+        assertEquals(ServerState.BROKER_INITIAL_AMOUNT, state.getAccounts().get(brokerId).getBalance());
+        assertEquals(0, state.getAccounts().get(userId).getBalance());
     }
 
     @Test
