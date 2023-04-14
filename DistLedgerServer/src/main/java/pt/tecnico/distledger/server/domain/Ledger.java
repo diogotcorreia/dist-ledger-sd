@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -27,7 +28,7 @@ public class Ledger {
     private final Set<VectorClock> operationIdList = ConcurrentHashMap.newKeySet();
     private int stableOperationCount = 0;
 
-    private final Object lock = new Object();
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     /**
      * Add a single (unstable) operation to the ledger. It will be added to the end of the ledger. Then, try to
@@ -41,13 +42,28 @@ public class Ledger {
         if (operation.isStable()) {
             throw new IllegalArgumentException("Operation to add to ledger must be unstable");
         }
-        synchronized (lock) {
-            if (!operationIdList.add(operation.getUniqueTimestamp())) {
-                throw new IllegalArgumentException("Operation already in ledger");
+        if (!operationIdList.add(operation.getUniqueTimestamp())) {
+            throw new IllegalArgumentException("Operation already in ledger");
+        }
+        if (this.stable.test(operation)) {
+            this.lock.writeLock().lock();
+            try {
+                this.ledger.add(this.stableOperationCount, operation);
+                operation.setStable(true);
+                this.executorCallback.accept(operation);
+                this.stableOperationCount++;
+            } finally {
+                this.lock.writeLock().unlock();
             }
+            log.debug(
+                    "The %s operation with timestamp %s has now been stabilized",
+                    operation.getType(),
+                    operation.getUniqueTimestamp()
+            );
+        } else {
+            // The underlying structure already gives us synchronization guarantees
             this.ledger.add(operation);
         }
-        stabilizeOperations();
     }
 
     /**
@@ -64,27 +80,36 @@ public class Ledger {
         }
 
         operations.forEach(operation -> {
-            synchronized (lock) {
-                if (operationIdList.add(operation.getUniqueTimestamp())) {
-                    this.ledger.add(operation);
-                }
+            if (operationIdList.add(operation.getUniqueTimestamp())) {
+                this.ledger.add(operation);
             }
         });
         stabilizeOperations();
     }
 
     public void operateOverLedger(OperationVisitor visitor) {
-        this.ledger.forEach(operation -> operation.accept(visitor));
+        this.lock.readLock().lock();
+        try {
+            this.ledger.forEach(operation -> operation.accept(visitor));
+        } finally {
+            this.lock.readLock().unlock();
+        }
     }
 
     public void operateOverLedger(OperationVisitor visitor, Predicate<Operation> filter) {
-        ledger.stream()
-                .filter(filter)
-                .forEach(operation -> operation.accept(visitor));
+        this.lock.readLock().lock();
+        try {
+            this.ledger.stream()
+                    .filter(filter)
+                    .forEach(operation -> operation.accept(visitor));
+        } finally {
+            this.lock.readLock().unlock();
+        }
     }
 
     @VisibleForTesting
     public int size() {
+        // No need for locks, the underlying structure provides synchornization guarantees.
         return this.ledger.size();
     }
 
@@ -92,17 +117,26 @@ public class Ledger {
      * Try to mark operations as stable whenever possible.
      */
     private void stabilizeOperations() {
-        synchronized (lock) {
-            for (int i = stableOperationCount; i < this.ledger.size(); i++) {
+        this.lock.readLock().lock();
+        try {
+            for (int i = this.stableOperationCount; i < this.ledger.size(); i++) {
                 Operation operation = this.ledger.get(i);
-                if (stable.test(operation)) {
-                    if (this.stableOperationCount != i) {
-                        Collections.swap(this.ledger, this.stableOperationCount, i);
+                if (this.stable.test(operation)) {
+                    this.lock.readLock().unlock();
+                    this.lock.writeLock().lock();
+                    try {
+                        // Check if another thread got the lock and stabilized this operation meanwhile
+                        if (!operation.isStable()) {
+                            Collections.swap(this.ledger, this.stableOperationCount, i);
+                            operation.setStable(true);
+                            this.executorCallback.accept(operation);
+                            i = this.stableOperationCount;
+                            this.stableOperationCount++;
+                        }
+                        this.lock.readLock().lock();
+                    } finally {
+                        this.lock.writeLock().unlock();
                     }
-                    i = this.stableOperationCount;
-                    this.stableOperationCount++;
-                    operation.setStable(true);
-                    this.executorCallback.accept(operation);
                     log.debug(
                             "The %s operation with timestamp %s has now been stabilized",
                             operation.getType(),
@@ -110,6 +144,8 @@ public class Ledger {
                     );
                 }
             }
+        } finally {
+            this.lock.readLock().unlock();
         }
     }
 
