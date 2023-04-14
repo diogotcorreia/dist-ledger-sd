@@ -15,6 +15,12 @@ import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.TransferToRequ
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc.UserServiceBlockingStub;
 
 import java.util.List;
+import java.util.Scanner;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.*;
@@ -61,18 +67,17 @@ public class UserService implements AutoCloseable {
     public int balance(String qualifier, String username) throws StatusRuntimeException, ServerUnresolvableException {
         log.debug("Sending request to get balance for '%s'", username);
 
-        // since this operation may take a while, if the gossip process is slow, we allow the user to cancel it (as it's blocking)
-        log.info("This operation is cancellable. Press ENTER to cancel this request.");
-
         AtomicReference<BalanceResponse> response = new AtomicReference<>();
-        List<Thread> threads = List.of(new Thread(() -> {
-            try {
-                System.in.read();
-            } catch (Exception e) {
-                log.error("Error while waiting for user input", e);
-            }
-        }),
-                new Thread(() -> {
+        List<Callable<Void>> tasks = List.of(
+                () -> {
+                    try (Scanner scanner = new Scanner(System.in)) {
+                        scanner.nextLine();
+                    } catch (Exception e) {
+                        log.error("Error while waiting for user input", e);
+                    }
+                    return null;
+                },
+                () -> {
                     try {
                         response.set(
                                 serverResolver.resolveStub(qualifier)
@@ -93,25 +98,28 @@ public class UserService implements AutoCloseable {
                     } catch (Exception e) {
                         log.error("Error while performing request", e);
                     }
-                })
+                    return null;
+                }
         );
-        threads.forEach(Thread::start);
 
-        // we wait for either the user to press ENTER or for the request to finish
-        Thread thread1 = threads.get(0);
-        Thread thread2 = threads.get(1);
+        ExecutorService executorService = Executors.newFixedThreadPool(tasks.size());
+        CompletionService<Void> completionService = new ExecutorCompletionService<>(executorService);
+        tasks.forEach(completionService::submit);
+
         try {
-            thread1.join();
-        } catch (InterruptedException e) {
-            log.error("Error while waiting for user input", e);
+            // Wait for the threads to finish, returning the first one that finishes
+            completionService.take().get();
+        } catch (Exception e) {
+            log.error("Error while waiting for threads to finish", e);
+        } finally {
+            executorService.shutdownNow();
         }
 
-        // if the user pressed ENTER, we cancel the request
-        if (thread1.isInterrupted()) {
-            thread2.interrupt();
-            log.info("Request cancelled");
-            return 0;
+        if (response.get() == null) {
+            log.debug("Request successfully cancelled");
+            return -1;
         }
+
         return response.get().getValue();
     }
 
