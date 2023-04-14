@@ -25,10 +25,9 @@ code dependency management, to ensure your code runs using the correct component
 The overall system is made up of several modules. The server's logic is implemented in _DistLedgerServer_. The clients are the _User_ 
 and the _Admin_. The definition of messages and services is in the _Contract_. The naming server
 is the _NamingServer_. There's also a _Common_ module, where our custom Logger and Server Resolvers
-are implemented.
+are implemented, along with a Vector Clock implementation.
 Note that the _DistLedgerServer_ also contains the logic for the _ServerCoordinator_, which is responsible for
-coordinating the servers (currently two, in a primary-backup configuration) and ensuring proper
-information replication.
+coordinating all the server replicas, ensuring proper information replication with the gossip architecture.
 
 See the [Project Statement](https://github.com/tecnico-distsys/DistLedger) for a complete domain and system description.
 
