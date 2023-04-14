@@ -12,14 +12,17 @@ The `ServerCoordinator` now not only handles the caching of known peers, but als
 sending the information to the destination replica (using gossip, of course). The `ServerState` now holds its qualifier, instead
 of whether it's the primary or backup server, and holds three timestamp-related utilities:
 
-- `gossipTimestamps`, a table with the timestamps of the last known timestamps of each replica; it's updated by the `ServerCoordinator` when it receives a gossip request;
-- `valueTimestamp`, a vector clock with its current timestamp (representing all the updates it knows about);
+- `gossipTimestamps`, a table with the timestamps of the last known timestamps of each replica; it's updated by the `ServerCoordinator`
+    after each successful gossip transaction;
+- `valueTimestamp`, a vector clock with its current timestamp (i.e the timestamp of the state held by the replica);
 - `replicaTimestamp`, a vector clock updated with each operation that is performed on the ledger.
 
 Each operation now holds a `stable` field, stating whether an operation is deemed stable or not, and a `uniqueTimestamp` field,
 a timestamp incrementing the client's previous timestamp, the `vectorClock` field in `UserService`, with the newly calculated
 `replicaTimestamp` (as per the course's slides). The gossip's logic itself is also implemented as per the course's slides.
 
+Note that our implementation leads to an account only being able to be managed by a single client at a time, as discussed
+at Moodle.
 
 ## Implementation options
 
@@ -34,11 +37,11 @@ Vector clocks are, of course, one of the building blocks of the gossip architect
 utilized to ensure that the information is properly replicated across the servers. We decided to implement
 it under the `Common` package, with its internals being a mapping of a replica's qualifier to its timestamp,
 rather than a literal vector approach. This allows us to simplify processes, as there's no natural ordering
-required for the vector clock.
+required for the vector clock; as such, it also eases the support for more than two replicas.
 
 ### Blocking Wait User-Server
 
-We opted to implement a synchronous, blocking approach for user-server interactions. The alternative, which
+We've opted to implement a synchronous, blocking approach for user-server interactions. The alternative, which
 would be to implement an asynchronous approach, would require the user's client to be able to, among other
 things, handle multiple requests at once (and print out information at seemingly random times), which would,
 in our opinion, be far from an ideal user experience. As such, we implemented a synchronous approach, where
