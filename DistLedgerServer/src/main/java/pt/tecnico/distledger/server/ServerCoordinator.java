@@ -114,8 +114,6 @@ public class ServerCoordinator {
         } catch (Exception e) {
             e.printStackTrace();
             peersCache.invalidate(serverTo);
-        } finally {
-            log.error("Failed to send ledger to server: %s", serverTo);
         }
         return false;
     }
