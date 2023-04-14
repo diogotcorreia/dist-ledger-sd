@@ -56,6 +56,10 @@ public class UserService implements AutoCloseable {
         AtomicReference<BalanceResponse> response = new AtomicReference<>();
         List<Callable<Void>> tasks = List.of(
                 () -> {
+                    Thread.sleep(1000);
+
+                    log.info("Query is taking too long... Press ENTER to cancel.");
+
                     // noinspection ResultOfMethodCallIgnored
                     System.in.read();
                     return null;

@@ -94,9 +94,6 @@ public class CommandParser {
         String server = split[1];
         String username = split[2];
 
-        // since this operation may take a while, if the gossip process is slow, we allow the user to cancel it (as it's blocking)
-        log.debug("This operation is cancellable. Press any key to cancel this request."); // TODO: this should be log.info
-
         final int balance = userService.balance(server, username);
 
         if (balance == -1) {
