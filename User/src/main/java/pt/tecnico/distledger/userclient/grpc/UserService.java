@@ -1,5 +1,6 @@
 package pt.tecnico.distledger.userclient.grpc;
 
+import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,6 @@ import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.TransferToRequ
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc.UserServiceBlockingStub;
 
 import java.util.List;
-import java.util.Scanner;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutorCompletionService;
@@ -22,7 +22,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.*;
+import static pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.TransferToResponse;
 
 @CustomLog(topic = "Service")
 @RequiredArgsConstructor
@@ -56,11 +56,8 @@ public class UserService implements AutoCloseable {
         AtomicReference<BalanceResponse> response = new AtomicReference<>();
         List<Callable<Void>> tasks = List.of(
                 () -> {
-                    try (Scanner scanner = new Scanner(System.in)) {
-                        scanner.nextLine();
-                    } catch (Exception e) {
-                        log.error("Error while waiting for user input", e);
-                    }
+                    // noinspection ResultOfMethodCallIgnored
+                    System.in.read();
                     return null;
                 },
                 () -> {
@@ -81,8 +78,12 @@ public class UserService implements AutoCloseable {
                                 response.get().getValue()
                         );
                         vectorClock.updateVectorClock(new VectorClock(response.get().getNewTimestampMap()));
+                    } catch (StatusRuntimeException e) {
+                        if (e.getStatus().getCode() != Status.Code.CANCELLED) {
+                            log.error("Error while performing request: %s", e);
+                        }
                     } catch (Exception e) {
-                        log.error("Error while performing request", e);
+                        log.error("Error while performing request: %s", e);
                     }
                     return null;
                 }
