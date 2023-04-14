@@ -131,7 +131,7 @@ public class CommandParser {
         return null;
     }
 
-    private Void balance(String line) {
+    private Void balance(String line) throws ServerUnresolvableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 3) {
@@ -141,23 +141,14 @@ public class CommandParser {
         final String server = split[1];
         final String username = split[2];
 
-        try {
-            final int balance = userService.balance(server, username);
+        final int balance = userService.balance(server, username);
 
-            log.debug("Balance of user '%s' is %d%n", username, balance);
-            log.info("OK");
-            if (balance > 0) {
-                log.info("%d", balance);
-            }
-            log.info("");
-        } catch (StatusRuntimeException e) {
-            if (e.getStatus().getCode() != Status.Code.CANCELLED) {
-                throw e;
-            }
-            log.debug("Cancelled gRPC request");
-        } catch (Exception e) {
-            log.error("Exception %s", e);
+        log.debug("Balance of user '%s' is %d%n", username, balance);
+        log.info("OK");
+        if (balance > 0) {
+            log.info("%d", balance);
         }
+        log.info("");
 
         return null;
     }
