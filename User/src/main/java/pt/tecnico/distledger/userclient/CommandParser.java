@@ -90,11 +90,13 @@ public class CommandParser {
     private void runCancellableCommand(Callable<Void> handler) {
         running.set(true);
         this.runningTask = new Thread(() -> {
+            boolean cancelled = false;
             try {
                 handler.call();
             } catch (StatusRuntimeException e) {
                 if (e.getStatus().getCode() == Status.Code.CANCELLED) {
-                    log.info("Cancelled gRPC request");
+                    log.info("Cancelled request");
+                    cancelled = true;
                     return;
                 }
                 if (e.getStatus().getDescription() != null) {
@@ -113,8 +115,10 @@ public class CommandParser {
             } finally {
                 running.set(false);
                 System.out.print("> ");
-                // Avoid sending the "this is taking too long" message
-                this.mainThread.interrupt();
+                if (!cancelled) {
+                    // Avoid sending the "this is taking too long" message
+                    this.mainThread.interrupt();
+                }
             }
         });
         this.runningTask.start();
@@ -132,7 +136,6 @@ public class CommandParser {
         String username = split[2];
 
         userService.createAccount(server, username);
-        log.debug("Account '%s' has been created%n", username);
         log.info("OK%n");
 
         return null;
@@ -150,7 +153,6 @@ public class CommandParser {
 
         final int balance = userService.balance(server, username);
 
-        log.debug("Balance of user '%s' is %d%n", username, balance);
         log.info("OK");
         if (balance > 0) {
             log.info("%d", balance);
@@ -173,11 +175,6 @@ public class CommandParser {
         Integer amount = Integer.valueOf(split[4]);
 
         userService.transferTo(server, from, dest, amount);
-        if (amount == 1) {
-            log.debug("1 coin has been transferred from account '%s' account '%s'%n", from, dest);
-        } else {
-            log.debug("%d coins have been transferred from account '%s' account '%s'%n", amount, from, dest);
-        }
         log.info("OK%n");
 
         return null;
