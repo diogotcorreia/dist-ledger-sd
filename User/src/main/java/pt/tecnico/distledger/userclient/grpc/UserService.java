@@ -52,7 +52,7 @@ public class UserService implements AutoCloseable {
 
     public int balance(String qualifier, String username) throws StatusRuntimeException, ServerUnresolvableException {
         log.debug("Sending request to get balance for '%s'", username);
-
+        logTimestamps();
         AtomicReference<BalanceResponse> response = new AtomicReference<>();
         List<Callable<Void>> tasks = List.of(
                 () -> {
@@ -106,6 +106,7 @@ public class UserService implements AutoCloseable {
             return -1;
         }
 
+        logTimestamps();
         return response.get().getValue();
     }
 
