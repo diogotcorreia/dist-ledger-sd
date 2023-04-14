@@ -65,7 +65,7 @@ public class CommandParser {
                 }
             }
 
-            if (!exit) {
+            if (!exit && isForegroundTaskRunning()) {
                 try {
                     // Wait for a bit before telling the user their action can be cancelled.
                     // If the action finished before the sleep, this thread will be interrupted and the message
