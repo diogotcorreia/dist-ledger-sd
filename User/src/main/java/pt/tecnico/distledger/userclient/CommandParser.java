@@ -31,7 +31,6 @@ public class CommandParser {
     private Thread runningTask;
     private final AtomicBoolean running = new AtomicBoolean(false);
 
-
     public CommandParser(UserService userService) {
         this.userService = userService;
         this.mainThread = Thread.currentThread();
